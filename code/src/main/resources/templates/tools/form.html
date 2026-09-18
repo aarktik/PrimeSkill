@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' · Primeskill'">จัดการเครื่องมือ · Primeskill</title>
+</head>
+<body>
+<main class="ps-page ps-tool-form">
+    <h1 th:text="${pageTitle}">จัดการเครื่องมือ</h1>
+    <form th:action="${formAction}" th:object="${toolRequest}" method="post" novalidate>
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+        <div>
+            <label for="name">ชื่อเครื่องมือ</label>
+            <input id="name" th:field="*{name}" required maxlength="150" aria-describedby="name-error">
+            <p id="name-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" role="alert"></p>
+        </div>
+        <div>
+            <label for="slug">Slug</label>
+            <input id="slug" th:field="*{slug}" required maxlength="170" aria-describedby="slug-error">
+            <p id="slug-error" th:if="${#fields.hasErrors('slug')}" th:errors="*{slug}" role="alert"></p>
+        </div>
+        <div>
+            <label for="shortDescription">คำอธิบายสั้น</label>
+            <input id="shortDescription" th:field="*{shortDescription}" required maxlength="300" aria-describedby="short-description-error">
+            <p id="short-description-error" th:if="${#fields.hasErrors('shortDescription')}" th:errors="*{shortDescription}" role="alert"></p>
+        </div>
+        <div>
+            <label for="description">รายละเอียด</label>
+            <textarea id="description" th:field="*{description}" required aria-describedby="description-error"></textarea>
+            <p id="description-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}" role="alert"></p>
+        </div>
+        <div>
+            <label for="categoryId">หมวดหมู่</label>
+            <select id="categoryId" th:field="*{categoryId}" required aria-describedby="category-error">
+                <option value="">เลือกหมวดหมู่</option>
+                <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}">Category</option>
+            </select>
+            <p id="category-error" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}" role="alert"></p>
+        </div>
+        <div>
+            <label for="repositoryUrl">Repository URL</label>
+            <input id="repositoryUrl" type="url" th:field="*{repositoryUrl}" maxlength="500" aria-describedby="repository-url-error">
+            <p id="repository-url-error" th:if="${#fields.hasErrors('repositoryUrl')}" th:errors="*{repositoryUrl}" role="alert"></p>
+        </div>
+        <div>
+            <a class="ps-btn ps-btn--secondary" th:href="@{/dashboard/tools}">ยกเลิก</a>
+            <button class="ps-btn ps-btn--primary" type="submit">บันทึกการเปลี่ยนแปลง</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

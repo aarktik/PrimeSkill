@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' · Primeskill'">สำรวจเครื่องมือ · Primeskill</title>
+</head>
+<body>
+<main class="ps-page ps-tools-list">
+    <header><h1 th:text="${pageTitle}">สำรวจเครื่องมือ</h1><p>ค้นพบเครื่องมือสำหรับ AI agents</p></header>
+    <section aria-live="polite">
+        <p th:if="${#lists.isEmpty(tools)}">ไม่พบเครื่องมือที่ตรงกับการค้นหา</p>
+        <div class="ps-tool-grid">
+            <article class="ps-tool-card" th:each="tool : ${tools}">
+                <h2><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a></h2>
+                <p th:text="${tool.shortDescription}">คำอธิบายเครื่องมือ</p>
+                <span th:text="${tool.status}">DRAFT</span>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' · Primeskill'">เครื่องมือของฉัน · Primeskill</title>
+</head>
+<body>
+<main class="ps-page ps-dashboard-tools">
+    <header><h1 th:text="${pageTitle}">เครื่องมือของฉัน</h1><a class="ps-btn ps-btn--primary" th:href="@{/dashboard/tools/new}">เพิ่มเครื่องมือ</a></header>
+    <p th:if="${successMessage}" role="status" th:text="${successMessage}"></p>
+    <p th:if="${#lists.isEmpty(tools)}">เริ่มเผยแพร่เครื่องมือแรกของคุณ</p>
+    <table th:unless="${#lists.isEmpty(tools)}">
+        <thead><tr><th>ชื่อ</th><th>สถานะ</th><th>การจัดการ</th></tr></thead>
+        <tbody><tr th:each="tool : ${tools}">
+            <td><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a></td>
+            <td th:text="${tool.status}">DRAFT</td>
+            <td><a th:href="@{/dashboard/tools/{id}/edit(id=${tool.id})}">แก้ไข</a>
+                <form th:action="@{/dashboard/tools/{id}/delete(id=${tool.id})}" method="post" style="display:inline">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit">ลบ</button>
+                </form>
+            </td>
+        </tr></tbody>
+    </table>
+    <nav th:if="${toolPage.totalPages > 1}" aria-label="แบ่งหน้ารายการเครื่องมือ">
+        <span th:if="${toolPage.first}">ก่อนหน้า</span>
+        <a th:unless="${toolPage.first}" th:href="@{/dashboard/tools(page=${toolPage.number - 1})}">ก่อนหน้า</a>
+        <th:block th:each="pageNumber : ${#numbers.sequence(0, toolPage.totalPages - 1)}">
+            <span th:if="${pageNumber == toolPage.number}" aria-current="page" th:text="${pageNumber + 1}">1</span>
+            <a th:unless="${pageNumber == toolPage.number}"
+               th:href="@{/dashboard/tools(page=${pageNumber})}" th:text="${pageNumber + 1}">2</a>
+        </th:block>
+        <span th:if="${toolPage.last}">ถัดไป</span>
+        <a th:unless="${toolPage.last}" th:href="@{/dashboard/tools(page=${toolPage.number + 1})}">ถัดไป</a>
+    </nav>
+</main>
+</body>
+</html>
