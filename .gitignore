@@ -1,8 +1,13 @@
 HELP.md
-target/
+code/target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+# Local environment files and database credentials
+.env
+.env.*
+!.env.example
 
 ### STS ###
 .apt_generated
