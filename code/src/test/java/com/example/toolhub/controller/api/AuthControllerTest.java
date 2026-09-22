@@ -18,9 +18,12 @@ import com.example.toolhub.security.UserPrincipal;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.mock.web.MockHttpSession;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
@@ -159,5 +162,34 @@ void login_withInvalidEmail_returnsBadRequest() throws Exception {
             .andExpect(status().isBadRequest());
 
     verifyNoInteractions(authenticationManager);
+}
+@Test
+void logout_invalidatesSessionAndClearsSecurityContext()
+        throws Exception {
+
+    Authentication authentication =
+            new UsernamePasswordAuthenticationToken(
+                    "user@example.com",
+                    "unused-password"
+            );
+
+    SecurityContext context = SecurityContextHolder.createEmptyContext();
+    context.setAuthentication(authentication);
+    SecurityContextHolder.setContext(context);
+
+    MockHttpSession session = new MockHttpSession();
+    session.setAttribute(
+            HttpSessionSecurityContextRepository
+                    .SPRING_SECURITY_CONTEXT_KEY,
+            context
+    );
+
+    mockMvc.perform(post("/api/v1/auth/logout")
+                    .session(session))
+            .andExpect(status().isNoContent());
+
+    assertThat(session.isInvalid()).isTrue();
+    assertThat(SecurityContextHolder.getContext().getAuthentication())
+            .isNull();
 }
 }

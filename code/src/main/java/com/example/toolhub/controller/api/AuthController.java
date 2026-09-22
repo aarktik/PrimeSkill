@@ -8,6 +8,7 @@ import com.example.toolhub.security.UserPrincipal;
 import com.example.toolhub.service.UserRegistrationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpSession;
 import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -82,4 +83,18 @@ public class AuthController {
                 )
         );
     }
+    @PostMapping("/logout")
+public ResponseEntity<Void> logout(
+        HttpServletRequest servletRequest
+) {
+    HttpSession session = servletRequest.getSession(false);
+
+    if (session != null) {
+        session.invalidate();
+    }
+
+    SecurityContextHolder.clearContext();
+
+    return ResponseEntity.noContent().build();
+}
 }
