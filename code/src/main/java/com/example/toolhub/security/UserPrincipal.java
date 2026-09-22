@@ -6,17 +6,20 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.example.toolhub.domain.enums.Role;
 
 public class UserPrincipal implements UserDetails {
 
     private final Long id;
     private final String email;
     private final String passwordHash;
+    private final Role role;
     private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public UserPrincipal(User user) {
         this.id = user.getId();
+        this.role = user.getRole();
         this.email = user.getEmail();
         this.passwordHash = user.getPasswordHash();
         this.enabled = user.isEnabled();
@@ -27,6 +30,10 @@ public class UserPrincipal implements UserDetails {
 
     public Long getId() {
         return id;
+    }
+
+    public Role getRole() {
+        return role;
     }
 
     @Override

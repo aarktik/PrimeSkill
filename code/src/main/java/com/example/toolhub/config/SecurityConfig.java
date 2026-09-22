@@ -29,11 +29,12 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/api/v1/auth/register",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+                         "/api/v1/auth/register",
+                         "/api/v1/auth/login",
+                         "/v3/api-docs/**",
+                         "/swagger-ui/**",
+                         "/swagger-ui.html"
+).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable)

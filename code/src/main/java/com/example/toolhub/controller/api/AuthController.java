@@ -1,31 +1,45 @@
 package com.example.toolhub.controller.api;
 
+import com.example.toolhub.dto.request.LoginRequest;
 import com.example.toolhub.dto.request.RegisterRequest;
+import com.example.toolhub.dto.response.LoginResponse;
 import com.example.toolhub.dto.response.UserProfileResponse;
+import com.example.toolhub.security.UserPrincipal;
 import com.example.toolhub.service.UserRegistrationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
     private final UserRegistrationService userRegistrationService;
+    private final AuthenticationManager authenticationManager;
 
     public AuthController(
-            UserRegistrationService userRegistrationService
+            UserRegistrationService userRegistrationService,
+            AuthenticationManager authenticationManager
     ) {
         this.userRegistrationService = userRegistrationService;
+        this.authenticationManager = authenticationManager;
     }
 
     @PostMapping("/register")
     public ResponseEntity<UserProfileResponse> register(
-           @Valid @RequestBody RegisterRequest request
+            @Valid @RequestBody RegisterRequest request
     ) {
         UserProfileResponse response =
                 userRegistrationService.register(request);
@@ -33,5 +47,39 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        String email = request.email().trim().toLowerCase(Locale.ROOT);
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        email,
+                        request.password()
+                )
+        );
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        servletRequest.getSession(true).setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context
+        );
+
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                new LoginResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getRole()
+                )
+        );
     }
 }

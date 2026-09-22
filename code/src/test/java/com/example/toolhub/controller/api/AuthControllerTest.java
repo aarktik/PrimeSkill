@@ -11,6 +11,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.security.authentication.AuthenticationManager;
+import com.example.toolhub.domain.entity.User;
+import com.example.toolhub.dto.request.LoginRequest;
+import com.example.toolhub.security.UserPrincipal;
+import org.junit.jupiter.api.AfterEach;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+
+import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -26,17 +38,23 @@ class AuthControllerTest {
     private MockMvc mockMvc;
     private UserRegistrationService userRegistrationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private AuthenticationManager authenticationManager;
 
     @BeforeEach
     void setUp() {
         userRegistrationService = mock(UserRegistrationService.class);
-
+        authenticationManager = mock(AuthenticationManager.class);
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new AuthController(userRegistrationService))
+                .standaloneSetup(
+        new AuthController(userRegistrationService, authenticationManager)
+)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
-
+    @AfterEach
+        void tearDown() {
+         SecurityContextHolder.clearContext();
+    }
     @Test
     void register_withValidRequest_returnsCreatedUser() throws Exception {
         RegisterRequest request = new RegisterRequest(
@@ -87,4 +105,59 @@ class AuthControllerTest {
 
         verifyNoInteractions(userRegistrationService);
     }
+    @Test
+void login_withValidCredentials_createsSessionAndReturnsUser()
+        throws Exception {
+
+    User user = new User("user@example.com", "encoded-password");
+    user.setRole(Role.USER);
+
+    UserPrincipal principal = new UserPrincipal(user);
+
+    Authentication authentication =
+            new UsernamePasswordAuthenticationToken(
+                    principal,
+                    null,
+                    principal.getAuthorities()
+            );
+
+    when(authenticationManager.authenticate(any(Authentication.class)))
+            .thenReturn(authentication);
+
+    LoginRequest loginRequest = new LoginRequest(
+            "USER@EXAMPLE.COM",
+            "password123"
+    );
+
+    mockMvc.perform(post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.email").value("user@example.com"))
+            .andExpect(jsonPath("$.role").value("USER"))
+            .andExpect(request().sessionAttribute(
+                    HttpSessionSecurityContextRepository
+                            .SPRING_SECURITY_CONTEXT_KEY,
+                    notNullValue()
+            ));
+
+    verify(authenticationManager).authenticate(any(Authentication.class));
+}
+
+@Test
+void login_withInvalidEmail_returnsBadRequest() throws Exception {
+    String invalidJson = """
+            {
+              "email": "wrong-email",
+              "password": "password123"
+            }
+            """;
+
+    mockMvc.perform(post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(invalidJson))
+            .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(authenticationManager);
+}
 }
