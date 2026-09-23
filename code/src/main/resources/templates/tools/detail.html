@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' · Primeskill'">Tool · Primeskill</title>
+</head>
+<body>
+<main class="ps-page ps-tool-detail">
+    <p><a th:href="@{/tools}">กลับไปสำรวจเครื่องมือ</a></p>
+    <header><h1 th:text="${tool.name}">ชื่อเครื่องมือ</h1><p th:text="${tool.shortDescription}">คำอธิบายสั้น</p></header>
+    <p><strong>หมวดหมู่:</strong> <span th:text="${tool.categoryName}">หมวดหมู่</span></p>
+    <p><strong>สถานะ:</strong> <span th:text="${tool.status}">DRAFT</span></p>
+    <p class="ps-tool-description" th:text="${tool.description}">รายละเอียด</p>
+    <a th:if="${tool.repositoryUrl != null}" th:href="${tool.repositoryUrl}" target="_blank" rel="noopener" class="ps-link">เปิด repository</a>
+</main>
+</body>
+</html>
