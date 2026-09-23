@@ -13,7 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-
+import com.example.toolhub.controller.api.UserProfileController;
+import com.example.toolhub.service.UserProfileService;
 import com.example.toolhub.dto.request.CategoryRequest;
 import com.example.toolhub.dto.response.CategoryResponse;
 import com.example.toolhub.security.CurrentActor;
@@ -35,7 +36,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest({AuthController.class, CategoryRestController.class})
+@WebMvcTest({
+        AuthController.class,
+        CategoryRestController.class,
+        UserProfileController.class
+})
 @Import({
         SecurityConfig.class,
         PasswordConfig.class,
@@ -45,6 +50,9 @@ class AuthCsrfSecurityTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private UserProfileService userProfileService;
 
     @MockitoBean
     private UserRegistrationService userRegistrationService;
@@ -58,6 +66,7 @@ private CategoryService categoryService;
 
 @MockitoBean
 private CurrentActorProvider currentActorProvider;
+
     @Test
     void csrfEndpoint_isPublicAndReturnsToken() throws Exception {
         mockMvc.perform(get("/api/v1/auth/csrf"))
@@ -82,7 +91,14 @@ private CurrentActorProvider currentActorProvider;
 
         verifyNoInteractions(userRegistrationService);
     }
+    @Test
+    void anonymous_cannotReadOwnProfile() throws Exception {
+        mockMvc.perform(get("/api/v1/users/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
 
+        verifyNoInteractions(userProfileService);
+    }
     @Test
     void register_withCsrfToken_createsUser() throws Exception {
         UserProfileResponse response = new UserProfileResponse(
@@ -145,4 +161,5 @@ void admin_canCreateCategory() throws Exception {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.slug").value("ai"));
 }
+
 }
