@@ -130,6 +130,13 @@ private CurrentActorProvider currentActorProvider;
         verify(userRegistrationService).register(any(RegisterRequest.class));
     }
     @Test
+void logout_withoutCsrfToken_returnsForbidden() throws Exception {
+    mockMvc.perform(post("/api/v1/auth/logout")
+                    .with(user("member").roles("USER")))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+}
+    @Test
 void user_cannotCreateCategory() throws Exception {
     mockMvc.perform(post("/api/v1/admin/categories")
                     .with(user("member").roles("USER"))
