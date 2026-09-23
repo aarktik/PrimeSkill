@@ -8,7 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.example.toolhub.domain.enums.Role;
 
-public class UserPrincipal implements UserDetails {
+public class UserPrincipal implements UserDetails,AuthenticatedUserPrincipal {
 
     private final Long id;
     private final String email;
