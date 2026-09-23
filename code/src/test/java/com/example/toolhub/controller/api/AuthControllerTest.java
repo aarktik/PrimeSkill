@@ -1,5 +1,7 @@
 package com.example.toolhub.controller.api;
 
+import com.example.toolhub.exception.DuplicateResourceException;
+import org.springframework.security.authentication.BadCredentialsException;
 import com.example.toolhub.domain.enums.Role;
 import com.example.toolhub.dto.request.RegisterRequest;
 import com.example.toolhub.dto.response.UserProfileResponse;
@@ -191,5 +193,40 @@ void logout_invalidatesSessionAndClearsSecurityContext()
     assertThat(session.isInvalid()).isTrue();
     assertThat(SecurityContextHolder.getContext().getAuthentication())
             .isNull();
+}
+@Test
+void register_withDuplicateEmail_returnsConflict() throws Exception {
+    RegisterRequest request = new RegisterRequest(
+            "user@example.com",
+            "password123",
+            "Nattakorn"
+    );
+
+    when(userRegistrationService.register(any(RegisterRequest.class)))
+            .thenThrow(new DuplicateResourceException("Email is already registered"));
+
+    mockMvc.perform(post("/api/v1/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("RESOURCE_CONFLICT"));
+}
+
+@Test
+void login_withWrongCredentials_returnsUnauthorized() throws Exception {
+    LoginRequest request = new LoginRequest(
+            "user@example.com",
+            "wrong-password"
+    );
+
+    when(authenticationManager.authenticate(any(Authentication.class)))
+            .thenThrow(new BadCredentialsException("Bad credentials"));
+
+    mockMvc.perform(post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+            .andExpect(jsonPath("$.message").value("Invalid email or password"));
 }
 }
