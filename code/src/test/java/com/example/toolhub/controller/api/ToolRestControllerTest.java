@@ -116,6 +116,16 @@ class ToolRestControllerTest {
                 .andExpect(jsonPath("$.traceId").isNotEmpty());
     }
     @Test
+void create_withMalformedJson_returnsMalformedRequestError() throws Exception {
+    mockMvc.perform(post("/api/v1/tools")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"name\":"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"))
+            .andExpect(jsonPath("$.message").value("Request body is malformed"))
+            .andExpect(jsonPath("$.path").value("/api/v1/tools"));
+}
+    @Test
 void getBySlug_whenToolDoesNotExist_returnsNotFoundError() throws Exception {
     when(currentActorProvider.currentActor())
             .thenReturn(new CurrentActor(null, false));
