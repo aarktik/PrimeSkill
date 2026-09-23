@@ -1,5 +1,7 @@
 package com.example.toolhub.controller.api;
 
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.GetMapping;
 import com.example.toolhub.dto.request.LoginRequest;
 import com.example.toolhub.dto.request.RegisterRequest;
 import com.example.toolhub.dto.response.LoginResponse;
@@ -98,5 +100,9 @@ public ResponseEntity<Void> logout(
     SecurityContextHolder.clearContext();
 
     return ResponseEntity.noContent().build();
+}
+@GetMapping("/csrf")
+public CsrfToken csrf(CsrfToken csrfToken) {
+    return csrfToken;
 }
 }
