@@ -168,5 +168,12 @@ void admin_canCreateCategory() throws Exception {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.slug").value("ai"));
 }
+@Test
+void logout_withCsrfToken_returnsNoContent() throws Exception {
+    mockMvc.perform(post("/api/v1/auth/logout")
+                    .with(user("member").roles("USER"))
+                    .with(csrf()))
+            .andExpect(status().isNoContent());
+}
 
 }
