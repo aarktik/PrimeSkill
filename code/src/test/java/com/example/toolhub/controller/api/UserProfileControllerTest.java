@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -104,7 +104,7 @@ class UserProfileControllerTest {
                 any(UpdateUserProfileRequest.class)
         )).thenReturn(response);
 
-        mockMvc.perform(patch("/api/v1/users/me")
+        mockMvc.perform(put("/api/v1/users/me/profile")
                         .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -132,7 +132,7 @@ class UserProfileControllerTest {
                 }
                 """;
 
-        mockMvc.perform(patch("/api/v1/users/me")
+        mockMvc.perform(put("/api/v1/users/me/profile")
                         .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
