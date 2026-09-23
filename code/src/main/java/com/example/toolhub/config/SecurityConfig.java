@@ -3,6 +3,7 @@ package com.example.toolhub.config;
 import com.example.toolhub.security.JpaUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -13,28 +14,44 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import com.example.toolhub.security.RestSecurityExceptionHandler;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
+   public SecurityFilterChain securityFilterChain(
+        HttpSecurity http,
+        RestSecurityExceptionHandler restSecurityExceptionHandler
+) throws Exception {
 
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+
                 )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(restSecurityExceptionHandler)
+                        .accessDeniedHandler(restSecurityExceptionHandler)
+)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                         "/api/v1/auth/register",
-                         "/api/v1/auth/login",
-                         "/v3/api-docs/**",
-                         "/swagger-ui/**",
-                         "/swagger-ui.html"
-).permitAll()
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/login",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/categories",
+                                "/api/v1/tools/*",
+                                "/tools",
+                                "/tools/*"
+                        ).permitAll()
+                        .requestMatchers("/api/v1/admin/categories/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
