@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import com.example.toolhub.exception.ResourceNotFoundException;
 import com.example.toolhub.dto.response.ToolResponse;
 import com.example.toolhub.exception.AuthenticationRequiredException;
 import com.example.toolhub.exception.CatalogConflictException;
@@ -115,4 +115,16 @@ class ToolRestControllerTest {
                 .andExpect(jsonPath("$.message").value("An unexpected error occurred"))
                 .andExpect(jsonPath("$.traceId").isNotEmpty());
     }
+    @Test
+void getBySlug_whenToolDoesNotExist_returnsNotFoundError() throws Exception {
+    when(currentActorProvider.currentActor())
+            .thenReturn(new CurrentActor(null, false));
+    when(toolService.getByIdOrSlug(anyString(), isNull(), anyBoolean()))
+            .thenThrow(new ResourceNotFoundException("Tool not found"));
+
+    mockMvc.perform(get("/api/v1/tools/missing"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
+            .andExpect(jsonPath("$.path").value("/api/v1/tools/missing"));
+}
 }
