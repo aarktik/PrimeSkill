@@ -11,6 +11,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+
+import com.example.toolhub.dto.request.CategoryRequest;
+import com.example.toolhub.dto.response.CategoryResponse;
+import com.example.toolhub.security.CurrentActor;
+import com.example.toolhub.security.CurrentActorProvider;
+import com.example.toolhub.service.CategoryService;
 import com.example.toolhub.config.PasswordConfig;
 import com.example.toolhub.config.SecurityConfig;
 import com.example.toolhub.domain.enums.Role;
@@ -27,7 +35,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(AuthController.class)
+@WebMvcTest({AuthController.class, CategoryRestController.class})
 @Import({
         SecurityConfig.class,
         PasswordConfig.class,
@@ -45,6 +53,11 @@ class AuthCsrfSecurityTest {
     private JpaUserDetailsService userDetailsService;
     @MockitoBean(name = "jpaMappingContext")
     private JpaMetamodelMappingContext jpaMappingContext;
+    @MockitoBean
+private CategoryService categoryService;
+
+@MockitoBean
+private CurrentActorProvider currentActorProvider;
     @Test
     void csrfEndpoint_isPublicAndReturnsToken() throws Exception {
         mockMvc.perform(get("/api/v1/auth/csrf"))
@@ -100,4 +113,36 @@ class AuthCsrfSecurityTest {
 
         verify(userRegistrationService).register(any(RegisterRequest.class));
     }
+    @Test
+void user_cannotCreateCategory() throws Exception {
+    mockMvc.perform(post("/api/v1/admin/categories")
+                    .with(user("member").roles("USER"))
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                            {"name":"AI","slug":"ai"}
+                            """))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+
+    verifyNoInteractions(categoryService);
+}
+
+@Test
+void admin_canCreateCategory() throws Exception {
+    when(currentActorProvider.requireActor())
+            .thenReturn(new CurrentActor(1L, true));
+    when(categoryService.create(any(CategoryRequest.class), eq(true)))
+            .thenReturn(new CategoryResponse(1L, "AI", "ai", null));
+
+    mockMvc.perform(post("/api/v1/admin/categories")
+                    .with(user("admin").roles("ADMIN"))
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                            {"name":"AI","slug":"ai"}
+                            """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.slug").value("ai"));
+}
 }
