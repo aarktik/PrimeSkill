@@ -12,7 +12,7 @@ ToolHub is a platform for discovering, publishing, versioning, and reviewing sof
 
 - Java 17, Spring Boot, Spring Data JPA, Spring Security
 - PostgreSQL (Supabase)
-- JWT and OpenAPI/Swagger UI
+- Session-based authentication and OpenAPI/Swagger UI
 
 ## Project structure
 
