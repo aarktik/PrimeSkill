@@ -63,7 +63,9 @@ public class AuthController {
                         request.password()
                 )
         );
-
+        if (servletRequest.getSession(false) != null) {
+        servletRequest.changeSessionId();
+        }
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);

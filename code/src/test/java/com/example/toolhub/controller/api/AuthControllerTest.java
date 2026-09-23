@@ -148,7 +148,38 @@ void login_withValidCredentials_createsSessionAndReturnsUser()
 
     verify(authenticationManager).authenticate(any(Authentication.class));
 }
+@Test
+void login_withExistingSession_changesSessionId() throws Exception {
+    User user = new User("user@example.com", "encoded-password");
+    user.setRole(Role.USER);
 
+    UserPrincipal principal = new UserPrincipal(user);
+    Authentication authentication = new UsernamePasswordAuthenticationToken(
+            principal,
+            null,
+            principal.getAuthorities()
+    );
+
+    when(authenticationManager.authenticate(any(Authentication.class)))
+            .thenReturn(authentication);
+
+    MockHttpSession existingSession = new MockHttpSession();
+    String previousSessionId = existingSession.getId();
+
+    LoginRequest loginRequest = new LoginRequest(
+            "user@example.com",
+            "password123"
+    );
+
+    mockMvc.perform(post("/api/v1/auth/login")
+                    .session(existingSession)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isOk())
+            .andExpect(result -> assertThat(
+                    result.getRequest().getSession(false).getId()
+            ).isNotEqualTo(previousSessionId));
+}
 @Test
 void login_withInvalidEmail_returnsBadRequest() throws Exception {
     String invalidJson = """
