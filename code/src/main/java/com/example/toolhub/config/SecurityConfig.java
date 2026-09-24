@@ -48,11 +48,15 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/categories",
+                                "/api/v1/tools",
                                 "/api/v1/tools/*",
+                                "/api/v1/tools/*/tags",
+                                "/api/v1/tags",
                                 "/tools",
                                 "/tools/*"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/categories/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/tags/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
