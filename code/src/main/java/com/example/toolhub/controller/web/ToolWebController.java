@@ -7,7 +7,6 @@ import com.example.toolhub.security.CurrentActor;
 import com.example.toolhub.security.CurrentActorProvider;
 import com.example.toolhub.service.CategoryService;
 import com.example.toolhub.service.ToolService;
-import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
@@ -37,15 +36,7 @@ public class ToolWebController {
         this.currentActorProvider = currentActorProvider;
     }
 
-    /** Public listing is intentionally supplied by Role C's search/browse flow. */
-    @GetMapping("/tools")
-    public String list(Model model) {
-        model.addAttribute("tools", List.of());
-        model.addAttribute("pageTitle", "สำรวจเครื่องมือ");
-        model.addAttribute("activeNav", "explore");
-        return "tools/list";
-    }
-
+    /** Public /tools listing is owned by {@code ToolBrowseWebController} (Role C search flow). */
     @GetMapping("/tools/{idOrSlug}")
     public String detail(@PathVariable String idOrSlug, Model model) {
         CurrentActor actor = currentActorProvider.currentActor();
