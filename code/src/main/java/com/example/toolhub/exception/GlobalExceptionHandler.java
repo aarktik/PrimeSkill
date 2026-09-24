@@ -40,6 +40,13 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "Request parameter is invalid", request, List.of());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException exception,
+                                                               HttpServletRequest request) {
+        String message = exception.getMessage() == null ? "Request parameter is invalid" : exception.getMessage();
+        return build(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", message, request, List.of());
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleMalformedRequest(HttpMessageNotReadableException exception,
                                                                   HttpServletRequest request) {
