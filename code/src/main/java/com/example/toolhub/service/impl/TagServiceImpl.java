@@ -3,6 +3,7 @@ package com.example.toolhub.service.impl;
 import com.example.toolhub.domain.entity.Tag;
 import com.example.toolhub.domain.entity.Tool;
 import com.example.toolhub.domain.entity.ToolTag;
+import com.example.toolhub.domain.enums.ToolStatus;
 import com.example.toolhub.dto.request.TagRequest;
 import com.example.toolhub.dto.response.TagResponse;
 import com.example.toolhub.exception.CatalogConflictException;
@@ -103,8 +104,12 @@ public class TagServiceImpl implements TagService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TagResponse> findTagsOfTool(Long toolId) {
-        if (!toolRepository.existsById(toolId)) {
+    public List<TagResponse> findTagsOfTool(Long toolId, Long actorUserId, boolean actorIsAdmin) {
+        Tool tool = toolRepository.findById(toolId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tool not found: " + toolId));
+        boolean publicTool = tool.getStatus() == ToolStatus.PUBLISHED;
+        boolean owner = actorUserId != null && actorUserId.equals(tool.getOwnerId());
+        if (!publicTool && !owner && !actorIsAdmin) {
             throw new ResourceNotFoundException("Tool not found: " + toolId);
         }
         return toolTagRepository.findByIdToolId(toolId).stream()
