@@ -30,6 +30,9 @@
 | `tags` filter | **slug** คั่น comma, logic **ANY** | ถ้าจะเอา ID ต้องแก้ `searchPublishedWithTags` + หน้า web |
 | `ToolResponse` จะใส่ tags/rating | **ยังไม่ใส่** (คง shape เดิมเพื่อไม่พัง callers ของ B) | ถ้าจะขยาย ให้ตกลง projection/DTO ร่วมกันก่อน อย่าแก้ `ToolMapper.toResponse` ฝ่ายเดียว |
 | ผูก tag กับ tool | C สร้าง endpoint แยก `POST/DELETE /api/v1/tools/{toolId}/tags/{tagId}` (ตรวจ owner/admin ใน `TagService`) | ถ้า B อยากให้ผ่าน Tool CRUD เดิมแทน บอก C — C จะย้าย logic ไปโดยคง service authorization ไว้ |
+| `GET /tools/{id}/tags` visibility | **PUBLISHED อ่านได้ทุกคน, non-PUBLISHED ได้เฉพาะ owner/admin (404 ซ่อน existence)** — แก้ตามรีวิว B แล้ว (`TagServiceImpl.findTagsOfTool` ลอก logic `ToolServiceImpl.getByIdOrSlug`) | ถ้า B จะเปลี่ยนเป็น 403 แทน 404 บอก C ก่อน merge |
+| `sort=relevance` | **valid แต่ fallback เป็น newest** — ไม่มี `q` → `newest`, มี `q` → filter ที่ repo + order `createdAt DESC, id ASC` ชั่วคราว (ชัดเหมือน `rating` แล้ว) | `CASE-based ranking` เป็น follow-up ของ **C** เมื่อทีมตกลงสูตร — ไม่บล็อก merge นี้ |
+| `sort=popular` / `viewCount` | C อ่าน `viewCount` อย่างเดียวเพื่อ sort (`PopularityToolSortStrategy`) | **Owner increment คือ B** (ตกลงแล้ว): ขอให้ B ทำ `viewCount++` ตอน `GET /api/v1/tools/{idOrSlug}` — จัดการ concurrent / นับเฉพาะ PUBLISHED หรือไม่ / ตำแหน่ง tool ไม่มีวิว บอก C กลับใน PR นี้ |
 
 ## 4. เกณฑ์รับงาน (acceptance)
 
