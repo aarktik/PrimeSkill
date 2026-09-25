@@ -75,4 +75,22 @@ class ToolBrowseWebControllerTest {
         verify(toolSearchService).search(any(), any(), anyList(), anyString(), pageCaptor.capture(), anyInt());
         assertEquals(0, pageCaptor.getValue());
     }
+
+    @Test
+    void browse_whenSortInvalid_fallsBackToNewest() {
+        var pageable = PageRequest.of(0, 20);
+        when(toolSearchService.search(any(), any(), anyList(), anyString(), anyInt(), anyInt()))
+                .thenReturn(new PageImpl<ToolResponse>(List.of(), pageable, 0));
+        when(categoryService.findAll()).thenReturn(List.of());
+        when(tagService.findAll()).thenReturn(List.of());
+        ExtendedModelMap model = new ExtendedModelMap();
+
+        String view = controller.browse(null, null, null, "random", 0, 20, model);
+
+        assertEquals("tools/list", view);
+        org.mockito.ArgumentCaptor<String> sortCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(toolSearchService).search(any(), any(), anyList(), sortCaptor.capture(), anyInt(), anyInt());
+        assertEquals("newest", sortCaptor.getValue());
+        assertEquals("newest", model.get("sort"));
+    }
 }

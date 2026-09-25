@@ -8,13 +8,17 @@ import static org.mockito.Mockito.when;
 
 import com.example.toolhub.domain.entity.Tag;
 import com.example.toolhub.domain.entity.Tool;
+import com.example.toolhub.domain.entity.ToolTag;
+import com.example.toolhub.domain.enums.ToolStatus;
 import com.example.toolhub.dto.request.TagRequest;
 import com.example.toolhub.exception.CatalogConflictException;
+import com.example.toolhub.exception.ResourceNotFoundException;
 import com.example.toolhub.mapper.TagMapper;
 import com.example.toolhub.repository.TagRepository;
 import com.example.toolhub.repository.ToolRepository;
 import com.example.toolhub.repository.ToolTagRepository;
 import com.example.toolhub.service.impl.TagServiceImpl;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,5 +95,68 @@ class TagServiceImplTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> tagService.assignTag(1L, 2L, 9L, false));
+    }
+
+    @Test
+    void findTagsOfTool_whenPublishedAnonymous_returnsTags() {
+        Tool tool = org.mockito.Mockito.mock(Tool.class);
+        when(tool.getStatus()).thenReturn(ToolStatus.PUBLISHED);
+        when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
+        ToolTag link = org.mockito.Mockito.mock(ToolTag.class);
+        when(link.getTag()).thenReturn(new Tag("Calendar", "calendar"));
+        when(toolTagRepository.findByIdToolId(1L)).thenReturn(List.of(link));
+
+        var result = tagService.findTagsOfTool(1L, null, false);
+
+        assertEquals(1, result.size());
+        assertEquals("calendar", result.get(0).slug());
+    }
+
+    @Test
+    void findTagsOfTool_whenDraftAnonymous_throwsNotFound() {
+        Tool tool = org.mockito.Mockito.mock(Tool.class);
+        when(tool.getStatus()).thenReturn(ToolStatus.DRAFT);
+        when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> tagService.findTagsOfTool(1L, null, false));
+    }
+
+    @Test
+    void findTagsOfTool_whenDraftOwner_returnsTags() {
+        Tool tool = org.mockito.Mockito.mock(Tool.class);
+        when(tool.getStatus()).thenReturn(ToolStatus.DRAFT);
+        when(tool.getOwnerId()).thenReturn(7L);
+        when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
+        ToolTag link = org.mockito.Mockito.mock(ToolTag.class);
+        when(link.getTag()).thenReturn(new Tag("Calendar", "calendar"));
+        when(toolTagRepository.findByIdToolId(1L)).thenReturn(List.of(link));
+
+        var result = tagService.findTagsOfTool(1L, 7L, false);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void findTagsOfTool_whenDraftAdmin_returnsTags() {
+        Tool tool = org.mockito.Mockito.mock(Tool.class);
+        when(tool.getStatus()).thenReturn(ToolStatus.PENDING);
+        when(tool.getOwnerId()).thenReturn(7L);
+        when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
+        ToolTag link = org.mockito.Mockito.mock(ToolTag.class);
+        when(link.getTag()).thenReturn(new Tag("Calendar", "calendar"));
+        when(toolTagRepository.findByIdToolId(1L)).thenReturn(List.of(link));
+
+        var result = tagService.findTagsOfTool(1L, 9L, true);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void findTagsOfTool_whenToolMissing_throwsNotFound() {
+        when(toolRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> tagService.findTagsOfTool(99L, null, false));
     }
 }

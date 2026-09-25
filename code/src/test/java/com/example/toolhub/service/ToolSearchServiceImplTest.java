@@ -95,6 +95,12 @@ class ToolSearchServiceImplTest {
     }
 
     @Test
+    void search_whenSizeZero_throwsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.search(null, null, null, "newest", 0, 0));
+    }
+
+    @Test
     void search_relevanceWithoutKeyword_fallsBackToNewest() {
         when(toolRepository.searchPublished(eq(ToolStatus.PUBLISHED), any(), any(), any()))
                 .thenReturn(new PageImpl<>(List.of()));
