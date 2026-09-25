@@ -3,6 +3,7 @@ package com.example.toolhub.controller.web;
 import com.example.toolhub.service.CategoryService;
 import com.example.toolhub.service.TagService;
 import com.example.toolhub.service.ToolSearchService;
+import com.example.toolhub.service.search.ToolSortOption;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.stereotype.Controller;
@@ -37,8 +38,14 @@ public class ToolBrowseWebController {
             Model model) {
         int safePage = Math.max(page, 0);
         int safeSize = size <= 0 ? DEFAULT_SIZE : Math.min(size, 100);
+        String effectiveSort = sort == null || sort.isBlank() ? "newest" : sort;
+        try {
+            ToolSortOption.from(effectiveSort);
+        } catch (IllegalArgumentException ex) {
+            effectiveSort = "newest";
+        }
         List<String> tagSlugs = parseTags(tagsParam);
-        var result = toolSearchService.search(keyword, categoryId, tagSlugs, sort, safePage, safeSize);
+        var result = toolSearchService.search(keyword, categoryId, tagSlugs, effectiveSort, safePage, safeSize);
 
         model.addAttribute("tools", result.getContent());
         model.addAttribute("totalElements", result.getTotalElements());
@@ -50,7 +57,7 @@ public class ToolBrowseWebController {
         model.addAttribute("q", keyword == null ? "" : keyword);
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("tags", tagsParam == null ? "" : tagsParam);
-        model.addAttribute("sort", sort == null || sort.isBlank() ? "newest" : sort);
+        model.addAttribute("sort", effectiveSort);
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("allTags", tagService.findAll());
         model.addAttribute("pageTitle", "สำรวจเครื่องมือ");
