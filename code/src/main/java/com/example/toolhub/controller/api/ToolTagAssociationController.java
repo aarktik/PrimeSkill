@@ -27,9 +27,10 @@ public class ToolTagAssociationController {
     }
 
     @GetMapping
-    @Operation(summary = "List tags assigned to a tool")
+    @Operation(summary = "List tags of a published tool (owner/admin may see non-public)")
     public ResponseEntity<List<TagResponse>> findTagsOfTool(@PathVariable Long toolId) {
-        return ResponseEntity.ok(tagService.findTagsOfTool(toolId));
+        CurrentActor actor = currentActorProvider.currentActor();
+        return ResponseEntity.ok(tagService.findTagsOfTool(toolId, actor.id(), actor.admin()));
     }
 
     @PostMapping("/{tagId}")

@@ -19,5 +19,5 @@ public interface TagService {
 
     void unassignTag(Long toolId, Long tagId, Long actorUserId, boolean actorIsAdmin);
 
-    List<TagResponse> findTagsOfTool(Long toolId);
+    List<TagResponse> findTagsOfTool(Long toolId, Long actorUserId, boolean actorIsAdmin);
 }
