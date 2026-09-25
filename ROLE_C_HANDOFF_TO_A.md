@@ -8,7 +8,8 @@
 
 | ไฟล์ | สิ่งที่เปลี่ยน |
 |---|---|
-| `code/src/main/java/com/example/toolhub/config/SecurityConfig.java` | เพิ่ม public `GET /api/v1/tools` (exact path), `GET /api/v1/tags`, `GET /api/v1/tools/*/tags`; เพิ่ม `/api/v1/admin/tags/**` ให้ `ADMIN` เท่านั้น |
+| `code/src/main/java/com/example/toolhub/config/SecurityConfig.java` | เพิ่ม public `GET /api/v1/tools` (exact path), `GET /api/v1/tags`, `GET /api/v1/tools/*/tags`; เพิ่ม `/api/v1/admin/tags/**` ให้ `ADMIN` เท่านั้น — `permitAll` คงได้เพราะบังคับ visibility ที่ service แล้ว |
+| `code/src/main/java/com/example/toolhub/service/impl/TagServiceImpl.java` | แก้ `findTagsOfTool(toolId, actorId, isAdmin)` ตามรีวิว: `PUBLISHED` อ่านได้ทุกคน, non-`PUBLISHED` ได้เฉพาะ owner/admin ไม่งั้น 404 `RESOURCE_NOT_FOUND` (ลอก `ToolServiceImpl.getByIdOrSlug`) |
 | `code/src/main/java/com/example/toolhub/exception/GlobalExceptionHandler.java` | เพิ่ม handler `IllegalArgumentException` → **400 `VALIDATION_FAILED`** (รองรับ sort/page/size ผิดของ search) — scope จำกัดแค่ `controller.api` เหมือนเดิม |
 
 C ไม่ได้แตะ session/CSRF/login/logout/UserDetails/principal ใด ๆ และใช้ `CurrentActorProvider` + `ErrorResponse` เดิมทั้งหมด
@@ -23,7 +24,9 @@ C ไม่ได้แตะ session/CSRF/login/logout/UserDetails/principal �
 
 ## 3. เกณฑ์รับงาน (acceptance)
 
-- [ ] Anonymous `GET /api/v1/tools`, `GET /api/v1/tags`, `GET /tools` ได้ 200
+- [ ] Anonymous `GET /api/v1/tools`, `GET /api/v1/tags`, `GET /tools`, `GET /api/v1/tools/{id}/tags` (ของ `PUBLISHED`) ได้ 200
+- [ ] Anonymous `GET /api/v1/tools/{id}/tags` ของ `DRAFT/PENDING/DEPRECATED` ได้ 404 `RESOURCE_NOT_FOUND` (owner/admin ได้ 200)
+- [ ] `size=0` ได้ 400 `VALIDATION_FAILED` (แก้จากเดิมที่ default เงียบเป็น 20 ให้ตรงสเปก `1-100`), หน้า web `sort` ผิด fallback เป็น `newest` ไม่ 500
 - [ ] Anonymous/USER `POST /api/v1/admin/tags` ได้ 401/403 (JSON), ADMIN + CSRF ได้ 201
 - [ ] USER แตะ admin tags ไม่ได้ 403; mutation ไม่มี CSRF ถูกปฏิเสธ
 - [ ] Error shape ทุก status ตรง contract เดิม (มี `code`/`fieldErrors`/`traceId` ตามที่กำหนด)
