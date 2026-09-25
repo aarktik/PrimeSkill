@@ -3,20 +3,101 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${pageTitle} + ' · Primeskill'">สำรวจเครื่องมือ · Primeskill</title>
+    <style>
+        :root{--ps-bg:#f8fafc;--ps-surface:#fff;--ps-text:#102a43;--ps-muted:#526477;--ps-primary:#123b5d;--ps-primary-hover:#0b2942;--ps-link:#175cd3;--ps-soft:#eaf2ff;--ps-border:#d8e1ea;--ps-control-border:#7c8b9a;--ps-radius-control:8px;--ps-radius-card:16px;--ps-shadow:0 8px 24px rgba(16,42,67,.08)}
+        *{box-sizing:border-box}body{margin:0;background:var(--ps-bg);color:var(--ps-text);font-family:"Noto Sans Thai",system-ui,sans-serif;font-size:16px;line-height:1.6}
+        .ps-page{max-width:1200px;margin:0 auto;padding:24px}
+        .ps-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:12px 20px;border:1px solid transparent;border-radius:var(--ps-radius-control);font:inherit;font-size:14px;font-weight:600;text-decoration:none;cursor:pointer}
+        .ps-btn--primary{background:var(--ps-primary);color:#fff}.ps-btn--primary:hover{background:var(--ps-primary-hover)}
+        .ps-btn--secondary{background:var(--ps-surface);border-color:var(--ps-control-border);color:var(--ps-text)}
+        .ps-btn--ghost{background:transparent;color:var(--ps-text)}
+        .ps-layout{display:grid;grid-template-columns:240px 1fr;gap:24px;margin-top:24px}
+        .ps-filters{background:var(--ps-surface);border:1px solid var(--ps-border);border-radius:var(--ps-radius-card);padding:16px;height:fit-content}
+        .ps-field{margin-bottom:24px}.ps-field label{display:block;font-size:14px;font-weight:600;margin-bottom:8px}
+        .ps-field input,.ps-field select{min-height:44px;width:100%;background:#fff;border:1px solid var(--ps-control-border);border-radius:var(--ps-radius-control);padding:12px;font:inherit;font-size:16px}
+        .ps-search-row{display:flex;gap:12px}.ps-search-row input{flex:1;min-height:44px;border:1px solid var(--ps-control-border);border-radius:var(--ps-radius-control);padding:12px;font:inherit;font-size:16px}
+        .ps-tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+        .ps-tool-card{background:var(--ps-surface);border:1px solid var(--ps-border);border-radius:var(--ps-radius-card);box-shadow:var(--ps-shadow);padding:16px}
+        .ps-tool-card h2{font-size:18px;margin:0 0 8px}.ps-tool-card a{color:var(--ps-link)}
+        .ps-tool-card p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--ps-muted)}
+        .ps-badge{display:inline-block;font-size:13px;border-radius:999px;padding:2px 10px;background:#eef2f6;margin-right:4px}
+        .ps-pagination{display:flex;gap:8px;align-items:center;margin-top:24px}
+        .ps-pagination .ps-btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+        @media (max-width:1023px){.ps-tool-grid{grid-template-columns:repeat(2,1fr)}}
+        @media (max-width:767px){.ps-page{padding:16px}.ps-layout{grid-template-columns:1fr}.ps-tool-grid{grid-template-columns:1fr}.ps-search-row{flex-direction:column}}
+    </style>
 </head>
 <body>
 <main class="ps-page ps-tools-list">
-    <header><h1 th:text="${pageTitle}">สำรวจเครื่องมือ</h1><p>ค้นพบเครื่องมือสำหรับ AI agents</p></header>
-    <section aria-live="polite">
-        <p th:if="${#lists.isEmpty(tools)}">ไม่พบเครื่องมือที่ตรงกับการค้นหา</p>
-        <div class="ps-tool-grid">
-            <article class="ps-tool-card" th:each="tool : ${tools}">
-                <h2><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a></h2>
-                <p th:text="${tool.shortDescription}">คำอธิบายเครื่องมือ</p>
-                <span th:text="${tool.status}">DRAFT</span>
-            </article>
+    <header>
+        <h1 th:text="${pageTitle}">สำรวจเครื่องมือ</h1>
+        <p>ค้นพบเครื่องมือสำหรับ AI agents</p>
+    </header>
+
+    <form method="get" th:action="@{/tools}" role="search" aria-label="ค้นหาเครื่องมือ">
+        <div class="ps-search-row">
+            <label class="ps-visually-hidden" for="q">ค้นหา</label>
+            <input id="q" name="q" type="search" th:value="${q}" placeholder="ค้นหาชื่อหรือคำอธิบาย…" autocomplete="off">
+            <button class="ps-btn ps-btn--primary" type="submit">ค้นหา</button>
+            <a class="ps-btn ps-btn--secondary" th:href="@{/tools}">ล้างตัวกรอง</a>
         </div>
-    </section>
+        <div class="ps-layout">
+            <aside class="ps-filters" aria-label="ตัวกรอง">
+                <div class="ps-field">
+                    <label for="category">หมวดหมู่</label>
+                    <select id="category" name="category" onchange="this.form.submit()">
+                        <option value="" th:selected="${categoryId == null}">ทั้งหมด</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id()}"
+                                th:text="${cat.name()}" th:selected="${categoryId != null and categoryId == cat.id()}">หมวด</option>
+                    </select>
+                </div>
+                <div class="ps-field">
+                    <label for="tags">แท็ก (คั่นด้วย comma)</label>
+                    <input id="tags" name="tags" type="text" th:value="${tags}" placeholder="เช่น calendar, ai">
+                    <p th:if="${allTags != null and !#lists.isEmpty(allTags)}" style="font-size:13px;color:var(--ps-muted)">
+                        แท็กที่มี:
+                        <span th:each="t,iter : ${allTags}">
+                            <code th:text="${t.slug()}">slug</code><span th:if="${!iter.last}">, </span>
+                        </span>
+                    </p>
+                </div>
+                <div class="ps-field">
+                    <label for="sort">เรียงตาม</label>
+                    <select id="sort" name="sort" onchange="this.form.submit()">
+                        <option value="newest" th:selected="${sort == 'newest'}">ใหม่ล่าสุด</option>
+                        <option value="popular" th:selected="${sort == 'popular'}">ยอดนิยม</option>
+                        <option value="rating" th:selected="${sort == 'rating'}">คะแนนสูงสุด</option>
+                        <option value="relevance" th:selected="${sort == 'relevance'}">เกี่ยวข้องที่สุด</option>
+                    </select>
+                </div>
+                <button class="ps-btn ps-btn--primary" type="submit" style="width:100%">ใช้ตัวกรอง</button>
+            </aside>
+            <section aria-live="polite">
+                <p><strong th:text="${totalElements}">0</strong> รายการ</p>
+                <p th:if="${#lists.isEmpty(tools)}">ไม่พบเครื่องมือที่ตรงกับการค้นหา</p>
+                <div class="ps-tool-grid" th:if="${!#lists.isEmpty(tools)}">
+                    <article class="ps-tool-card" th:each="tool : ${tools}">
+                        <h2><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a></h2>
+                        <p th:text="${tool.shortDescription}">คำอธิบายเครื่องมือ</p>
+                        <div>
+                            <span class="ps-badge" th:text="${tool.categoryName}">หมวด</span>
+                            <span style="font-size:13px;color:var(--ps-muted)" th:text="'เข้าชม ' + ${tool.viewCount}">เข้าชม 0</span>
+                        </div>
+                        <p style="font-size:13px;color:var(--ps-muted)">ยังไม่มีรีวิว</p>
+                    </article>
+                </div>
+                <nav class="ps-pagination" th:if="${totalPages > 1}" aria-label="เปลี่ยนหน้า">
+                    <a class="ps-btn ps-btn--secondary"
+                       th:href="${!first} ? @{/tools(q=${q}, category=${categoryId}, tags=${tags}, sort=${sort}, page=${page - 1}, size=${size})} : null"
+                       th:aria-disabled="${first}">ก่อนหน้า</a>
+                    <span th:text="${page + 1} + ' / ' + ${totalPages}">1 / 1</span>
+                    <a class="ps-btn ps-btn--secondary"
+                       th:href="${!last} ? @{/tools(q=${q}, category=${categoryId}, tags=${tags}, sort=${sort}, page=${page + 1}, size=${size})} : null"
+                       th:aria-disabled="${last}">ถัดไป</a>
+                </nav>
+            </section>
+        </div>
+    </form>
 </main>
 </body>
 </html>
