@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ToolSearchServiceImpl implements ToolSearchService {
-    private static final int DEFAULT_SIZE = 20;
     private static final int MAX_SIZE = 100;
 
     private final ToolRepository toolRepository;
@@ -39,10 +38,10 @@ public class ToolSearchServiceImpl implements ToolSearchService {
         if (page < 0) {
             throw new IllegalArgumentException("page must be >= 0");
         }
-        int effectiveSize = size <= 0 ? DEFAULT_SIZE : size;
-        if (effectiveSize < 1 || effectiveSize > MAX_SIZE) {
+        if (size < 1 || size > MAX_SIZE) {
             throw new IllegalArgumentException("size must be between 1 and 100");
         }
+        int effectiveSize = size;
 
         String sortValue = sort == null || sort.isBlank() ? ToolSortOption.NEWEST.value() : sort;
         ToolSortOption option = ToolSortOption.from(sortValue);

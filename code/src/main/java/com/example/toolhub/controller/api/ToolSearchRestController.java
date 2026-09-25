@@ -22,7 +22,7 @@ public class ToolSearchRestController {
     }
 
     @GetMapping
-    @Operation(summary = "Search published tools (provisional contract: category=ID, tags=slug ANY)")
+    @Operation(summary = "Search published tools (category=ID, tags=slug ANY; relevance w/o q falls back to newest like rating; popular sorts by viewCount owned by B)")
     public ResponseEntity<PagedResponse<ToolResponse>> search(
             @RequestParam(name = "q", required = false) String keyword,
             @RequestParam(name = "category", required = false) Long categoryId,
