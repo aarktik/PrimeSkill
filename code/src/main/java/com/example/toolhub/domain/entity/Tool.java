@@ -78,6 +78,7 @@ public class Tool extends BaseEntity {
     public long getViewCount() { return viewCount; }
 
     public void updateCategory(Category category) { this.category = category; }
+    public void changeStatus(ToolStatus status) { this.status = status; }
     public void updateDetails(String name, String slug, String shortDescription,
                               String description, String repositoryUrl) {
         this.name = name;

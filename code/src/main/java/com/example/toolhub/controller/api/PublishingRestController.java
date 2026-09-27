@@ -1,0 +1,70 @@
+package com.example.toolhub.controller.api;
+
+import com.example.toolhub.domain.enums.PublishingAction;
+import com.example.toolhub.dto.response.ToolResponse;
+import com.example.toolhub.security.CurrentActorProvider;
+import com.example.toolhub.service.PublishingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1")
+@Tag(name = "Publishing")
+public class PublishingRestController {
+    private final PublishingService publishingService;
+    private final CurrentActorProvider currentActorProvider;
+
+    public PublishingRestController(PublishingService publishingService, CurrentActorProvider currentActorProvider) {
+        this.publishingService = publishingService;
+        this.currentActorProvider = currentActorProvider;
+    }
+
+    @PostMapping("/tools/{id}/submit")
+    @Operation(summary = "Submit an owned draft for approval")
+    public ResponseEntity<ToolResponse> submit(@PathVariable Long id) {
+        return transition(id, PublishingAction.SUBMIT);
+    }
+
+    @PostMapping("/admin/tools/{id}/approve")
+    @Operation(summary = "Approve a pending tool")
+    public ResponseEntity<ToolResponse> approve(@PathVariable Long id) {
+        return transition(id, PublishingAction.APPROVE);
+    }
+
+    @PostMapping("/admin/tools/{id}/reject")
+    @Operation(summary = "Reject a pending tool")
+    public ResponseEntity<ToolResponse> reject(@PathVariable Long id) {
+        return transition(id, PublishingAction.REJECT);
+    }
+
+    @PostMapping("/tools/{id}/deprecate")
+    @Operation(summary = "Deprecate a published tool")
+    public ResponseEntity<ToolResponse> deprecate(@PathVariable Long id) {
+        return transition(id, PublishingAction.DEPRECATE);
+    }
+
+    @PostMapping("/tools/{id}/restore")
+    @Operation(summary = "Restore an owned deprecated tool to draft")
+    public ResponseEntity<ToolResponse> restore(@PathVariable Long id) {
+        return transition(id, PublishingAction.RESTORE);
+    }
+
+    @GetMapping("/admin/tools/pending")
+    @Operation(summary = "List tools awaiting admin approval")
+    public ResponseEntity<Page<ToolResponse>> pending(@PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(publishingService.listPending(pageable, currentActorProvider.requireActor()));
+    }
+
+    private ResponseEntity<ToolResponse> transition(Long id, PublishingAction action) {
+        return ResponseEntity.ok(publishingService.transition(id, action, currentActorProvider.requireActor()));
+    }
+}

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ดำเนินการไม่สำเร็จ · Primeskill</title>
+    <link rel="stylesheet" th:href="@{/css/role-e.css}">
+</head>
+<body>
+<main class="ps-e-page ps-e-page--form">
+    <section class="ps-e-card" role="alert">
+        <h1>ดำเนินการไม่สำเร็จ</h1>
+        <p th:text="${message}">โปรดลองอีกครั้ง</p>
+        <a class="ps-e-button ps-e-button--secondary" th:href="@{/dashboard/tools}">กลับไปเครื่องมือของฉัน</a>
+    </section>
+</main>
+</body>
+</html>

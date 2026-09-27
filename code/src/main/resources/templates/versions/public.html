@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' · Primeskill'">เวอร์ชัน · Primeskill</title>
+    <link rel="stylesheet" th:href="@{/css/role-e.css}">
+</head>
+<body>
+<main class="ps-e-page">
+    <nav aria-label="เส้นทางนำทาง"><a th:href="@{/tools/{slug}(slug=${tool.slug})}">รายละเอียดเครื่องมือ</a></nav>
+    <header class="ps-e-header"><div><h1 th:text="${pageTitle}">เวอร์ชันของเครื่องมือ</h1><p>ประวัติเวอร์ชันที่เจ้าของเครื่องมือบันทึกไว้</p></div></header>
+    <section class="ps-e-card" aria-labelledby="versions-title">
+        <h2 id="versions-title">รายการเวอร์ชัน</h2>
+        <p th:if="${#lists.isEmpty(versions)}">ยังไม่มีเวอร์ชันสำหรับเครื่องมือนี้</p>
+        <div class="ps-e-table-wrap" th:unless="${#lists.isEmpty(versions)}">
+            <table>
+                <thead><tr><th scope="col">เวอร์ชัน</th><th scope="col">บันทึกการเปลี่ยนแปลง</th></tr></thead>
+                <tbody><tr th:each="version : ${versions}">
+                    <td th:text="${version.version}">1.0.0</td>
+                    <td th:text="${version.releaseNotes ?: '—'}">รายละเอียด</td>
+                </tr></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

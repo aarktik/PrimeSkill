@@ -47,12 +47,23 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
+                                "/css/role-e.css",
                                 "/api/v1/categories",
                                 "/api/v1/tools/*",
+                                "/api/v1/tools/*/versions",
+                                "/api/v1/tools/*/versions/*",
                                 "/tools",
-                                "/tools/*"
+                                "/tools/*",
+                                "/tools/*/versions",
+                                "/actuator/health"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/categories/**").hasRole("ADMIN")
+                        .requestMatchers(
+                                "/api/v1/admin/tools",
+                                "/api/v1/admin/tools/**",
+                                "/admin/tools",
+                                "/admin/tools/**"
+                        ).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable)

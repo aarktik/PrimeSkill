@@ -10,6 +10,7 @@
     <header><h1 th:text="${tool.name}">ชื่อเครื่องมือ</h1><p th:text="${tool.shortDescription}">คำอธิบายสั้น</p></header>
     <p><strong>หมวดหมู่:</strong> <span th:text="${tool.categoryName}">หมวดหมู่</span></p>
     <p><strong>สถานะ:</strong> <span th:text="${tool.status}">DRAFT</span></p>
+    <p><a th:href="@{/tools/{slug}/versions(slug=${tool.slug})}">ดูเวอร์ชัน</a></p>
     <p class="ps-tool-description" th:text="${tool.description}">รายละเอียด</p>
     <a th:if="${tool.repositoryUrl != null}" th:href="${tool.repositoryUrl}" target="_blank" rel="noopener" class="ps-link">เปิด repository</a>
 </main>
