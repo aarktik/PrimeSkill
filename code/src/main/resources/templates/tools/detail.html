@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${pageTitle} + ' · Primeskill'">Tool · Primeskill</title>
+    <link rel="stylesheet" th:href="@{/css/role-e.css}">
+    <script defer th:src="@{/js/role-e.js}"></script>
 </head>
 <body>
-<main class="ps-page ps-tool-detail">
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main id="main" tabindex="-1" class="ps-page ps-tool-detail">
     <p><a th:href="@{/tools}">กลับไปสำรวจเครื่องมือ</a></p>
     <header><h1 th:text="${tool.name}">ชื่อเครื่องมือ</h1><p th:text="${tool.shortDescription}">คำอธิบายสั้น</p></header>
-    <p><strong>หมวดหมู่:</strong> <span th:text="${tool.categoryName}">หมวดหมู่</span></p>
-    <p><strong>สถานะ:</strong> <span th:text="${tool.status}">DRAFT</span></p>
+    <div th:replace="~{fragments/layout :: alerts}"></div><p th:if="${viewerId == tool.ownerId}"><a th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">จัดการเวอร์ชันและสถานะ</a></p><p><strong>หมวดหมู่:</strong> <span th:text="${tool.categoryName}">หมวดหมู่</span></p>
+    <p><strong>สถานะ:</strong> <span th:replace="~{fragments/layout :: statusBadge(${tool.status})}">แบบร่าง</span></p>
     <p><a th:href="@{/tools/{slug}/versions(slug=${tool.slug})}">ดูเวอร์ชัน</a></p>
     <p class="ps-tool-description" th:text="${tool.description}">รายละเอียด</p>
-    <a th:if="${tool.repositoryUrl != null}" th:href="${tool.repositoryUrl}" target="_blank" rel="noopener" class="ps-link">เปิด repository</a>
+    <a th:if="${!#strings.isEmpty(tool.repositoryUrl)}" th:href="${tool.repositoryUrl}" target="_blank" rel="noopener" class="ps-link">เปิด repository</a>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

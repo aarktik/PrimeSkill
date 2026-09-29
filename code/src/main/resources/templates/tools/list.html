@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${pageTitle} + ' · Primeskill'">สำรวจเครื่องมือ · Primeskill</title>
+    <link rel="stylesheet" th:href="@{/css/role-e.css}">
+    <script defer th:src="@{/js/role-e.js}"></script>
 </head>
 <body>
-<main class="ps-page ps-tools-list">
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main id="main" tabindex="-1" class="ps-page ps-tools-list">
     <header><h1 th:text="${pageTitle}">สำรวจเครื่องมือ</h1><p>ค้นพบเครื่องมือสำหรับ AI agents</p></header>
     <section aria-live="polite">
         <p th:if="${#lists.isEmpty(tools)}">ไม่พบเครื่องมือที่ตรงกับการค้นหา</p>
@@ -18,5 +21,6 @@
         </div>
     </section>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

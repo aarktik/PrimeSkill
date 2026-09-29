@@ -369,11 +369,39 @@ class RoleEFlowIntegrationTest {
                 jdbc.queryForObject("select version from tool_versions where id = ?", String.class, version));
     }
 
-    @Test
-    void unknownModerationSortFieldIsAClientError() throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"doesNotExist", "category.name", "ownerId", "name.length"})
+    void unknownModerationSortFieldIsAClientError(String field) throws Exception {
         Client admin = registerAndLogin(true);
-        mvc.perform(get("/api/v1/admin/tools/pending?sort=doesNotExist,asc").session(admin.session))
-                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/v1/admin/tools/pending").param("sort", field + ",asc").session(admin.session))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"id", "name", "createdAt", "updatedAt"})
+    void supportedModerationSortFieldsStillWork(String field) throws Exception {
+        Client owner = registerAndLogin(false);
+        Client admin = registerAndLogin(true);
+        long tool = createTool(owner);
+        send(owner, post("/api/v1/tools/" + tool + "/submit"), null).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/admin/tools/pending").param("sort", field + ",desc").session(admin.session))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].id").value(tool));
+    }
+
+    @Test
+    void equalNamesHaveStablePageOrderAndMixedInvalidSortIsRejected() throws Exception {
+        Client owner = registerAndLogin(false);
+        Client admin = registerAndLogin(true);
+        long first = createTool(owner);
+        long second = createTool(owner);
+        jdbc.update("update tools set status = 'PENDING' where id in (?, ?)", first, second);
+        for (int page = 0; page < 2; page++) {
+            mvc.perform(get("/api/v1/admin/tools/pending").session(admin.session)
+                    .param("sort", "name,asc").param("size", "1").param("page", String.valueOf(page)))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].id").value(page == 0 ? first : second));
+        }
+        mvc.perform(get("/api/v1/admin/tools/pending").session(admin.session)
+                .param("sort", "name,asc", "invalid,desc")).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -390,7 +418,9 @@ class RoleEFlowIntegrationTest {
         long tool = createTool(owner);
         mvc.perform(post("/api/v1/tools/" + tool + "/versions").session(owner.session)
                 .header(owner.header, owner.token).contentType(MediaType.TEXT_PLAIN).content("version=1"))
-                .andExpect(status().isUnsupportedMediaType());
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"))
+                .andExpect(header().string("Accept", org.hamcrest.Matchers.containsString("application/json")));
         assertEquals(0, jdbc.queryForObject("select count(*) from tool_versions where tool_id = ?", Integer.class, tool));
     }
 
@@ -419,6 +449,43 @@ class RoleEFlowIntegrationTest {
                 .andExpect(status().isForbidden());
         assertEquals("DRAFT", jdbc.queryForObject("select status from tools where id = ?", String.class, tool));
         assertEquals(0, jdbc.queryForObject("select count(*) from tool_versions where tool_id = ?", Integer.class, tool));
+    }
+    @Test
+    void browserEntryPointsNavigationAndApiUnauthorizedStaySeparate() throws Exception {
+        mvc.perform(get("/login")).andExpect(status().isOk()).andExpect(view().name("auth/login"));
+        mvc.perform(get("/register")).andExpect(status().isOk()).andExpect(view().name("auth/register"));
+        mvc.perform(get("/js/role-e.js")).andExpect(status().isOk());
+        mvc.perform(get("/dashboard/tools").accept(MediaType.TEXT_HTML))
+                .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));
+        mvc.perform(get("/api/v1/admin/tools/pending").accept(MediaType.TEXT_HTML)).andExpect(status().isUnauthorized());
+        Client owner = registerAndLogin(false);
+        mvc.perform(get("/dashboard/tools").session(owner.session)).andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("href=\"/admin/tools\""))));
+        Client admin = registerAndLogin(true);
+        mvc.perform(get("/admin/tools").session(admin.session)).andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/admin/tools\"")));
+    }
+
+    @Test
+    void toolDeleteFormWarnsAboutCascadeAndIncludesCsrf() throws Exception {
+        Client owner = registerAndLogin(false);
+        createTool(owner);
+        mvc.perform(get("/dashboard/tools").session(owner.session)).andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("ลบเครื่องมือนี้และประวัติเวอร์ชันทั้งหมดหรือไม่?")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("_csrf")));
+    }
+
+    @Test
+    void duplicateWebVersionRetainsValuesAndShowsFieldError() throws Exception {
+        Client owner = registerAndLogin(false);
+        long tool = createTool(owner);
+        String path = "/dashboard/tools/" + tool + "/versions";
+        send(owner, post(path).param("version", "1"), null).andExpect(status().is3xxRedirection());
+        send(owner, post(path).param("version", "1").param("releaseNotes", "keep my notes"), null)
+                .andExpect(status().isOk()).andExpect(view().name("versions/form"))
+                .andExpect(model().attributeHasFieldErrors("versionRequest", "version"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("keep my notes")));
+        assertEquals(1, jdbc.queryForObject("select count(*) from tool_versions where tool_id = ?", Integer.class, tool));
     }
     private Client registerAndLogin(boolean admin) throws Exception {
         Client client = csrf(new MockHttpSession());

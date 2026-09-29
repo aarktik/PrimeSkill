@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${pageTitle} + ' · Primeskill'">จัดการเวอร์ชัน · Primeskill</title>
     <link rel="stylesheet" th:href="@{/css/role-e.css}">
+    <script defer th:src="@{/js/role-e.js}"></script>
 </head>
 <body>
-<main class="ps-e-page ps-e-page--form">
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main id="main" tabindex="-1" class="ps-e-page ps-e-page--form">
     <nav aria-label="เส้นทางนำทาง"><a th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">เวอร์ชันของ <span th:text="${tool.name}">Tool</span></a></nav>
     <header class="ps-e-header"><h1 th:text="${pageTitle}">เพิ่มเวอร์ชัน</h1></header>
     <form class="ps-e-card ps-e-form" th:action="${formAction}" th:object="${versionRequest}" method="post" novalidate>
@@ -30,5 +32,6 @@
         </div>
     </form>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

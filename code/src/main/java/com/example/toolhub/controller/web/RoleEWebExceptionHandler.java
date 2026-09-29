@@ -9,7 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-@ControllerAdvice(assignableTypes = RoleEWebController.class)
+@ControllerAdvice(assignableTypes = {RoleEWebController.class, ToolWebController.class})
 public class RoleEWebExceptionHandler {
     @ExceptionHandler({InvalidStateTransitionException.class, CatalogConflictException.class})
     public String conflict(RuntimeException exception, Model model, HttpServletResponse response) {

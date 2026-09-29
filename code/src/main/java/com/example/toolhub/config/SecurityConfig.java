@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(restSecurityExceptionHandler)
 )
                 .authorizeHttpRequests(authorize -> authorize
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
@@ -47,7 +48,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/css/role-e.css",
+                                "/css/role-e.css", "/js/role-e.js", "/", "/login", "/register", "/error",
                                 "/api/v1/categories",
                                 "/api/v1/tools/*",
                                 "/api/v1/tools/*/versions",

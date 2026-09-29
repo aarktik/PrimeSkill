@@ -6,6 +6,7 @@ import com.example.toolhub.dto.request.ToolVersionRequest;
 import com.example.toolhub.dto.response.ToolResponse;
 import com.example.toolhub.dto.response.ToolVersionResponse;
 import com.example.toolhub.exception.InvalidStateTransitionException;
+import com.example.toolhub.exception.CatalogConflictException;
 import com.example.toolhub.security.CurrentActor;
 import com.example.toolhub.security.CurrentActorProvider;
 import com.example.toolhub.service.PublishingService;
@@ -82,7 +83,13 @@ public class RoleEWebController {
             populateVersionForm(model, tool, request, null);
             return "versions/form";
         }
-        versionService.create(toolId, request, actor);
+        try {
+            versionService.create(toolId, request, actor);
+        } catch (CatalogConflictException exception) {
+            errors.rejectValue("version", "duplicate", "เลขเวอร์ชันนี้มีแล้ว กรุณาใช้เลขอื่น");
+            populateVersionForm(model, tool, request, null);
+            return "versions/form";
+        }
         redirect.addFlashAttribute("successMessage", "เพิ่มเวอร์ชันแล้ว");
         return versionsRedirect(toolId);
     }
@@ -108,7 +115,13 @@ public class RoleEWebController {
             populateVersionForm(model, tool, request, versionId);
             return "versions/form";
         }
-        versionService.update(toolId, versionId, request, actor);
+        try {
+            versionService.update(toolId, versionId, request, actor);
+        } catch (CatalogConflictException exception) {
+            errors.rejectValue("version", "duplicate", "เลขเวอร์ชันนี้มีแล้ว กรุณาใช้เลขอื่น");
+            populateVersionForm(model, tool, request, versionId);
+            return "versions/form";
+        }
         redirect.addFlashAttribute("successMessage", "บันทึกเวอร์ชันแล้ว");
         return versionsRedirect(toolId);
     }

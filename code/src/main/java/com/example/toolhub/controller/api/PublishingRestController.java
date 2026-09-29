@@ -2,6 +2,10 @@ package com.example.toolhub.controller.api;
 
 import com.example.toolhub.domain.enums.PublishingAction;
 import com.example.toolhub.dto.response.ToolResponse;
+import com.example.toolhub.exception.InvalidRequestParameterException;
+import java.util.Set;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import com.example.toolhub.security.CurrentActorProvider;
 import com.example.toolhub.service.PublishingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 @Tag(name = "Publishing")
 public class PublishingRestController {
+    private static final Set<String> SORT_FIELDS = Set.of("id", "name", "createdAt", "updatedAt");
     private final PublishingService publishingService;
     private final CurrentActorProvider currentActorProvider;
 
@@ -61,7 +66,19 @@ public class PublishingRestController {
     @GetMapping("/admin/tools/pending")
     @Operation(summary = "List tools awaiting admin approval")
     public ResponseEntity<Page<ToolResponse>> pending(@PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(publishingService.listPending(pageable, currentActorProvider.requireActor()));
+        var actor = currentActorProvider.requireActor();
+        for (Sort.Order order : pageable.getSort()) {
+            if (!SORT_FIELDS.contains(order.getProperty())) {
+                throw new InvalidRequestParameterException("Sort must use id, name, createdAt or updatedAt");
+            }
+        }
+        // A unique tie-breaker keeps page boundaries stable when names or timestamps match.
+        Sort sort = pageable.getSort();
+        if (sort.getOrderFor("id") == null) {
+            sort = sort.and(Sort.by("id"));
+        }
+        return ResponseEntity.ok(publishingService.listPending(
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort), actor));
     }
 
     private ResponseEntity<ToolResponse> transition(Long id, PublishingAction action) {
