@@ -49,7 +49,7 @@ public class ToolWebController {
     @GetMapping("/tools/{idOrSlug}")
     public String detail(@PathVariable String idOrSlug, Model model) {
         CurrentActor actor = currentActorProvider.currentActor();
-        ToolResponse tool = toolService.getByIdOrSlug(idOrSlug, actor.id(), actor.admin());
+        ToolResponse tool = toolService.getDetailByIdOrSlug(idOrSlug, actor.id(), actor.admin());
         model.addAttribute("tool", tool);
         model.addAttribute("pageTitle", tool.getName());
         model.addAttribute("activeNav", "explore");

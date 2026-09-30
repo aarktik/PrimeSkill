@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -45,11 +46,12 @@ class ToolRestControllerTest {
     @Test
     void getBySlug_returnsOkForAnonymousRequest() throws Exception {
         when(currentActorProvider.currentActor()).thenReturn(new CurrentActor(null, false));
-        when(toolService.getByIdOrSlug(anyString(), isNull(), anyBoolean()))
+        when(toolService.getDetailByIdOrSlug(anyString(), isNull(), anyBoolean()))
                 .thenReturn(ToolResponse.builder().id(1L).name("Calendar").slug("calendar").build());
 
         mockMvc.perform(get("/api/v1/tools/calendar"))
                 .andExpect(status().isOk());
+        verify(toolService).getDetailByIdOrSlug("calendar", null, false);
     }
 
     @Test
@@ -129,7 +131,7 @@ void create_withMalformedJson_returnsMalformedRequestError() throws Exception {
 void getBySlug_whenToolDoesNotExist_returnsNotFoundError() throws Exception {
     when(currentActorProvider.currentActor())
             .thenReturn(new CurrentActor(null, false));
-    when(toolService.getByIdOrSlug(anyString(), isNull(), anyBoolean()))
+    when(toolService.getDetailByIdOrSlug(anyString(), isNull(), anyBoolean()))
             .thenThrow(new ResourceNotFoundException("Tool not found"));
 
     mockMvc.perform(get("/api/v1/tools/missing"))

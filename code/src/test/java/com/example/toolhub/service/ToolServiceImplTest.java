@@ -3,6 +3,7 @@ package com.example.toolhub.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -112,5 +113,62 @@ class ToolServiceImplTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> service.getByIdOrSlug("missing", null, false));
+    }
+
+    @Test
+    void getDetail_whenAnonymousViewsPublishedTool_incrementsAtomically() {
+        Tool tool = mock(Tool.class);
+        ToolResponse response = ToolResponse.builder().id(1L).status(ToolStatus.PUBLISHED).build();
+        when(tool.getId()).thenReturn(1L);
+        when(tool.getStatus()).thenReturn(ToolStatus.PUBLISHED);
+        when(toolRepository.findBySlug("calendar")).thenReturn(java.util.Optional.of(tool));
+        when(toolMapper.toResponse(tool)).thenReturn(response);
+
+        assertEquals(response, service.getDetailByIdOrSlug("calendar", null, false));
+
+        verify(toolRepository).incrementPublishedViewCount(1L, ToolStatus.PUBLISHED);
+    }
+
+    @Test
+    void getDetail_whenSignedInNonOwnerViewsPublishedTool_incrementsAtomically() {
+        Tool tool = mock(Tool.class);
+        when(tool.getId()).thenReturn(1L);
+        when(tool.getOwnerId()).thenReturn(7L);
+        when(tool.getStatus()).thenReturn(ToolStatus.PUBLISHED);
+        when(toolRepository.findBySlug("calendar")).thenReturn(java.util.Optional.of(tool));
+        when(toolMapper.toResponse(tool)).thenReturn(ToolResponse.builder().id(1L).build());
+
+        service.getDetailByIdOrSlug("calendar", 8L, false);
+
+        verify(toolRepository).incrementPublishedViewCountExcludingOwner(
+                1L, ToolStatus.PUBLISHED, 8L);
+    }
+
+    @Test
+    void getDetail_whenOwnerViewsPublishedTool_doesNotIncrement() {
+        Tool tool = mock(Tool.class);
+        when(tool.getOwnerId()).thenReturn(7L);
+        when(tool.getStatus()).thenReturn(ToolStatus.PUBLISHED);
+        when(toolRepository.findBySlug("calendar")).thenReturn(java.util.Optional.of(tool));
+        when(toolMapper.toResponse(tool)).thenReturn(ToolResponse.builder().id(1L).build());
+
+        service.getDetailByIdOrSlug("calendar", 7L, false);
+
+        verify(toolRepository, never()).incrementPublishedViewCount(any(), any());
+        verify(toolRepository, never()).incrementPublishedViewCountExcludingOwner(any(), any(), any());
+    }
+
+    @Test
+    void getDetail_whenOwnerViewsDraftTool_doesNotIncrement() {
+        Tool tool = mock(Tool.class);
+        when(tool.getOwnerId()).thenReturn(7L);
+        when(tool.getStatus()).thenReturn(ToolStatus.DRAFT);
+        when(toolRepository.findBySlug("calendar")).thenReturn(java.util.Optional.of(tool));
+        when(toolMapper.toResponse(tool)).thenReturn(ToolResponse.builder().id(1L).build());
+
+        service.getDetailByIdOrSlug("calendar", 7L, false);
+
+        verify(toolRepository, never()).incrementPublishedViewCount(any(), any());
+        verify(toolRepository, never()).incrementPublishedViewCountExcludingOwner(any(), any(), any());
     }
 }
