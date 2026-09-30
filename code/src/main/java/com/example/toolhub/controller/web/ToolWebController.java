@@ -7,7 +7,6 @@ import com.example.toolhub.security.CurrentActor;
 import com.example.toolhub.security.CurrentActorProvider;
 import com.example.toolhub.service.CategoryService;
 import com.example.toolhub.service.ToolService;
-import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
@@ -35,15 +34,6 @@ public class ToolWebController {
         this.toolService = toolService;
         this.categoryService = categoryService;
         this.currentActorProvider = currentActorProvider;
-    }
-
-    /** Public listing is intentionally supplied by Role C's search/browse flow. */
-    @GetMapping("/tools")
-    public String list(Model model) {
-        model.addAttribute("tools", List.of());
-        model.addAttribute("pageTitle", "สำรวจเครื่องมือ");
-        model.addAttribute("activeNav", "explore");
-        return "tools/list";
     }
 
     @GetMapping("/tools/{idOrSlug}")
