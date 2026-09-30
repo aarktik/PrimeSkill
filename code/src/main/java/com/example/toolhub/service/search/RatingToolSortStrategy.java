@@ -13,10 +13,7 @@ public class RatingToolSortStrategy implements ToolSortStrategy {
 
     @Override
     public Sort toSort() {
-        // Provisional contract: Role D has not merged the review aggregate yet,
-        // so there is no rating column to sort by at the database level.
-        // Fall back to newest-first with a stable id tie-break until the
-        // average-rating/review-count contract with D is agreed.
+        // Rating needs review aggregate, fall back to newest for now.
         return Sort.by(Sort.Direction.DESC, "createdAt")
                 .and(Sort.by(Sort.Direction.ASC, "id"));
     }

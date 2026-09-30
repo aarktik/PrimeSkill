@@ -50,6 +50,15 @@ public class ToolSearchServiceImpl implements ToolSearchService {
             option = ToolSortOption.NEWEST;
         }
         List<String> normalizedTags = normalizeTags(tagSlugs);
+        if (option == ToolSortOption.RELEVANCE) {
+            Pageable unsorted = PageRequest.of(page, effectiveSize);
+            if (normalizedTags.isEmpty()) {
+                return toolRepository.searchPublishedByRelevance(ToolStatus.PUBLISHED, categoryId,
+                        normalizedKeyword, unsorted).map(toolMapper::toResponse);
+            }
+            return toolRepository.searchPublishedWithTagsByRelevance(ToolStatus.PUBLISHED, categoryId,
+                    normalizedKeyword, normalizedTags, unsorted).map(toolMapper::toResponse);
+        }
         Sort sortOrder = resolveSort(option);
         Pageable pageable = PageRequest.of(page, effectiveSize, sortOrder);
 

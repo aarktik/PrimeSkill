@@ -13,12 +13,7 @@ public class RelevanceToolSortStrategy implements ToolSortStrategy {
 
     @Override
     public Sort toSort() {
-        // Provisional contract (same clarity as rating): valid value but no
-        // CASE-based ranking yet. Keyword matches are filtered in the repository
-        // query; ordering within matches is newest-first with a stable id
-        // tie-break. Without a keyword this strategy is not used — the search
-        // service falls back to newest (see ToolSearchServiceImpl + handoff to B).
-        // Follow-up owner: C (needs agreed formula before DB-level ranking).
+        // Relevance order is defined in the repository query; this is only for no-keyword fallback.
         return Sort.by(Sort.Direction.DESC, "createdAt")
                 .and(Sort.by(Sort.Direction.ASC, "id"));
     }

@@ -85,4 +85,53 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
             @Param("keyword") String keyword,
             @Param("tagSlugs") List<String> tagSlugs,
             Pageable pageable);
+
+    @EntityGraph(attributePaths = "category")
+    @Query(
+            value = "SELECT DISTINCT t FROM Tool t "
+                    + "WHERE t.status = :status "
+                    + "AND (:categoryId IS NULL OR t.category.id = :categoryId) "
+                    + "AND (LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' "
+                    + "OR LOWER(t.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' "
+                    + "OR LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\') "
+                    + "ORDER BY CASE WHEN LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' THEN 0 "
+                    + "WHEN LOWER(t.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' THEN 1 "
+                    + "ELSE 2 END, t.createdAt DESC, t.id ASC",
+            countQuery = "SELECT COUNT(DISTINCT t.id) FROM Tool t "
+                    + "WHERE t.status = :status "
+                    + "AND (:categoryId IS NULL OR t.category.id = :categoryId) "
+                    + "AND (LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' "
+                    + "OR LOWER(t.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' "
+                    + "OR LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\')")
+    Page<Tool> searchPublishedByRelevance(
+            @Param("status") ToolStatus status,
+            @Param("categoryId") Long categoryId,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    @EntityGraph(attributePaths = "category")
+    @Query(
+            value = "SELECT DISTINCT t FROM Tool t "
+                    + "WHERE t.status = :status "
+                    + "AND (:categoryId IS NULL OR t.category.id = :categoryId) "
+                    + "AND (LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' "
+                    + "OR LOWER(t.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' "
+                    + "OR LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\') "
+                    + "AND EXISTS (SELECT 1 FROM ToolTag tt WHERE tt.tool.id = t.id AND tt.tag.slug IN :tagSlugs) "
+                    + "ORDER BY CASE WHEN LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' THEN 0 "
+                    + "WHEN LOWER(t.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' THEN 1 "
+                    + "ELSE 2 END, t.createdAt DESC, t.id ASC",
+            countQuery = "SELECT COUNT(DISTINCT t.id) FROM Tool t "
+                    + "WHERE t.status = :status "
+                    + "AND (:categoryId IS NULL OR t.category.id = :categoryId) "
+                    + "AND (LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' "
+                    + "OR LOWER(t.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\' "
+                    + "OR LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '\\') "
+                    + "AND EXISTS (SELECT 1 FROM ToolTag tt WHERE tt.tool.id = t.id AND tt.tag.slug IN :tagSlugs)")
+    Page<Tool> searchPublishedWithTagsByRelevance(
+            @Param("status") ToolStatus status,
+            @Param("categoryId") Long categoryId,
+            @Param("keyword") String keyword,
+            @Param("tagSlugs") List<String> tagSlugs,
+            Pageable pageable);
 }

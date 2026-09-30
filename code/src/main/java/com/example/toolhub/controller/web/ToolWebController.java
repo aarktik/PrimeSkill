@@ -36,7 +36,6 @@ public class ToolWebController {
         this.currentActorProvider = currentActorProvider;
     }
 
-    /** Public /tools listing is owned by {@code ToolBrowseWebController} (Role C search flow). */
     @GetMapping("/tools/{idOrSlug}")
     public String detail(@PathVariable String idOrSlug, Model model) {
         CurrentActor actor = currentActorProvider.currentActor();

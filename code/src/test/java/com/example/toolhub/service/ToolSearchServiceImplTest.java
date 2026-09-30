@@ -113,4 +113,28 @@ class ToolSearchServiceImplTest {
         assertEquals("createdAt",
                 pageableCaptor.getValue().getSort().iterator().next().getProperty());
     }
+
+    @Test
+    void search_relevanceWithKeyword_usesRelevanceQuery() {
+        when(toolRepository.searchPublishedByRelevance(eq(ToolStatus.PUBLISHED), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of()));
+        ArgumentCaptor<String> keywordCaptor = ArgumentCaptor.forClass(String.class);
+
+        searchService.search("calendar", null, null, "relevance", 0, 20);
+
+        verify(toolRepository).searchPublishedByRelevance(eq(ToolStatus.PUBLISHED), any(),
+                keywordCaptor.capture(), any());
+        assertEquals("calendar", keywordCaptor.getValue());
+    }
+
+    @Test
+    void search_relevanceWithKeywordAndTags_usesRelevanceTagQuery() {
+        when(toolRepository.searchPublishedWithTagsByRelevance(eq(ToolStatus.PUBLISHED), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        searchService.search("calendar", null, List.of("ai"), "relevance", 0, 20);
+
+        verify(toolRepository).searchPublishedWithTagsByRelevance(eq(ToolStatus.PUBLISHED), any(),
+                eq("calendar"), eq(List.of("ai")), any());
+    }
 }
