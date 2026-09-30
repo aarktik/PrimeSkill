@@ -77,4 +77,19 @@ class ToolWebControllerTest {
         verify(toolService).listOwnedBy(eq(7L), pageableCaptor.capture());
         assertEquals(0, pageableCaptor.getValue().getPageNumber());
     }
+
+    @Test
+    void detail_usesViewCountingServicePath() {
+        CurrentActor actor = new CurrentActor(8L, false);
+        ToolResponse tool = ToolResponse.builder().id(1L).name("Calendar").slug("calendar").build();
+        when(currentActorProvider.currentActor()).thenReturn(actor);
+        when(toolService.getDetailByIdOrSlug("calendar", 8L, false)).thenReturn(tool);
+        ExtendedModelMap model = new ExtendedModelMap();
+
+        String view = controller.detail("calendar", model);
+
+        verify(toolService).getDetailByIdOrSlug("calendar", 8L, false);
+        assertEquals("tools/detail", view);
+        assertSame(tool, model.get("tool"));
+    }
 }
