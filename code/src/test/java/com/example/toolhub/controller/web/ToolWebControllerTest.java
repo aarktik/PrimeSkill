@@ -11,7 +11,10 @@ import com.example.toolhub.dto.response.ToolResponse;
 import com.example.toolhub.security.CurrentActor;
 import com.example.toolhub.security.CurrentActorProvider;
 import com.example.toolhub.service.CategoryService;
+import com.example.toolhub.service.ReviewService;
+import com.example.toolhub.service.ReviewSummaryService;
 import com.example.toolhub.service.ToolService;
+import com.example.toolhub.dto.response.ReviewSummary;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,12 +33,15 @@ class ToolWebControllerTest {
     @Mock private ToolService toolService;
     @Mock private CategoryService categoryService;
     @Mock private CurrentActorProvider currentActorProvider;
+    @Mock private ReviewService reviewService;
+    @Mock private ReviewSummaryService reviewSummaryService;
 
     private ToolWebController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new ToolWebController(toolService, categoryService, currentActorProvider);
+        controller = new ToolWebController(toolService, categoryService, currentActorProvider,
+                reviewService, reviewSummaryService);
     }
 
     @Test
@@ -84,12 +90,17 @@ class ToolWebControllerTest {
         ToolResponse tool = ToolResponse.builder().id(1L).name("Calendar").slug("calendar").build();
         when(currentActorProvider.currentActor()).thenReturn(actor);
         when(toolService.getDetailByIdOrSlug("calendar", 8L, false)).thenReturn(tool);
+        when(reviewService.listForTool(eq(1L), eq(8L), eq(false), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+        when(reviewSummaryService.summarizeByToolIds(List.of(1L)))
+                .thenReturn(java.util.Map.of(1L, new ReviewSummary(1L, null, 0)));
         ExtendedModelMap model = new ExtendedModelMap();
 
-        String view = controller.detail("calendar", model);
+        String view = controller.detail("calendar", 0, model);
 
         verify(toolService).getDetailByIdOrSlug("calendar", 8L, false);
         assertEquals("tools/detail", view);
         assertSame(tool, model.get("tool"));
+        assertEquals(0L, ((ReviewSummary) model.get("reviewSummary")).reviewCount());
     }
 }

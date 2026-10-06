@@ -32,6 +32,7 @@
     <header>
         <h1 th:text="${pageTitle}">สำรวจเครื่องมือ</h1>
         <p>ค้นพบเครื่องมือสำหรับ AI agents</p>
+        <p><a th:href="@{/my/reviews}">รีวิวของฉัน</a></p>
     </header>
 
     <form method="get" th:action="@{/tools}" role="search" aria-label="ค้นหาเครื่องมือ">

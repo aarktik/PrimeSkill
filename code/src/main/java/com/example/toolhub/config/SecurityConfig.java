@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/api/v1/tools",
                                 "/api/v1/tools/*",
                                 "/api/v1/tools/*/tags",
+                                "/api/v1/tools/*/reviews",
                                 "/api/v1/tags",
                                 "/tools",
                                 "/tools/*"

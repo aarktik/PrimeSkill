@@ -78,7 +78,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_reviews_tool FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
-    CONSTRAINT uq_reviews_user_tool UNIQUE (user_id, tool_id)
+    CONSTRAINT uq_reviews_user_tool UNIQUE (user_id, tool_id),
+    CONSTRAINT ck_reviews_comment_length CHECK (comment IS NULL OR char_length(comment) <= 2000)
 );
 
 CREATE INDEX IF NOT EXISTS idx_reviews_tool_id ON reviews(tool_id);
