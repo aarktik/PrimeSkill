@@ -1,5 +1,12 @@
 # Role E local runbook
 
+## สถานะล่าสุด — 7 ตุลาคม 2026
+
+- `./scripts/test-postgres.ps1` รันสำเร็จ: Surefire 170 tests และ Failsafe PostgreSQL 99 tests; รวมการรัน 269 กรณี, failures/errors/skipped เป็น 0 ทั้งสองชุด. PostgreSQL ประกอบด้วย flow/query/ชนิดฐานข้อมูลเดิม 70 กรณี, V7 migration tests 13 กรณี และ V8 comment migration tests 16 กรณี.
+- สภาพแวดล้อม local: Java 26.0.1 และ PostgreSQL 18.6. ตรวจแล้วว่าสคริปต์หยุดฐานทดสอบและ port 15432 ไม่เหลือ listener. รายงานอยู่ที่ `code/target/surefire-reports/`, `code/target/failsafe-reports/`; log รอบล่าสุด `code/target/role-e-v8-verify.log`.
+- ตรวจ YAML ของ workflow, syntax ของ bash smoke และ `git diff --check` แล้ว. เครื่องนี้ไม่มี Docker จึงยังไม่ยืนยัน container startup/restart; GitHub Actions ที่ใช้ Java 17/PostgreSQL 17 ยังไม่ได้รันจากการแก้ไขชุดนี้.
+- งาน PostgreSQL/CI/เอกสารครั้งนี้ยังไม่ commit/push/merge. การทดลอง UI ธีม KKU เดิมยังอยู่ใน working tree; ไม่มีการรวม UI จาก branch อื่น. บันทึกผลวันที่ก่อนหน้านี้ด้านล่างเป็นประวัติการทำงาน.
+
 ## ส่วนต่าง ๆ ใช้ทำอะไร
 
 - **Version CRUD:** ให้เจ้าของเพิ่ม/แก้/ลบรุ่นของเครื่องมือ พร้อม release notes ได้เฉพาะตอนเป็น DRAFT ป้องกันการเปลี่ยนข้อมูลระหว่างตรวจหรือหลังเผยแพร่
@@ -9,7 +16,7 @@
 - **หน้าสาธารณะ:** แสดงเวอร์ชันของเครื่องมือที่เผยแพร่แล้ว และโหลด `/css/role-e.css` ได้โดยไม่ต้อง login ส่วน draft ยังถูกซ่อนจากบุคคลทั่วไป
 - **Health endpoint:** `GET /actuator/health` ใช้ตรวจว่าแอปและฐานข้อมูลพร้อมตอบสนอง โดยไม่เปิด endpoint จัดการอื่นเพิ่ม
 - **Docker Compose:** เตรียมแอปและ PostgreSQL สำหรับเครื่อง local พร้อม volume เก็บข้อมูลข้ามการ restart ยังต้องรันทดสอบบนเครื่องที่มี Docker
-- **CI:** รัน Maven verify แล้วจึง build Docker image เพื่อจับปัญหาโค้ดและการสร้าง container โดยยังไม่มีขั้นตอน push image หรือ deploy
+- **CI:** เตรียมรัน Maven verify, PostgreSQL integration tests, build Docker image และตรวจ health/ข้อมูลหลัง restart แยกเป็นฐานทดสอบของแต่ละ run; ยังไม่มีขั้นตอน push image หรือ deploy
 
 ## ทดสอบได้ทันทีโดยไม่ต้องมี Docker
 
@@ -124,10 +131,53 @@ Review the owner dashboard's draft, pending, and published sample tools; open th
 
 This is a review aid, not a production login bootstrap. Registration and login browser forms call Role A's existing JSON endpoints with the session cookie and the current CSRF token. E2E review of owner and moderator flows uses only test accounts.
 
-ผล Sprint 3 ที่ทำในรอบนี้อยู่ใน branch `thaninton_673380043-6_02` และยังไม่ commit: มีหน้า login/register ที่เชื่อมกับ Role A ผ่าน session+CSRF, shared nav/alerts/footer, mobile menu, form validation และ lock ปุ่มระหว่างส่ง, flash messages, safe error pages, version detail link เฉพาะกรณีมี URL, idempotency/query guard สำหรับคิวอนุมัติ และ preview fixtures แยกใน H2.
+ผล Sprint 3 อยู่ใน branch `thaninton_673380043-6_02` และ commit/push แล้วที่ `76cdd65`: มีหน้า login/register ที่เชื่อมกับ Role A ผ่าน session+CSRF, shared nav/alerts/footer, mobile menu, form validation และ lock ปุ่มระหว่างส่ง, flash messages, safe error pages, version detail link เฉพาะกรณีมี URL, idempotency/query guard สำหรับคิวอนุมัติ และ preview fixtures แยกใน H2.
 
 Browser smoke ที่ตรวจ: สมัคร/login จริง → draft → เพิ่ม version → validation → duplicate version พร้อมรักษาค่าที่กรอก → submit → สลับเป็น admin → เห็น pending queue → approve → ดู public version ได้หลัง logout; error login แสดงข้อความทั่วไปและล้าง password. ตรวจ viewport 375px (document scrollWidth=375; ตาราง scroll ภายใน region), 768px และ 1280px และ Escape ปิดเมนู/คืน focus. ตรวจหน้า status/flash และ devtools ไม่มี console error ในเส้นทางที่ลอง. Automated `mvn -B -f code/pom.xml verify` ผ่าน 153 tests; `git diff --check` ผ่าน.
 
 ขอบเขตสถานะ: ส่วน browser/session/CSRF/navigation/form ของ Role E พร้อมให้ review; ยังไม่ถือว่า Sprint 3 ของทีม A–E ปิดทั้ง sprint เพราะหน้า browse/search/review ร่วมและ sign-off/integration ระหว่างโมดูลยังขึ้นกับเจ้าของ Role อื่น. PostgreSQL จริงและ integration บน CI ยังไม่รันในงานนี้.
 
-ผลหลังปิดงาน Sprint 3 ของ Role E (30 กันยายน 2026): mvn -B -f code/pom.xml verify ผ่าน 154 tests, failures 0, errors 0, skipped 0; สร้าง executable JAR สำเร็จ. Regression ของ sort/Content-Type, CSRF/cascade-delete form และ moderation query budget ผ่านแล้ว. มีคำเตือนยืนยันการลบเครื่องมือ+เวอร์ชันและป้ายสถานะภาษาไทย. ภาพ browser review อยู่ที่ sprint3-review-dashboard.png ใน workspace; preview loopback H2 ยังเปิดให้ตรวจ. งานทั้งหมดของรอบนี้ยังไม่ commit/push.
+ผลหลังปิดงาน Sprint 3 ของ Role E (30 กันยายน 2026): mvn -B -f code/pom.xml verify ผ่าน 154 tests, failures 0, errors 0, skipped 0; สร้าง executable JAR สำเร็จ. Regression ของ sort/Content-Type, CSRF/cascade-delete form และ moderation query budget ผ่านแล้ว. มีคำเตือนยืนยันการลบเครื่องมือ+เวอร์ชันและป้ายสถานะภาษาไทย. ภาพ browser review อยู่ที่ sprint3-review-dashboard.png ใน workspace. งาน Sprint 3 ชุดนี้ commit/push แล้วที่ `76cdd65`; การทดลองธีม KKU และงาน PostgreSQL/CI วันที่ 7 ตุลาคมยังแยกเป็น local changes.
+
+## PostgreSQL regression tests
+
+เพิ่มวันที่ 7 ตุลาคม 2026 เพื่อทดสอบ SQL, transaction และการแข่งขันแก้ข้อมูลของ Role E กับ PostgreSQL จริง โดยไม่ต้อง merge develop หรือ Role C/D ก่อน
+
+รันจาก repository root ใน PowerShell:
+
+```powershell
+./scripts/test-postgres.ps1
+# หาก path หรือ port ต่างจากค่าเริ่มต้น:
+./scripts/test-postgres.ps1 -PostgresBin 'C:\Program Files\PostgreSQL\18\bin' -Port 15433 -MavenCommand 'mvn'
+```
+
+- ต้องมี Maven, JDK และ PostgreSQL binaries (`initdb`, `pg_ctl`, `createdb`) อยู่ก่อน ไม่ต้องเปิด Docker หรือแก้ `.env`.
+- สคริปต์สร้าง cluster ใหม่ทุกครั้งใน `code/target/postgres-test/` ใช้รหัสสุ่มและ bind เฉพาะ `127.0.0.1`; ปฏิเสธ port ที่มีคนใช้ ไม่หยุด server อื่น และหยุด cluster ของตัวเองใน `finally`.
+- เก็บ cluster/log ไว้ใต้ `target` สำหรับวิเคราะห์ข้อผิดพลาด; Git ไม่ติดตามข้อมูลเหล่านี้. เก็บเป็นข้อมูลทดสอบชั่วคราวเท่านั้น.
+- `RoleEPostgresIT` สืบทอดชุด flow ของ Role E และตรวจชนิดฐานข้อมูลจริง; `ModerationPostgresIT` ทดสอบจำนวน query ของคิวอนุมัติบน PostgreSQL.
+- `MigrationPreflightPostgresIT` อ่านร่าง V7 จาก `doc/sql` จริงและทดสอบใน schema ชั่วคราวแยกทุกกรณี: URL variants, oversized data, rerun, rollback และชนิดคอลัมน์เดิม. ดู [รายงาน migration tests](role-e-migration-test-report.md). ต้องรันจาก checkout ที่มีไฟล์ `doc/sql`; ไม่ใช่ชุดทดสอบ migration จาก packaged JAR.
+- `ReviewCommentMigrationPostgresIT` ตรวจสำเนา V8 ของ D ที่ pin commit/blob ใน test resources: comment boundary, Unicode, oversized legacy rows, insert/update, NOT VALID, rerun และ rollback. ดู [รายงาน V8](role-e-v8-test-report.md). ไม่ได้ merge review service ของ D และไม่ได้ติดตั้ง constraint ในฐานร่วม.
+- Maven profile `postgres-it` เปิด Failsafe เพิ่ม; คำสั่ง `mvn verify` ปกติยังใช้ชุด H2/unit tests และไม่ต้องมี PostgreSQL.
+- ก่อน initialize SQL ตัว guard บังคับ URL เป็น loopback, ระบุ port, ชื่อฐาน `primeskill_test_*` และไม่มี query/userinfo/fragment. ชุดทดสอบมีการล้างข้อมูล จึงต้องใช้ฐานเฉพาะสำหรับเทสเสมอ.
+
+ถ้าจัดเตรียม PostgreSQL ทดสอบเอง ให้ตั้ง `PRIMESKILL_TEST_DB_URL`, `PRIMESKILL_TEST_DB_USERNAME`, `PRIMESKILL_TEST_DB_PASSWORD` แล้วรัน `mvn -B -f code/pom.xml -Ppostgres-it verify`. ต้องเป็นฐานว่างเฉพาะเทสที่เข้าถึงผ่าน loopback และผ่าน guard ข้างต้น. ชุดนี้ไม่เปิด Flyway และไม่ทดสอบ migration ของ C/D; ดู [migration readiness](role-e-migration-readiness.md).
+
+CI ที่เตรียมไว้รันเมื่อ push branch ส่วนตัว, develop/main, pull request หรือสั่ง workflow เอง: job PostgreSQL ใช้ PostgreSQL 17 + Java 17, อีก job ตรวจ H2 และ Compose health/restart persistence. แต่ละ Compose run ใช้ project/volume เฉพาะและลบทิ้งหลังจบ. ยังต้อง commit/push ก่อนจึงจะมีผลการรัน workflow จริง.
+
+## ตรวจ Role D แยกโดยไม่ merge
+
+รัน `./scripts/check-role-d-postgres.ps1 -RoleDRef 0a92dbc3a80538917bc400d8862d8644c5dd4ec9` จาก repository root. สคริปต์สร้าง detached checkout ใต้ ignored target และใช้ PostgreSQL disposable อีกชุด; ไม่เปลี่ยน branch หลักหรือ production source ของ D.
+
+ผลวันที่ 7 ตุลาคม: เมื่อมี test-only config ผ่านเทสเดิม D 131 และ PostgreSQL IT ใหม่ 28 รวม 159 การรัน, failures/errors/skipped = 0. Baseline D ที่ไม่มี DB environment มี contextLoads error 1 กรณี จึงต้องส่งต่อให้ D/A แก้ test setup; ไม่อ้างว่า baseline ผ่าน. ผลนี้แยกจาก 269 กรณีของ E และยังไม่ครอบคลุม D+E publishing race. ดู [รายงาน D PostgreSQL integration](role-d-postgres-integration-report.md) และ [วิธีรัน/ขอบเขต](../test/role-d-postgres/README.md).
+
+## Review–publishing race (7 October 2026)
+
+ทดสอบ D `0a92dbc` ร่วมกับ publishing service ของ E ใน detached checkout โดยไม่ merge. ผู้ใช้ยืนยันกติกา: deprecate commit ก่อนให้ปฏิเสธ create/update review; review commit ก่อนให้เก็บรีวิวแล้ว deprecate ต่อ; author/admin ยังลบ hidden review ได้.
+
+ก่อนแก้ race tests ไม่ผ่าน 6 กรณี. แพตช์ให้ create/update ล็อก Tool แถวเดียวกับ publishing และ refresh สถานะใน persistence context. หลังใช้แพตช์ใน checkout ใหม่ผ่าน D เดิม 131 + PostgreSQL IT 28 + race IT 6 รวม 165 กรณี ไม่มี failures/errors/skips. Unmodified baseline ยังมี contextLoads error เพราะไม่มี Supabase config; ไม่รวมเป็นผลผ่าน.
+
+รันซ้ำด้วย `./scripts/check-role-d-postgres.ps1 -RoleDRef 0a92dbc3a80538917bc400d8862d8644c5dd4ec9 -IncludePublishingRace -ApplyReviewLockCandidate`. ดู [รายงาน](review-publishing-race-report.md) และ [แพตช์/วิธีส่งต่อให้ D/A/E](../test/review-publishing-race/README.md). ยังไม่ commit/push หรือเปลี่ยน production tree ของ E; ต้อง review และทดสอบกับ branch ที่รวมจริง รวมถึง CI Java 17/Docker ต่อ.
+
+## Personal-branch delivery checkpoint
+
+ชุด PostgreSQL/CI, V7/V8 tests, D integration และ race candidate จัดส่งพร้อม [แผนรับช่วงงาน](../docs/superpowers/plans/2026-10-07-postgres-race-handoff.md) ใน branch `thaninton_673380043-6_02`. ข้อความยังไม่ commit/push ในบันทึกก่อนหน้าเป็นสถานะ ณ เวลารันทดสอบนั้น. รัน E suite ซ้ำก่อนส่ง (`code/target/pre-push-postgres-verify.log`): Surefire 170 + PostgreSQL IT 99 = 269 ผ่าน ไม่มี failures/errors/skips; script ปิด cluster หลังจบ. D+E candidate run แยกผ่าน 165 ตามรายงาน race. ยังต้องตรวจ CI run ของ SHA ที่ส่งจริง; ไม่มีการ merge develop, ใช้แพตช์ใน D production หรือรัน shared migration จากการส่งครั้งนี้. ไฟล์ทดลองธีม KKU สองไฟล์ยังคงเป็น local changes และไม่รวมในชุดส่งงาน.

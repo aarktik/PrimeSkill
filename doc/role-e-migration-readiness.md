@@ -1,5 +1,7 @@
 # Role E migration readiness — 7 October 2026
 
+> Current delivery update: PostgreSQL scripts/profile/CI, V7/V8 fixtures and the review–publishing candidate are now delivered on the E personal branch. Read [the current handoff plan](../docs/superpowers/plans/2026-10-07-postgres-race-handoff.md) and [race evidence](review-publishing-race-report.md). The snapshots/local-only statements below describe the earlier documentation-only checkpoint. Latest tested D is `0a92dbc`; the race is reproduced and its isolated candidate passes. No shared migration or full production merge is implied.
+
 This is a preparation checklist, not an installed migration or permission to change a shared database. The current E branch uses `schema.sql` with `ddl-auto=validate`; no Flyway runtime has been enabled.
 
 ## Source snapshots inspected

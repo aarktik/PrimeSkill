@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-/** Real controllers, security filters, services and repositories; isolated H2 database. */
+/** Real controllers, filters, services and repositories; PostgreSQL subclass reuses these scenarios. */
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:role_e_flow;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -36,7 +36,7 @@ class RoleEFlowIntegrationTest {
 
     @AfterEach
     void cleanIsolatedDatabase() {
-        // This class has its own in-memory database. Requests commit their real service transactions.
+        // Only isolated test databases are used. Requests commit real service transactions.
         for (String table : new String[]{"tool_versions", "tools", "categories", "user_profiles", "users"}) {
             jdbc.update("delete from " + table);
         }

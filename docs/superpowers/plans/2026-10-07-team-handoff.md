@@ -1,5 +1,7 @@
 # PrimeSkill Cross-role Handoff Implementation Plan
 
+> **อัปเดตรอบส่งงาน:** อ่าน [PostgreSQL/race handoff](2026-10-07-postgres-race-handoff.md) ก่อนสำหรับสถานะและงานต่อ A/D/E/C ล่าสุด. ข้อความด้านล่างที่ระบุ D `e39a880`, local-only PostgreSQL/CI และ race ที่ยังไม่พิสูจน์เป็น snapshot ก่อนหน้า; D ที่ทดสอบล่าสุดคือ `0a92dbc`, E suite ผ่าน 269 และ D+E candidate overlay ผ่าน 165. เทส/แพตช์/CI ถูกจัดส่งใน branch E แล้ว แต่ race production integration, shared migration และผล CI ยังต้องตรวจต่อ. งาน C/B และข้อตกลง UI ด้านล่างยังเป็นรายการส่งต่อที่ต้องยืนยันกับเจ้าของ Role.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** ให้ผู้รับช่วงงาน A–E ทำงานใน branch ของตนต่อได้ และมีเกณฑ์ตรวจรับก่อนเสนอรวมโค้ด โดยเอกสารนี้ไม่ได้สั่ง merge เข้า develop
