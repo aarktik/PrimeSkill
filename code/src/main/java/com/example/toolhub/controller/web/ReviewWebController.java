@@ -78,13 +78,13 @@ public class ReviewWebController {
     @PostMapping("/tools/{toolId}/reviews/{reviewId}")
     public String update(@PathVariable Long toolId, @PathVariable Long reviewId,
                          @Valid @ModelAttribute("updateReviewRequest") UpdateReviewRequest request,
-                         BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+                         BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
         CurrentActor actor = currentActorProvider.requireActor();
-        if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "ตรวจสอบคะแนนและข้อความรีวิวอีกครั้ง");
-            return "redirect:/tools/" + toolId;
-        }
         ToolResponse tool = visibleTool(toolId, actor);
+        if (bindingResult.hasErrors()) {
+            modelForReviewValidation(tool, actor, model, request, reviewId, bindingResult);
+            return "tools/detail";
+        }
         try {
             reviewService.update(toolId, reviewId, request, actor.id(), actor.admin());
         } catch (CatalogConflictException | DuplicateResourceException | AccessDeniedException exception) {
@@ -123,6 +123,28 @@ public class ReviewWebController {
 
     private String showDetailWithErrors(ToolResponse tool, CurrentActor actor, CreateReviewRequest request,
                                         BindingResult bindingResult, Model model) {
+        model.addAttribute("tool", tool);
+        model.addAttribute("pageTitle", tool.getName());
+        model.addAttribute("activeNav", "explore");
+        populateReviewDetail(tool, actor, model);
+        model.addAttribute("createReviewRequest", request);
+        model.addAttribute("reviewErrors", bindingResult.getFieldErrors());
+        return "tools/detail";
+    }
+
+    private void modelForReviewValidation(ToolResponse tool, CurrentActor actor, Model model,
+                                         UpdateReviewRequest request, Long reviewId,
+                                         BindingResult bindingResult) {
+        model.addAttribute("tool", tool);
+        model.addAttribute("pageTitle", tool.getName());
+        model.addAttribute("activeNav", "explore");
+        populateReviewDetail(tool, actor, model);
+        model.addAttribute("updateReviewRequest", request);
+        model.addAttribute("updateReviewId", reviewId);
+        model.addAttribute("updateReviewErrors", bindingResult.getFieldErrors());
+    }
+
+    private void populateReviewDetail(ToolResponse tool, CurrentActor actor, Model model) {
         var reviews = reviewService.listForTool(tool.getId(), actor.id(), actor.admin(),
                 PageRequest.of(0, PAGE_SIZE));
         model.addAttribute("reviews", reviews.getContent());
@@ -132,9 +154,7 @@ public class ReviewWebController {
         model.addAttribute("myReview", reviewService.findMineForTool(tool.getId(), actor.id()));
         model.addAttribute("currentActorId", actor.id());
         model.addAttribute("currentActorAdmin", actor.admin());
-        model.addAttribute("createReviewRequest", request);
-        model.addAttribute("reviewErrors", bindingResult.getFieldErrors());
-        return "tools/detail";
+        model.addAttribute("createReviewRequest", new CreateReviewRequest(null, null));
     }
 
     private ToolResponse visibleTool(Long toolId, CurrentActor actor) {

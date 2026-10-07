@@ -130,6 +130,17 @@ class ReviewServiceImplTest {
     }
 
     @Test
+    void update_rejectsNonPublishedToolBeforeLoadingReview() {
+        ToolResponse draft = ToolResponse.builder().id(3L).ownerId(9L).status(ToolStatus.DRAFT).build();
+        when(toolService.getByIdOrSlug("3", 7L, false)).thenReturn(draft);
+
+        assertThrows(CatalogConflictException.class,
+                () -> service.update(3L, 12L, new UpdateReviewRequest((short) 4, "updated"), 7L, false));
+
+        verify(reviewRepository, never()).findByTool_IdAndId(any(), any());
+    }
+
+    @Test
     void delete_authorCanDeleteReviewWithoutLookingUpHiddenTool() {
         Review review = org.mockito.Mockito.mock(Review.class);
         User author = org.mockito.Mockito.mock(User.class);
