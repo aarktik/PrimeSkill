@@ -4,12 +4,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import com.example.toolhub.exception.ResourceNotFoundException;
@@ -26,10 +29,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class ToolRestControllerTest {
+    private static final String VALID_UPDATE = """
+            {"name":"Changed","slug":"changed","shortDescription":"Changed helper",
+             "description":"New details","categoryId":4,"repositoryUrl":"https://example.com/repo"}
+            """;
     private MockMvc mockMvc;
     private ToolService toolService;
     private CurrentActorProvider currentActorProvider;
@@ -116,6 +124,65 @@ class ToolRestControllerTest {
                 .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
                 .andExpect(jsonPath("$.message").value("An unexpected error occurred"))
                 .andExpect(jsonPath("$.traceId").isNotEmpty());
+    }
+
+    @Test
+    void update_passesAuthenticatedOwnerToService() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenReturn(ToolResponse.builder().id(1L).name("Changed").build());
+
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Changed"));
+
+        verify(toolService).update(eq(1L), any(), eq(7L), eq(false));
+    }
+
+    @Test
+    void update_passesAuthenticatedAdminToService() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(8L, true));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenReturn(ToolResponse.builder().id(1L).name("Changed").build());
+
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isOk());
+
+        verify(toolService).update(eq(1L), any(), eq(8L), eq(true));
+    }
+
+    @Test
+    void update_whenServiceDeniesOtherUser_returnsStandardForbiddenError() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(9L, false));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenThrow(new AccessDeniedException("You do not own this tool"));
+
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.path").value("/api/v1/tools/1"));
+    }
+
+    @Test
+    void update_whenAuthenticationIsMissing_doesNotCallService() throws Exception {
+        when(currentActorProvider.requireActor()).thenThrow(new AuthenticationRequiredException());
+
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
+
+        verify(toolService, never()).update(anyLong(), any(), anyLong(), anyBoolean());
+    }
+
+    @Test
+    void update_whenRequestIsInvalid_doesNotCallService() throws Exception {
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\",\"slug\":\"INVALID SLUG\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.fieldErrors").isArray());
+
+        verify(toolService, never()).update(anyLong(), any(), anyLong(), anyBoolean());
     }
     @Test
 void create_withMalformedJson_returnsMalformedRequestError() throws Exception {

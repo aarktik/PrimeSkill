@@ -1,6 +1,8 @@
 package com.example.toolhub.service;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -20,13 +22,21 @@ import com.example.toolhub.mapper.ToolMapper;
 import com.example.toolhub.repository.CategoryRepository;
 import com.example.toolhub.repository.ToolRepository;
 import com.example.toolhub.service.impl.ToolServiceImpl;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ToolServiceImplTest {
@@ -95,6 +105,82 @@ class ToolServiceImplTest {
 
         assertEquals("Changed", tool.getName());
         assertEquals("changed", tool.getSlug());
+    }
+
+    /**
+     * Records the existing B implementation, not the future B1 policy.
+     * Replace the owner/admin expectations after B/E confirm the policy in
+     * doc/role-b-tool-edit-policy-proposal.md; no production behavior changes here.
+     */
+    @Tag("b1-baseline")
+    @ParameterizedTest(name = "current behavior: {0}, {1}")
+    @MethodSource("currentUpdateCases")
+    void update_currentBehaviorAcrossStatusAndActor(ToolStatus status, UpdateActor actor) {
+        Tool tool = new Tool(7L, category, "Calendar", "calendar", "Helper",
+                "Details", "https://example.com/original");
+        ReflectionTestUtils.setField(tool, "id", 1L);
+        ReflectionTestUtils.setField(tool, "status", status);
+        ReflectionTestUtils.setField(tool, "viewCount", 17L);
+        when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
+        var request = new UpdateToolRequest("Changed", "changed", "Changed helper",
+                "New details", 4L, "https://example.com/changed");
+
+        if (actor == UpdateActor.OTHER_USER) {
+            assertThrows(AccessDeniedException.class,
+                    () -> service.update(1L, request, actor.id, actor.admin));
+            verify(toolRepository, never()).existsBySlugAndIdNot(any(), any());
+            verify(categoryRepository, never()).findById(any());
+            verify(toolMapper, never()).toResponse(any());
+            assertAll(
+                    () -> assertEquals("Calendar", tool.getName()),
+                    () -> assertEquals("calendar", tool.getSlug()),
+                    () -> assertEquals("Helper", tool.getShortDescription()),
+                    () -> assertEquals("Details", tool.getDescription()),
+                    () -> assertEquals("https://example.com/original", tool.getRepositoryUrl()),
+                    () -> assertSame(category, tool.getCategory()));
+        } else {
+            Category replacement = new Category("Productivity", "productivity", "New category");
+            ReflectionTestUtils.setField(replacement, "id", 4L);
+            when(categoryRepository.findById(4L)).thenReturn(Optional.of(replacement));
+            when(toolMapper.toResponse(tool)).thenAnswer(invocation -> new ToolMapper().toResponse(tool));
+
+            ToolResponse response = service.update(1L, request, actor.id, actor.admin);
+
+            assertAll(
+                    () -> assertEquals("Changed", tool.getName()),
+                    () -> assertEquals("changed", tool.getSlug()),
+                    () -> assertEquals("Changed helper", tool.getShortDescription()),
+                    () -> assertEquals("New details", tool.getDescription()),
+                    () -> assertEquals("https://example.com/changed", tool.getRepositoryUrl()),
+                    () -> assertSame(replacement, tool.getCategory()),
+                    () -> assertEquals("Changed", response.getName()),
+                    () -> assertEquals(4L, response.getCategoryId()),
+                    () -> assertEquals(status, response.getStatus()),
+                    () -> assertEquals(7L, response.getOwnerId()));
+        }
+
+        assertAll(
+                () -> assertEquals(1L, tool.getId()),
+                () -> assertEquals(7L, tool.getOwnerId()),
+                () -> assertEquals(status, tool.getStatus()),
+                () -> assertEquals(17L, tool.getViewCount()));
+    }
+
+    private static Stream<Arguments> currentUpdateCases() {
+        return Arrays.stream(ToolStatus.values()).flatMap(status ->
+                Arrays.stream(UpdateActor.values()).map(actor -> Arguments.of(status, actor)));
+    }
+
+    private enum UpdateActor {
+        OWNER(7L, false), ADMIN(8L, true), OTHER_USER(9L, false);
+
+        private final Long id;
+        private final boolean admin;
+
+        UpdateActor(Long id, boolean admin) {
+            this.id = id;
+            this.admin = admin;
+        }
     }
 
     @Test
