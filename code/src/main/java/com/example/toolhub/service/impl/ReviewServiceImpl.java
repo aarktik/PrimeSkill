@@ -18,6 +18,7 @@ import com.example.toolhub.repository.ToolRepository;
 import com.example.toolhub.repository.UserRepository;
 import com.example.toolhub.service.ReviewService;
 import com.example.toolhub.service.ToolService;
+import jakarta.persistence.EntityManager;
 import java.util.Objects;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -35,16 +36,19 @@ public class ReviewServiceImpl implements ReviewService {
     private final ToolService toolService;
     private final ReviewMapper reviewMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityManager entityManager;
 
     public ReviewServiceImpl(ReviewRepository reviewRepository, ToolRepository toolRepository,
                              UserRepository userRepository, ToolService toolService,
-                             ReviewMapper reviewMapper, ApplicationEventPublisher eventPublisher) {
+                             ReviewMapper reviewMapper, ApplicationEventPublisher eventPublisher,
+                             EntityManager entityManager) {
         this.reviewRepository = reviewRepository;
         this.toolRepository = toolRepository;
         this.userRepository = userRepository;
         this.toolService = toolService;
         this.reviewMapper = reviewMapper;
         this.eventPublisher = eventPublisher;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -69,6 +73,7 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewResponse create(Long toolId, CreateReviewRequest request,
                                  Long actorUserId, boolean actorIsAdmin) {
         requireActor(actorUserId);
+        lockToolForReview(toolId);
         ToolResponse visibleTool = visibleTool(toolId, actorUserId, actorIsAdmin);
         requirePublished(visibleTool);
         if (Objects.equals(visibleTool.getOwnerId(), actorUserId)) {
@@ -91,6 +96,7 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewResponse update(Long toolId, Long reviewId, UpdateReviewRequest request,
                                  Long actorUserId, boolean actorIsAdmin) {
         requireActor(actorUserId);
+        lockToolForReview(toolId);
         ToolResponse visibleTool = visibleTool(toolId, actorUserId, actorIsAdmin);
         requirePublished(visibleTool);
         Review review = findReview(toolId, reviewId);
@@ -121,6 +127,14 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewRepository.findByTool_IdAndUser_Id(toolId, actorUserId)
                 .map(reviewMapper::toResponse)
                 .orElse(null);
+    }
+
+    private void lockToolForReview(Long toolId) {
+        Tool tool = toolRepository.findForUpdateById(toolId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tool not found: " + toolId));
+        // Publishing takes the same row lock. Refresh status after acquiring it so a cached
+        // PUBLISHED value cannot survive a concurrent deprecation commit.
+        entityManager.refresh(tool);
     }
 
     private ToolResponse visibleTool(Long toolId, Long actorUserId, boolean actorIsAdmin) {

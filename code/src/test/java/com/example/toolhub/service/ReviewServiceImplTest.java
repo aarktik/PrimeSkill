@@ -25,6 +25,7 @@ import com.example.toolhub.repository.ReviewRepository;
 import com.example.toolhub.repository.ToolRepository;
 import com.example.toolhub.repository.UserRepository;
 import com.example.toolhub.service.impl.ReviewServiceImpl;
+import jakarta.persistence.EntityManager;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,7 @@ class ReviewServiceImplTest {
     @Mock private ToolService toolService;
     @Mock private ReviewMapper reviewMapper;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private EntityManager entityManager;
 
     private ReviewServiceImpl service;
     private ToolResponse publishedTool;
@@ -51,7 +53,9 @@ class ReviewServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new ReviewServiceImpl(reviewRepository, toolRepository, userRepository,
-                toolService, reviewMapper, eventPublisher);
+                toolService, reviewMapper, eventPublisher, entityManager);
+        lenient().when(toolRepository.findForUpdateById(3L))
+                .thenReturn(Optional.of(org.mockito.Mockito.mock(com.example.toolhub.domain.entity.Tool.class)));
         publishedTool = ToolResponse.builder().id(3L).ownerId(9L).status(ToolStatus.PUBLISHED).build();
         lenient().when(toolService.getByIdOrSlug("3", 7L, false)).thenReturn(publishedTool);
     }
@@ -73,6 +77,8 @@ class ReviewServiceImplTest {
         verify(reviewRepository).save(reviewCaptor.capture());
         assertEquals("Good tool", reviewCaptor.getValue().getComment());
         assertEquals((short) 5, response.rating());
+        verify(toolRepository).findForUpdateById(3L);
+        verify(entityManager).refresh(any(com.example.toolhub.domain.entity.Tool.class));
         verify(eventPublisher).publishEvent(any(com.example.toolhub.event.ReviewCreatedEvent.class));
     }
 
