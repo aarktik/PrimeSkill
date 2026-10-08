@@ -54,6 +54,7 @@ A ต้องเพิ่ม/ยืนยัน:
 - หาก C สร้าง controller ใหม่ ให้ถอด placeholder mapping ของ B ใน PR integration เดียวกัน
 - C ใช้ `ToolResponse`/projection contract ที่ตกลง ห้ามส่ง Entity ตรง
 - public result ต้องกรองเฉพาะ `PUBLISHED`
+- B นับ `viewCount` เมื่อเปิด detail ทั้ง REST/web เฉพาะ `PUBLISHED` และผู้ดูไม่ใช่ owner โดย increment แบบ atomic ที่ DB; C อ่านค่านี้สำหรับ `sort=popular`
 - ห้ามแก้ Tool CRUD ownership/status mutation ของ B/E ผ่าน search request
 - pagination ต้องรักษา query parameters และใช้ stable secondary sort ด้วย id
 

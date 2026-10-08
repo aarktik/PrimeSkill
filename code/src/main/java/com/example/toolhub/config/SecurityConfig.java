@@ -37,7 +37,6 @@ public class SecurityConfig {
                         .accessDeniedHandler(restSecurityExceptionHandler)
 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
@@ -46,19 +45,25 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/api/v1/auth/csrf"
                         ).permitAll()
+                        .requestMatchers("/css/role-e.css", "/js/role-e.js", "/", "/login", "/register", "/error")
+                        .permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/css/role-e.css", "/js/role-e.js", "/", "/login", "/register", "/error",
                                 "/api/v1/categories",
+                                "/api/v1/tools",
                                 "/api/v1/tools/*",
+                                "/api/v1/tools/*/tags",
+                                "/api/v1/tools/*/reviews",
                                 "/api/v1/tools/*/versions",
                                 "/api/v1/tools/*/versions/*",
+                                "/api/v1/tags",
                                 "/tools",
                                 "/tools/*",
                                 "/tools/*/versions",
                                 "/actuator/health"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/categories/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/tags/**").hasRole("ADMIN")
                         .requestMatchers(
                                 "/api/v1/admin/tools",
                                 "/api/v1/admin/tools/**",

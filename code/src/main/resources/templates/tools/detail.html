@@ -5,17 +5,88 @@
     <title th:text="${pageTitle} + ' · Primeskill'">Tool · Primeskill</title>
     <link rel="stylesheet" th:href="@{/css/role-e.css}">
     <script defer th:src="@{/js/role-e.js}"></script>
+    <style>
+        section{margin-top:32px;padding-top:20px;border-top:1px solid #d8e1ea}article{padding:16px 0;border-bottom:1px solid #e5eaf0}
+        label{display:block;font-weight:600;margin-top:12px}textarea,select{font:inherit;padding:8px;max-width:100%}
+        textarea{width:min(100%,600px);min-height:90px}button{font:inherit;padding:8px 14px;cursor:pointer}
+        .muted{color:#526477}.error{color:#b42318}
+    </style>
 </head>
 <body>
 <header th:replace="~{fragments/layout :: navbar}"></header>
 <main id="main" tabindex="-1" class="ps-page ps-tool-detail">
-    <p><a th:href="@{/tools}">กลับไปสำรวจเครื่องมือ</a></p>
+    <p><a th:href="@{/tools}">กลับไปสำรวจเครื่องมือ</a> · <a th:href="@{/my/reviews}">รีวิวของฉัน</a></p>
+    <div th:replace="~{fragments/layout :: alerts}"></div>
     <header><h1 th:text="${tool.name}">ชื่อเครื่องมือ</h1><p th:text="${tool.shortDescription}">คำอธิบายสั้น</p></header>
-    <div th:replace="~{fragments/layout :: alerts}"></div><p th:if="${viewerId == tool.ownerId}"><a th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">จัดการเวอร์ชันและสถานะ</a></p><p><strong>หมวดหมู่:</strong> <span th:text="${tool.categoryName}">หมวดหมู่</span></p>
+    <p th:if="${viewerId == tool.ownerId}"><a th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">จัดการเวอร์ชันและสถานะ</a></p>
+    <p><strong>หมวดหมู่:</strong> <span th:text="${tool.categoryName}">หมวดหมู่</span></p>
     <p><strong>สถานะ:</strong> <span th:replace="~{fragments/layout :: statusBadge(${tool.status})}">แบบร่าง</span></p>
     <p><a th:href="@{/tools/{slug}/versions(slug=${tool.slug})}">ดูเวอร์ชัน</a></p>
     <p class="ps-tool-description" th:text="${tool.description}">รายละเอียด</p>
-    <a th:if="${!#strings.isEmpty(tool.repositoryUrl)}" th:href="${tool.repositoryUrl}" target="_blank" rel="noopener" class="ps-link">เปิด repository</a>
+    <a th:if="${tool.repositoryUrl != null}" th:href="${tool.repositoryUrl}" target="_blank" rel="noopener" class="ps-link">เปิด repository</a>
+
+    <section aria-labelledby="reviews-heading">
+        <h2 id="reviews-heading">รีวิว</h2>
+        <p th:if="${reviewSummary.reviewCount == 0}" class="muted">ยังไม่มีรีวิว</p>
+        <p th:if="${reviewSummary.reviewCount > 0}">
+            คะแนนเฉลี่ย <strong th:text="${#numbers.formatDecimal(reviewSummary.avgRating, 1, 1)}">0.0</strong> / 5
+            · <span th:text="${reviewSummary.reviewCount}">0</span> รีวิว
+        </p>
+
+        <ul th:if="${reviewErrors != null}" class="error">
+            <li th:each="error : ${reviewErrors}" th:text="${error.defaultMessage}">ตรวจสอบข้อมูล</li>
+        </ul>
+        <p th:if="${tool.status.name() != 'PUBLISHED'}" class="muted">เครื่องมือนี้ยังไม่เผยแพร่ จึงไม่รับรีวิวใหม่หรือการแก้ไขรีวิว</p>
+
+        <form th:if="${currentActorId != null and tool.status.name() == 'PUBLISHED' and tool.ownerId != currentActorId and myReview == null}"
+              method="post" th:action="@{/tools/{toolId}/reviews(toolId=${tool.id})}" th:object="${createReviewRequest}">
+            <h3>เขียนรีวิว</h3>
+            <label for="new-rating">คะแนน</label>
+            <select id="new-rating" th:field="*{rating}" required>
+                <option value="">เลือกคะแนน</option>
+                <option th:each="score : ${#numbers.sequence(1,5)}" th:value="${score}" th:text="${score}">5</option>
+            </select>
+            <label for="new-comment">ความเห็น (ไม่บังคับ, ไม่เกิน 2,000 ตัวอักษร)</label>
+            <textarea id="new-comment" th:field="*{comment}" maxlength="2000"></textarea>
+            <button type="submit">ส่งรีวิว</button>
+        </form>
+        <p th:if="${currentActorId == null and tool.status.name() == 'PUBLISHED'}" class="muted">เข้าสู่ระบบเพื่อเขียนรีวิว</p>
+        <p th:if="${tool.ownerId == currentActorId and tool.status.name() == 'PUBLISHED'}" class="muted">เจ้าของเครื่องมือไม่สามารถรีวิวเครื่องมือของตนเองได้</p>
+        <p th:if="${myReview != null and tool.status.name() == 'PUBLISHED'}" class="muted">คุณส่งรีวิวนี้แล้ว สามารถแก้ไขได้ด้านล่าง</p>
+
+        <p th:if="${#lists.isEmpty(reviews) and reviewSummary.reviewCount > 0}" class="muted">ไม่มีรีวิวในหน้านี้</p>
+        <article th:each="review : ${reviews}">
+            <p><strong th:text="${review.authorDisplayName != null ? review.authorDisplayName : 'ผู้ใช้'}">ผู้ใช้</strong>
+                · คะแนน <strong th:text="${review.rating}">5</strong> / 5
+                · <time th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm')}">วันที่</time></p>
+            <p th:if="${review.comment != null and !review.comment.isBlank()}" th:text="${review.comment}">ความเห็น</p>
+            <ul th:if="${updateReviewId != null and updateReviewId == review.id and updateReviewErrors != null}" class="error">
+                <li th:each="error : ${updateReviewErrors}" th:text="${error.defaultMessage}">ตรวจสอบข้อมูล</li>
+            </ul>
+            <form th:if="${review.authorId == currentActorId and tool.status.name() == 'PUBLISHED'}" method="post"
+                  th:action="@{/tools/{toolId}/reviews/{reviewId}(toolId=${tool.id},reviewId=${review.id})}">
+                <label th:for="${'rating-' + review.id}">แก้คะแนน</label>
+                <select th:id="${'rating-' + review.id}" name="rating" required>
+                    <option th:each="score : ${#numbers.sequence(1,5)}" th:value="${score}"
+                            th:selected="${updateReviewId != null and updateReviewId == review.id ? score == updateReviewRequest.rating : score == review.rating}"
+                            th:text="${score}">5</option>
+                </select>
+                <label th:for="${'comment-' + review.id}">แก้ความเห็น</label>
+                <textarea th:id="${'comment-' + review.id}" name="comment" maxlength="2000"
+                          th:text="${updateReviewId != null and updateReviewId == review.id ? updateReviewRequest.comment : review.comment}"></textarea>
+                <button type="submit">บันทึกการแก้ไข</button>
+            </form>
+            <form th:if="${review.authorId == currentActorId or currentActorAdmin}" method="post"
+                  th:action="@{/tools/{toolId}/reviews/{reviewId}/delete(toolId=${tool.id},reviewId=${review.id})}">
+                <button type="submit">ลบรีวิว</button>
+            </form>
+        </article>
+        <nav th:if="${reviewPage.totalPages > 1}" aria-label="เปลี่ยนหน้ารีวิว">
+            <a th:if="${!reviewPage.first}" th:href="@{/tools/{slug}(slug=${tool.slug},page=${reviewPage.number - 1})}">รีวิวก่อนหน้า</a>
+            <span th:text="${reviewPage.number + 1} + ' / ' + ${reviewPage.totalPages}">1 / 1</span>
+            <a th:if="${!reviewPage.last}" th:href="@{/tools/{slug}(slug=${tool.slug},page=${reviewPage.number + 1})}">รีวิวถัดไป</a>
+        </nav>
+    </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

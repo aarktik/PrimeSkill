@@ -33,10 +33,10 @@ public class ToolRestController {
     }
 
     @GetMapping("/{idOrSlug}")
-    @Operation(summary = "Get a published tool or an owned tool")
+    @Operation(summary = "Get tool detail and record a non-owner view for published tools")
     public ResponseEntity<ToolResponse> getByIdOrSlug(@PathVariable String idOrSlug) {
         CurrentActor actor = currentActorProvider.currentActor();
-        return ResponseEntity.ok(toolService.getByIdOrSlug(idOrSlug, actor.id(), actor.admin()));
+        return ResponseEntity.ok(toolService.getDetailByIdOrSlug(idOrSlug, actor.id(), actor.admin()));
     }
 
     @PostMapping
