@@ -33,6 +33,15 @@ The complete patch passed `git apply --cached --check` against pinned D using a 
 
 ## Handoff / limits
 
+### Rollback follow-up (after fd67569)
+
+Added four cases for create/update with either the review or the deprecate transaction deliberately rolling back after SQL flush. Each case verifies a real PostgreSQL lock wait, release on rollback, successful completion of the waiting transaction and persisted state containing only committed changes. Review rollback leaves no new review (or preserves the original rating/comment on update); deprecate rollback leaves PUBLISHED and permits the waiting review write.
+
+- Red: original D review implementation failed all four new cases (failures 4, errors/skips 0), because the second transaction did not serialize. Log: `code/target/role-d-checks/role-d-0a92dbc-483d6214/rollback-four-red.log`.
+- Green: unchanged candidate patch, fresh composed checkout `code/target/role-d-checks/role-d-0a92dbc-652b3c5c`, existing D 131 + D PostgreSQL 28 + race 10 = **169 passed**, failures/errors/skips 0; runner exit 0 and PostgreSQL cluster stopped. Log: `code/target/review-race-rollback-green-runner.log`, with XML reports under that checkout's code/target.
+- No additional production fix was needed beyond the candidate patch. This extends its regression coverage; it does not integrate the patch into D's production branch. The unmodified baseline contextLoads configuration error remains separate.
+- E CI at fd67569 has now passed Java 17/PostgreSQL 17 and Docker checks; see [CI evidence](role-e-ci-verification.md). The composed ten-case suite above was run locally on Java 26/PostgreSQL 18.6, and is not included in that CI result.
+
 Publication update: tests, the candidate patch and [the implementation handoff plan](../docs/superpowers/plans/2026-10-07-postgres-race-handoff.md) are delivered on E's personal branch. Statements below about no commit/push describe the original test run; production integration/PR approval/shared migration remain pending.
 
 D/A/E should review [the candidate patch](../test/review-publishing-race/review-lock-candidate.patch) and [reproduction instructions](../test/review-publishing-race/README.md), then integrate equivalent changes on their agreed branch. Once D/E production branches are combined, rerun this suite against the actual merged implementation and normal CI. No commit, push, PR approval or shared DB migration was performed for this race task.

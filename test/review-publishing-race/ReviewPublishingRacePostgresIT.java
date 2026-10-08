@@ -21,6 +21,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -118,6 +119,48 @@ class ReviewPublishingRacePostgresIT {
             assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM reviews",Integer.class));
         } finally { releaseFirst.countDown(); }
     }
+
+    @ParameterizedTest
+    @CsvSource({"review,create", "review,update", "deprecate,create", "deprecate,update"})
+    void rollbackReleasesLockAndPreservesOnlyCommittedChanges(String rolledBack, String operation) throws Exception {
+        seedUpdate(operation);
+        boolean reviewRollsBack=rolledBack.equals("review");
+        CountDownLatch firstReady=new CountDownLatch(1), releaseFirst=new CountDownLatch(1), secondStarted=new CountDownLatch(1);
+        AtomicInteger firstPid=new AtomicInteger(), secondPid=new AtomicInteger();
+        Future<Outcome> first=workers.submit(()->transaction(firstPid,()->{
+            if(reviewRollsBack)writeReview(operation);else deprecate();
+            entityManager.flush(); // Ensure rollback undoes actual SQL, including update's dirty state.
+            firstReady.countDown();
+            await(releaseFirst);
+            throw new DeliberateRollback();
+        }));
+        try {
+            await(firstReady);
+            Future<Outcome> second=workers.submit(()->transaction(secondPid,()->{
+                secondStarted.countDown();
+                if(reviewRollsBack)deprecate();else writeReview(operation);
+            }));
+            await(secondStarted);
+            boolean blocked=waitForDatabaseBlockOrCompletion(second,secondPid.get(),firstPid.get());
+            releaseFirst.countDown();
+            assertInstanceOf(DeliberateRollback.class,first.get(15,TimeUnit.SECONDS).failure());
+            assertNull(second.get(15,TimeUnit.SECONDS).failure(),"Waiter must succeed after rollback releases the lock");
+            assertTrue(blocked,"Second transaction must wait for the first before its rollback");
+            assertEquals(reviewRollsBack?"DEPRECATED":"PUBLISHED",
+                    jdbc.queryForObject("SELECT status FROM tools WHERE id=?",String.class,tool));
+            if(reviewRollsBack && operation.equals("create")) {
+                assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM reviews WHERE tool_id=?",Integer.class,tool));
+            } else {
+                assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM reviews WHERE tool_id=?",Integer.class,tool));
+                assertEquals(reviewRollsBack?"original":"accepted",
+                        jdbc.queryForObject("SELECT comment FROM reviews WHERE tool_id=?",String.class,tool));
+                assertEquals(reviewRollsBack?4:5,
+                        jdbc.queryForObject("SELECT rating FROM reviews WHERE tool_id=?",Integer.class,tool));
+            }
+        } finally { releaseFirst.countDown(); }
+    }
+
+    private static final class DeliberateRollback extends RuntimeException {}
 
     private void seedUpdate(String operation){
         if(operation.equals("update"))review=jdbc.queryForObject(

@@ -22,7 +22,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not select the pinned D commit.' }
 Write-Host "Role D commit: $commit"
 Write-Host "Isolated checkout: $checkout"
 Push-Location $checkout
-$databaseVariables = @('SUPABASE_DB_URL','SUPABASE_DB_USERNAME','SUPABASE_DB_PASSWORD')
+$databaseVariables = @('SUPABASE_DB_URL','SUPABASE_DB_USERNAME','SUPABASE_DB_PASSWORD','MAVEN_ARGS')
 $originalDatabaseValues = @{}
 foreach ($variable in $databaseVariables) {
     $originalDatabaseValues[$variable] = [Environment]::GetEnvironmentVariable($variable,'Process')
@@ -36,13 +36,25 @@ try {
     foreach ($directory in @('scripts','code/src/test/resources','code/src/test/java/com/example/toolhub/support')) {
         New-Item -ItemType Directory -Path (Join-Path $checkout $directory) -Force | Out-Null
     }
-    Copy-Item -LiteralPath (Join-Path $repo 'scripts/test-postgres.ps1') -Destination scripts/test-postgres.ps1
-    Copy-Item -LiteralPath (Join-Path $repo 'code/src/test/java/com/example/toolhub/support/PostgresTestDatabaseGuard.java') -Destination code/src/test/java/com/example/toolhub/support/PostgresTestDatabaseGuard.java
-    Copy-Item -LiteralPath (Join-Path $repo 'code/src/test/resources/application-postgres-test.properties') -Destination code/src/test/resources/application-postgres-test.properties
-    # D's unprofiled contextLoads test needs a disposable datasource too; no production file is changed.
-    $productionDefaults = [IO.File]::ReadAllText((Join-Path $checkout 'code/src/main/resources/application.properties'))
-    $testDatabaseDefaults = [IO.File]::ReadAllText((Join-Path $repo 'code/src/test/resources/application-postgres-test.properties'))
-    [IO.File]::WriteAllText((Join-Path $checkout 'code/src/test/resources/application.properties'),"$productionDefaults`n$testDatabaseDefaults",[Text.UTF8Encoding]::new($false))
+    # Preserve the target's existing runtime/profile/guard; fill missing test support only.
+    foreach ($relative in @(
+        'scripts/test-postgres.ps1',
+        'code/src/test/java/com/example/toolhub/support/PostgresTestDatabaseGuard.java',
+        'code/src/test/resources/application-postgres-test.properties'
+    )) {
+        $destination = Join-Path $checkout $relative
+        if (-not (Test-Path -LiteralPath $destination)) {
+            Copy-Item -LiteralPath (Join-Path $repo $relative) -Destination $destination
+        }
+    }
+    # Legacy D lacks A's test profile. Only then supply fallback defaults; never replace A's config.
+    $testDefaultsPath = Join-Path $checkout 'code/src/test/resources/application.properties'
+    $aProfilePath = Join-Path $checkout 'code/src/test/resources/application-test.properties'
+    if (-not (Test-Path -LiteralPath $aProfilePath) -and -not (Test-Path -LiteralPath $testDefaultsPath)) {
+        $productionDefaults = [IO.File]::ReadAllText((Join-Path $checkout 'code/src/main/resources/application.properties'))
+        $testDatabaseDefaults = [IO.File]::ReadAllText((Join-Path $repo 'code/src/test/resources/application-postgres-test.properties'))
+        [IO.File]::WriteAllText((Join-Path $checkout 'code/src/test/resources/application.properties'),"$productionDefaults`n$testDatabaseDefaults",[Text.UTF8Encoding]::new($false))
+    }
     Copy-Item -LiteralPath (Join-Path $repo 'test/role-d-postgres/RoleDPostgresIT.java') -Destination code/src/test/java/com/example/toolhub/RoleDPostgresIT.java
     if ($IncludePublishingRace) {
         $publishingFiles = @(
@@ -57,23 +69,41 @@ try {
             $relative = 'code/src/main/java/com/example/toolhub/' + $file
             $destination = Join-Path $checkout $relative
             New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
-            Copy-Item -LiteralPath (Join-Path $repo $relative) -Destination $destination
+            if (-not (Test-Path -LiteralPath $destination)) {
+                Copy-Item -LiteralPath (Join-Path $repo $relative) -Destination $destination
+            }
         }
         $repositoryPath = Join-Path $checkout 'code/src/main/java/com/example/toolhub/repository/ToolRepository.java'
         $repository = [IO.File]::ReadAllText($repositoryPath)
-        $repository = $repository.Replace('public interface ToolRepository extends JpaRepository<Tool, Long> {', @'
+        $lockDefinitions = [regex]::Matches($repository, 'Optional\s*<\s*Tool\s*>\s+findForUpdateById\s*\(').Count
+        if ($lockDefinitions -gt 1) { throw 'Target ToolRepository already has duplicate lock methods.' }
+        if ($lockDefinitions -eq 1 -and -not $repository.Contains('PESSIMISTIC_WRITE')) { throw 'Existing Tool lock needs manual review.' }
+        if ($lockDefinitions -eq 0) {
+            $repository = $repository.Replace('public interface ToolRepository extends JpaRepository<Tool, Long> {', @'
 public interface ToolRepository extends JpaRepository<Tool, Long> {
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from Tool t where t.id = :id")
     Optional<Tool> findForUpdateById(@Param("id") Long id);
 '@)
-        [IO.File]::WriteAllText($repositoryPath,$repository,[Text.UTF8Encoding]::new($false))
+            if (-not $repository.Contains('findForUpdateById')) { throw 'Could not insert the missing Tool lock method.' }
+            [IO.File]::WriteAllText($repositoryPath,$repository,[Text.UTF8Encoding]::new($false))
+        }
         $toolPath = Join-Path $checkout 'code/src/main/java/com/example/toolhub/domain/entity/Tool.java'
         $toolSource = [IO.File]::ReadAllText($toolPath)
-        $toolSource = $toolSource.Replace('    public void updateCategory(', '    public void changeStatus(ToolStatus status) { this.status = status; }' + "`n" + '    public void updateCategory(')
-        [IO.File]::WriteAllText($toolPath,$toolSource,[Text.UTF8Encoding]::new($false))
+        $statusDefinitions = [regex]::Matches($toolSource, 'void\s+changeStatus\s*\(').Count
+        if ($statusDefinitions -gt 1) { throw 'Target Tool already has duplicate changeStatus methods.' }
+        if ($statusDefinitions -eq 0) {
+            $toolSource = $toolSource.Replace('    public void updateCategory(', '    public void changeStatus(ToolStatus status) { this.status = status; }' + "`n" + '    public void updateCategory(')
+            if (-not $toolSource.Contains('void changeStatus(')) { throw 'Could not insert the missing Tool status method.' }
+            [IO.File]::WriteAllText($toolPath,$toolSource,[Text.UTF8Encoding]::new($false))
+        }
         Copy-Item -LiteralPath (Join-Path $repo 'test/review-publishing-race/ReviewPublishingRacePostgresIT.java') -Destination code/src/test/java/com/example/toolhub/ReviewPublishingRacePostgresIT.java
-        if ($ApplyReviewLockCandidate) {
+        $reviewSource = [IO.File]::ReadAllText((Join-Path $checkout 'code/src/main/java/com/example/toolhub/service/impl/ReviewServiceImpl.java'))
+        $existingReviewLock = $reviewSource.Contains('findForUpdateById') -or $reviewSource.Contains('lockToolForReview')
+        if ($ApplyReviewLockCandidate -and $existingReviewLock) {
+            Write-Host 'Candidate skipped: target review implementation already contains a Tool lock. Source preserved.'
+        }
+        if ($ApplyReviewLockCandidate -and -not $existingReviewLock) {
             $candidate = Join-Path $repo 'test/review-publishing-race/review-lock-candidate.patch'
             # Composition already supplies E's identical repository lock method.
             $repositoryExclude = '--exclude=code/src/main/java/com/example/toolhub/repository/ToolRepository.java'
@@ -83,13 +113,37 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
             if ($LASTEXITCODE -ne 0) { throw 'Could not apply review lock candidate.' }
         }
     }
-    $ePom = [IO.File]::ReadAllText((Join-Path $repo 'code/pom.xml'))
-    $profiles = [regex]::Match($ePom,'(?s)<profiles>.*?</profiles>').Value
-    if (-not $profiles -or -not $profiles.Contains('<id>postgres-it</id>')) { throw 'E PostgreSQL Maven profile is missing.' }
+    $ePom = [xml][IO.File]::ReadAllText((Join-Path $repo 'code/pom.xml'))
+    $profileXPath = "/*[local-name()='project']/*[local-name()='profiles']/*[local-name()='profile'][*[local-name()='id']='postgres-it']"
+    $sourceProfile = $ePom.SelectSingleNode($profileXPath)
+    if (-not $sourceProfile) { throw 'E PostgreSQL Maven profile is missing.' }
     $pomPath = Join-Path $checkout 'code/pom.xml'
-    $dPom = [IO.File]::ReadAllText($pomPath)
-    if ($dPom.Contains('<profiles>')) { throw 'D now defines profiles; review the overlay instead of overwriting them.' }
-    [IO.File]::WriteAllText($pomPath,$dPom.Replace('</project>',"$profiles`n</project>"),[Text.UTF8Encoding]::new($false))
+    $dPomText = [IO.File]::ReadAllText($pomPath)
+    $dPom = [xml]$dPomText
+    $existingProfiles = $dPom.SelectNodes($profileXPath)
+    if ($existingProfiles.Count -gt 1) { throw 'Target already has duplicate postgres-it profiles.' }
+    $existingProfile = $dPom.SelectSingleNode($profileXPath)
+    if ($existingProfile) {
+        $failsafe = $existingProfile.SelectSingleNode(".//*[local-name()='plugin'][*[local-name()='artifactId']='maven-failsafe-plugin']")
+        if (-not $failsafe) { throw 'Existing postgres-it profile has no Failsafe plugin; manual review required.' }
+        $includes = @($failsafe.SelectNodes(".//*[local-name()='includes']/*[local-name()='include']") | ForEach-Object { $_.InnerText })
+        $goals = @($failsafe.SelectNodes(".//*[local-name()='goals']/*[local-name()='goal']") | ForEach-Object { $_.InnerText })
+        if (-not $failsafe -or $includes -notcontains '**/*PostgresIT.java' -or $goals -notcontains 'integration-test' -or $goals -notcontains 'verify') {
+            throw 'Existing postgres-it profile needs manual review: expected Failsafe include and verify goals are missing.'
+        }
+        Write-Host 'Existing postgres-it profile preserved.'
+    } else {
+        $profilesNode = $dPom.SelectSingleNode("/*[local-name()='project']/*[local-name()='profiles']")
+        if ($profilesNode) {
+            # Append to the existing profiles block without replacing unrelated profiles.
+            $profilesNode.AppendChild($dPom.ImportNode($sourceProfile, $true)) | Out-Null
+        } else {
+            $profilesNode = $dPom.CreateElement('profiles', $dPom.DocumentElement.NamespaceURI)
+            $profilesNode.AppendChild($dPom.ImportNode($sourceProfile, $true)) | Out-Null
+            $dPom.DocumentElement.AppendChild($profilesNode) | Out-Null
+        }
+        [IO.File]::WriteAllText($pomPath, $dPom.OuterXml, [Text.UTF8Encoding]::new($false))
+    }
     & ./scripts/test-postgres.ps1 -PostgresBin $PostgresBin -Port $Port -MavenCommand $MavenCommand *> postgres-verify.log
     $verifyExit = $LASTEXITCODE
     Get-Content postgres-verify.log -Tail 25

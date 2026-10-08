@@ -1,5 +1,13 @@
 # Review / publishing race handoff
 
+Update 8 October: D implemented the candidate's lock/refresh behavior in d8c51e3. Use the combined snapshot with the updated runner, without applying the candidate again:
+
+```powershell
+./scripts/check-role-d-postgres.ps1 -RoleDRef 3187098fac9d91c14d1fdfe40bb765797cde8cfd -IncludePublishingRace
+```
+
+The commands pinned to 0a92dbc below remain historical red/green reproduction. Existing production code and A/PostgreSQL configuration on the combined snapshot are preserved by the updated runner.
+
 This is an isolated D + E integration fixture, not a merge into develop. D is pinned to `0a92dbc3a80538917bc400d8862d8644c5dd4ec9`; E publishing source comes from the current personal checkout (publishing implementation unchanged from `76cdd65`).
 
 ## Approved policy
@@ -29,6 +37,6 @@ Composition copies only E's publishing service/state machine/dependencies, a sta
 
 The patch is based on the pinned D snapshot. On an isolated clean D checkout, inspect it and run `git apply --check <absolute-patch-path>` before applying. It includes ToolRepository's new method. If integrating after E already supplies that method, reconcile that hunk rather than adding a duplicate. The composed runner excludes the repository hunk for this reason. No candidate changes are applied to the E production tree by this harness.
 
-The six cases cover both create and update for deprecate-first, review-first (including author deletion after hiding), and a stale managed Tool loaded before a separate deprecate commits. Existing D PostgreSQL tests additionally cover HTTP permissions, CSRF, constraints, events and admin deletion. These tests do not replace browser/network tests, the full merged application, Java 17 CI or Docker verification.
+The ten cases cover both create and update for deprecate-first, review-first (including author deletion after hiding), a stale managed Tool loaded before a separate deprecate commits, and rollback of either the review or deprecate transaction. Rollback cases flush actual SQL, assert the second transaction blocks, then verify it completes after rollback and only committed changes remain. Existing D PostgreSQL tests additionally cover HTTP permissions, CSRF, constraints, events and admin deletion. These tests do not replace browser/network tests or the full merged application. E's separate Java 17/PostgreSQL 17 and Docker CI passed at fd67569, but that workflow does not automatically run this composed harness.
 
 See [the report](../../doc/review-publishing-race-report.md) for measured results.

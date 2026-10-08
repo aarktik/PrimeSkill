@@ -1,5 +1,7 @@
 # PostgreSQL and Review–Publishing Handoff Implementation Plan
 
+> Current handoff: read [8 October team actions](2026-10-08-team-action-handoff.md) first. D's lock and A's config are already in combined3187098; baseline/local expanded and actual CI results are recorded separately there. Older pending-implementation statements below are historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** ให้ A/D/E รับช่วงตรวจและนำแพตช์ race เข้าโค้ดจริง ให้ C ต่อคะแนน และให้ผู้ดูแลฐานข้อมูลรัน migration ได้ตามขั้นตอนที่ตรวจสอบได้.
@@ -12,6 +14,8 @@
 
 ## สถานะและวิธีเริ่ม
 
+- Update 8 October: D implemented lock/refresh in d8c51e3; combined snapshot 3187098 includes E publishing and A test configuration. Unmodified PostgreSQL suite passed 354. Updated runner preserves those existing parts and its expanded overlay passed 392, including external race fixture 10/10, without applying the candidate. See [baseline report](../../../doc/role-de-3187098-postgres-test-report.md) and [runner verification](../../../doc/role-d-runner-update-report.md). Earlier snapshot/pending-implementation statements below are historical; full team acceptance/CI/B1/migration remain separate.
+
 - ส่งงานจาก branch `thaninton_673380043-6_02` เท่านั้น. เอกสารนี้ไม่ได้อนุมัติ merge develop หรือเปลี่ยนฐานข้อมูลร่วม.
 - D snapshot ที่ทดสอบ: `0a92dbc3a80538917bc400d8862d8644c5dd4ec9`. E publishing implementation ไม่เปลี่ยนจาก `76cdd65`. ตรวจ remote/PR ใหม่ก่อนลงมือ; ข้อความจาก D ระบุ PR #5 แต่เอกสารนี้ไม่ยืนยันว่าสถานะปัจจุบัน approve/merge แล้ว.
 - E suite เคยผ่าน 170 Surefire + 99 PostgreSQL IT = 269; D standalone overlay 131 + 28 = 159; D+E candidate overlay 131 + 28 + 6 = 165. เป็นคนละ run ห้ามบวกเป็น suite เดียว. ผล local ใช้ Java 26.0.1/PostgreSQL 18.6.
@@ -19,6 +23,8 @@
 - Race เดิมไม่ผ่าน 6 กรณี; candidate ผ่านทั้ง 6. แพตช์พร้อม review แต่ยังไม่ได้ใช้ในโค้ดจริง. V7 tests 13 และ V8 tests 16 ผ่านใน disposable fixtures; ยังไม่รัน SQL กับฐานทีม.
 - เริ่มด้วย `git status --short` และ `git fetch origin '+refs/heads/*:refs/remotes/origin/*'`. จด SHA ของ branch ที่จะตรวจ; อย่า reset งานที่มีอยู่. อ่านไฟล์ของ Role อื่นด้วย `git show <sha>:<path>` ได้โดยไม่ merge.
 - Logs/reports ใต้ `code/target` ถูก ignore และไม่ส่งไป Git. ผู้รับงานต้องรันเองหรือใช้ artifacts จาก CI; รายงานใน doc ระบุผลและขอบเขตที่เคยรัน.
+- CI update: `fd67569` ผ่านทั้ง verify (รวม Docker health/restart persistence) และ postgres-integration แล้ว; ดู [CI evidence](../../../doc/role-e-ci-verification.md). ผลนี้ไม่รวม standalone/composed D harness หรือ changes หลัง SHA นี้.
+- Local rollback follow-up: เพิ่ม regression 4 กรณีและยืนยัน candidate overlay รวม 169 ผ่านแล้ว (race 10); ไม่ต้องเปลี่ยนแพตช์ production เพิ่ม. Task 1 ด้านล่างยังต้องนำเทสเหล่านี้ไปยืนยันกับโค้ดที่รวมจริง. ดู [รายงาน](../../../doc/review-publishing-race-report.md#rollback-follow-up-after-fd67569).
 
 ## Global Constraints
 
@@ -75,7 +81,7 @@
 
 **Files:** `doc/sql/V7__align_existing_tool_catalog.sql`, V8 ต้นทาง D `doc/sql/V8__limit_review_comment_length.sql`; สำเนาเพื่อทดสอบ `code/src/test/resources/migrations/role-d/V8__limit_review_comment_length.sql`; `MigrationPreflightPostgresIT.java`, `ReviewCommentMigrationPostgresIT.java`, `doc/role-e-migration-readiness.md`.
 
-- [ ] ระบุผู้รัน/ฐาน/schema/ช่วงเวลาและ backup/restore; ตรวจ migration history กับ schema จริงก่อนเลือก version. ตรวจว่า migration runner ครอบทั้งไฟล์ใน transaction.
+- [ ] ใช้ [database rollout checklist](../../../doc/database-rollout-checklist.md) ระบุผู้รัน/ฐาน/schema/ช่วงเวลาและ backup/restore; ตรวจ migration history กับ schema จริงก่อนเลือก version. ตรวจว่า migration runner ครอบทั้งไฟล์ใน transaction. Checklist เตรียมแล้ว แต่ target record ยังต้องให้ผู้ดูแลกรอก.
 - [ ] นับ comment เกินโดยไม่พิมพ์เนื้อหา: `SELECT count(*) FROM reviews WHERE comment IS NOT NULL AND char_length(comment)>2000;`. ถ้ามีให้หยุดและให้ผู้ดูแลตัดสินใจ ไม่ truncate อัตโนมัติ.
 - [ ] ตรวจ definition และ validation ของ constraint ชื่อ `ck_reviews_comment_length` จาก SQL snapshot. หากชื่อเดียวกันแต่เงื่อนไขไม่ตรง <=2000 ให้ D/E เตรียม forward migration; ห้ามสรุปว่าชื่อตรงแล้วปลอดภัย.
 - [ ] ตรวจ URL columns ขัดกัน, short_description >300 และ lengths อื่นตาม V7; ตกลง schema tags/version/index กับ B/C. V7 draft ที่ส่งมามี preflight และ ALTER TYPE สำหรับ short_description เดิมแล้ว.
@@ -88,9 +94,10 @@
 
 **Files:** `.github/workflows/build.yml`, `code/pom.xml`, `docker-compose.yml`, `Dockerfile`, `doc/role-e-local-runbook.md`.
 
-- [ ] เปิด Actions run ของ SHA ที่ push branch E; ดูทั้ง `verify` และ `postgres-integration` และดาวน์โหลด reports. Workflow นี้ไม่รัน harness D+E ที่อยู่ใต้ test/ โดยอัตโนมัติ.
-- [ ] ตรวจ Java17/PostgreSQL17 suite, Compose health และ restart persistence. หาก fail ให้แยก config/runtime จาก application regression และแนบ log reproduction ก่อนแก้.
-- [ ] บันทึก run URL/SHA/จำนวน tests/failure/error/skip ใน runbook. local Java26/PG18.6 ไม่ใช่ผล CI.
+- [x] ตรวจ Actions run ของ `fd67569`: ทั้ง `verify` และ `postgres-integration` success. Workflow นี้ไม่รัน harness D+E ที่อยู่ใต้ test/ โดยอัตโนมัติ.
+- [x] ยืนยัน job/steps สำหรับ Java17/PostgreSQL17 suite, Compose health และ restart persistence ผ่านใน run 37653267910.
+- [x] บันทึก run URL/SHA/ขอบเขตใน [CI evidence](../../../doc/role-e-ci-verification.md).
+- [ ] หากต้องการจำนวน tests/failure/error/skip ของ CI ให้ดาวน์โหลด XML artifacts; REST job success ไม่ใช่หลักฐานจำนวนเทส. local Java26/PG18.6 เป็นผลคนละชุด.
 - [ ] หลัง Task 1 รวมจริง ให้เพิ่ม race suite ใน CI ของ integration branch และยืนยันผลอีกครั้ง.
 
 **Done:** workflow ของ SHA ที่ตรวจผ่านพร้อม reports; race ของโค้ดรวมจริงมี CI evidence แยก.

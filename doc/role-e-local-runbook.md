@@ -180,4 +180,8 @@ CI ที่เตรียมไว้รันเมื่อ push branch ส�
 
 ## Personal-branch delivery checkpoint
 
+Rollback follow-up หลัง fd67569: เพิ่ม race tests 4 กรณี (รวม race 10). โค้ด D เดิมไม่ผ่านใหม่ทั้ง 4; candidate เดิมผ่านบน fresh composed checkout รวม D 131 + PostgreSQL 28 + race 10 = 169, ไม่มี failures/errors/skips. ดู [ผลและ logs](review-publishing-race-report.md#rollback-follow-up-after-fd67569). งาน follow-up นี้ยังเป็น local changes ไม่รวมใน CI ของ fd67569.
+
+CI follow-up: [run 37653267910](https://github.com/aarktik/PrimeSkill/actions/runs/37653267910) ของ SHA `fd67569` completed/success ทั้ง `verify` และ `postgres-integration`, รวม Docker startup/restart persistence. ดู [รายละเอียดและขอบเขต](role-e-ci-verification.md). ข้อความ CI ยังไม่ยืนยันในบันทึกก่อนหน้าเป็นสถานะก่อนตรวจ run นี้; ผลนี้ไม่รวม D+E harness หรือ changes หลัง SHA ดังกล่าว. [Database rollout checklist](database-rollout-checklist.md) พร้อมให้ผู้ดูแลกรอก target/history/backup; ยังไม่ได้ตรวจฐานร่วม.
+
 ชุด PostgreSQL/CI, V7/V8 tests, D integration และ race candidate จัดส่งพร้อม [แผนรับช่วงงาน](../docs/superpowers/plans/2026-10-07-postgres-race-handoff.md) ใน branch `thaninton_673380043-6_02`. ข้อความยังไม่ commit/push ในบันทึกก่อนหน้าเป็นสถานะ ณ เวลารันทดสอบนั้น. รัน E suite ซ้ำก่อนส่ง (`code/target/pre-push-postgres-verify.log`): Surefire 170 + PostgreSQL IT 99 = 269 ผ่าน ไม่มี failures/errors/skips; script ปิด cluster หลังจบ. D+E candidate run แยกผ่าน 165 ตามรายงาน race. ยังต้องตรวจ CI run ของ SHA ที่ส่งจริง; ไม่มีการ merge develop, ใช้แพตช์ใน D production หรือรัน shared migration จากการส่งครั้งนี้. ไฟล์ทดลองธีม KKU สองไฟล์ยังคงเป็น local changes และไม่รวมในชุดส่งงาน.

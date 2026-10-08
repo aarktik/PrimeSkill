@@ -1,5 +1,23 @@
 # Role D PostgreSQL integration overlay
 
+## Runner update — 8 October 2026
+
+For the combined branch with D's implemented lock and A's test configuration, run:
+
+```powershell
+./scripts/check-role-d-postgres.ps1 -RoleDRef 3187098fac9d91c14d1fdfe40bb765797cde8cfd -IncludePublishingRace
+```
+
+The runner preserves existing publishing files, Tool lock/status methods, test config/guard/script and a compatible postgres-it profile. It adds only missing support and the external E fixtures to an isolated clone. If an existing profile is incompatible, it stops for review rather than replacing it. Existing unrelated Maven profiles remain when a missing postgres-it profile is added.
+
+Do not request the old candidate for an already fixed D implementation. If `-ApplyReviewLockCandidate` is accidentally passed, the runner detects the existing review lock and skips the patch. That switch remains available for the pinned pre-fix D snapshot `0a92dbc`.
+
+`-IncludePublishingRace` copies E's current race fixture into Maven test sources so the commit-order/stale-cache cases and local rollback follow-up run explicitly. On an already combined checkout this is a test overlay; its results must be distinguished from the unmodified 3187098 baseline. Existing native PostgreSQL rollback classes continue to run via the preserved profile.
+
+Preparation regression command: `./scripts/test-role-d-runner.ps1`. This uses a Maven stub to test missing/existing support and source preservation; it still creates/stops disposable PostgreSQL clusters on port 15433. Its check count is **not** a Java test-suite count. Run the actual runner command above for application evidence. Both scripts clear and restore inherited MAVEN_ARGS/Supabase process values during execution.
+
+The older instructions and baseline limitations below describe the initial D snapshot; A's test config is already present on 3187098.
+
 ชุดนี้เก็บบน branch E เพื่อทดสอบ D แยก ไม่ใช่โค้ด review service ที่ merge เข้ามาใน E.
 
 ## รันซ้ำ
