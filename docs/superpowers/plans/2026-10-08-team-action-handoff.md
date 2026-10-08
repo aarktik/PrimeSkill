@@ -1,6 +1,6 @@
 # A/B/C/D/E — เริ่มอ่านไฟล์นี้ก่อน
 
-วันที่ 8 ตุลาคม 2026. เอกสารนี้รวมสถานะหลังอ่านข้อความส่งต่อของแต่ละ Role และตรวจ source/ผลทดสอบจริง. ชุดส่งมอบ E นี้เตรียมเผยแพร่บน personal branch พร้อม runner/tests/CI/เอกสาร; เอกสารนี้ไม่ใช่การอนุมัติ merge หรือรันฐานร่วม.
+วันที่ 8 ตุลาคม 2026. เอกสารนี้รวมสถานะหลังอ่านข้อความส่งต่อของแต่ละ Role และตรวจ source/ผลทดสอบจริง. ชุดส่งมอบ E เผยแพร่บน personal branch แล้วที่ 3c2af5a พร้อม runner/tests/CI/เอกสาร; เอกสารนี้ไม่ใช่การอนุมัติ merge หรือรันฐานร่วม.
 
 ## สิ่งที่ทำแล้วและไม่ต้องทำซ้ำ
 
@@ -14,9 +14,9 @@
 ## ลำดับที่ 1 — E: ส่งชุดเพิ่มเติมและยืนยัน expanded CI
 
 - [x] ตรวจ diff ของ runner, race fixture, CI additions และเอกสาร; แยกไฟล์ทดลองธีม KKU ออกจากชุดนี้.
-- [ ] Commit/push ลง `thaninton_673380043-6_02`. ระบุ SHA ใหม่ให้ทีมทราบว่าเป็นเทส/runner/CI/เอกสารเพิ่มเติม; implementation race เดิมของ D ไม่ถูกแก้ทับ.
-- [ ] ดู workflow `Review and publishing integration` ที่ push เรียก. ต้องได้ source SHA ที่ตั้งใจ, baseline/overlay artifacts และ required race coverage ผ่าน. ต้องตรวจผล workflow หลัง push; ห้ามใช้ผล CI354 อ้างว่า expanded CI392 ผ่านแล้ว.
-- [ ] แนบ run URL, SHA harness/source, Surefire/Failsafe และผล race/rollback ให้ A ตรวจ. จำนวนจริงอาจเปลี่ยนหาก snapshot เปลี่ยน ให้ใช้ XML ใหม่.
+- [x] Commit/push ลง `thaninton_673380043-6_02`. ระบุ SHA ใหม่ให้ทีมทราบว่าเป็นเทส/runner/CI/เอกสารเพิ่มเติม; implementation race เดิมของ D ไม่ถูกแก้ทับ.
+- [x] ดู workflow `Review and publishing integration` ที่ push เรียก. ต้องได้ source SHA ที่ตั้งใจ, baseline/overlay artifacts และ required race coverage ผ่าน. ตรวจ run 37802871848 และ artifacts แล้ว: baseline354/expanded392 ผ่าน, failures/errors/skips=0.
+- [x] แนบ run URL, SHA harness/source, Surefire/Failsafe และผล race/rollback ให้ A ตรวจใน [รายงาน CI](../../../doc/role-de-ci-test-report.md); ผู้ใช้ส่งลิงก์นี้ต่อให้ทีมได้. จำนวนจริงอาจเปลี่ยนหาก snapshot เปลี่ยน ให้ใช้ XML ใหม่.
 
 ## ลำดับที่ 2 — A ร่วม D/E: ตรวจรับโค้ดรวม
 

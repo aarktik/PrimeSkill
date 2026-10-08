@@ -48,3 +48,16 @@ This delivery includes the new workflow and its scripts. A successful expanded G
 ## Next action
 
 Publish the reviewed E delivery batch to the personal branch. Its push triggers the new expanded workflow; verify the resolved source/harness SHAs and baseline/overlay artifacts, then append that run URL/results here. No merge develop, PR approval or shared database migration has been performed by this CI task.
+
+
+## Expanded CI verified after publication — 2026-10-08
+
+- Harness: `3c2af5a2ab51751547a905ba7fffa198777c1ff7`, personal branch `thaninton_673380043-6_02`.
+- Production/config snapshot: `3187098fac9d91c14d1fdfe40bb765797cde8cfd`.
+- [Review and publishing integration run 37802871848](https://github.com/aarktik/PrimeSkill/actions/runs/37802871848): completed/success.
+- Unmodified baseline: Surefire 247 + Failsafe 107 = 354; failures/errors/skipped all zero.
+- Expanded overlay: Surefire 247 + Failsafe 145 = 392; failures/errors/skipped all zero.
+- Required external race 10, external RoleD 28, native concurrent rollback 4 and native service rollback 4 all passed. Coverage gate passed; tooling tests 8 passed separately from the Java counts.
+- Runtime: Temurin 17.0.20.1 with PostgreSQL 17 Alpine service. Downloaded `review-publishing-evidence` artifact verified harness/source SHAs, overlay-summary.json and baseline XML. ZIP retained under ignored `code/target/ci-runs/37802871848/`.
+- [Build and test run 37802871648](https://github.com/aarktik/PrimeSkill/actions/runs/37802871648): completed/success, both verify and postgres-integration jobs; container startup/database restart persistence step passed.
+- This satisfies the expanded CI publication gate above. Review/approval, B1 policy, C rating integration and shared database rollout remain team follow-ups. No develop merge or shared database migration was performed.
