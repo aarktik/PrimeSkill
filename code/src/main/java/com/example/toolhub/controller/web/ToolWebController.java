@@ -3,11 +3,14 @@ package com.example.toolhub.controller.web;
 import com.example.toolhub.dto.request.CreateToolRequest;
 import com.example.toolhub.dto.request.UpdateToolRequest;
 import com.example.toolhub.dto.response.ToolResponse;
+import com.example.toolhub.dto.request.CreateReviewRequest;
+import com.example.toolhub.dto.response.ReviewSummary;
 import com.example.toolhub.security.CurrentActor;
 import com.example.toolhub.security.CurrentActorProvider;
 import com.example.toolhub.service.CategoryService;
+import com.example.toolhub.service.ReviewService;
+import com.example.toolhub.service.ReviewSummaryService;
 import com.example.toolhub.service.ToolService;
-import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
@@ -29,31 +32,43 @@ public class ToolWebController {
     private final ToolService toolService;
     private final CategoryService categoryService;
     private final CurrentActorProvider currentActorProvider;
+    private final ReviewService reviewService;
+    private final ReviewSummaryService reviewSummaryService;
 
     public ToolWebController(ToolService toolService, CategoryService categoryService,
-                             CurrentActorProvider currentActorProvider) {
+                             CurrentActorProvider currentActorProvider, ReviewService reviewService,
+                             ReviewSummaryService reviewSummaryService) {
         this.toolService = toolService;
         this.categoryService = categoryService;
         this.currentActorProvider = currentActorProvider;
-    }
-
-    /** Public listing is intentionally supplied by Role C's search/browse flow. */
-    @GetMapping("/tools")
-    public String list(Model model) {
-        model.addAttribute("tools", List.of());
-        model.addAttribute("pageTitle", "สำรวจเครื่องมือ");
-        model.addAttribute("activeNav", "explore");
-        return "tools/list";
+        this.reviewService = reviewService;
+        this.reviewSummaryService = reviewSummaryService;
     }
 
     @GetMapping("/tools/{idOrSlug}")
-    public String detail(@PathVariable String idOrSlug, Model model) {
+    public String detail(@PathVariable String idOrSlug,
+                         @RequestParam(defaultValue = "0") int page, Model model) {
         CurrentActor actor = currentActorProvider.currentActor();
-        ToolResponse tool = toolService.getByIdOrSlug(idOrSlug, actor.id(), actor.admin());
+        ToolResponse tool = toolService.getDetailByIdOrSlug(idOrSlug, actor.id(), actor.admin());
         model.addAttribute("tool", tool);
         model.addAttribute("pageTitle", tool.getName());
         model.addAttribute("activeNav", "explore");
+        populateReviews(model, tool, actor.id(), actor.admin(), page);
         return "tools/detail";
+    }
+
+    private void populateReviews(Model model, ToolResponse tool, Long actorId, boolean admin, int page) {
+        var reviews = reviewService.listForTool(tool.getId(), actorId, admin,
+                PageRequest.of(Math.max(page, 0), 20));
+        ReviewSummary summary = reviewSummaryService.summarizeByToolIds(java.util.List.of(tool.getId()))
+                .get(tool.getId());
+        model.addAttribute("reviews", reviews.getContent());
+        model.addAttribute("reviewPage", reviews);
+        model.addAttribute("reviewSummary", summary);
+        model.addAttribute("myReview", reviewService.findMineForTool(tool.getId(), actorId));
+        model.addAttribute("currentActorId", actorId);
+        model.addAttribute("currentActorAdmin", admin);
+        model.addAttribute("createReviewRequest", new CreateReviewRequest(null, null));
     }
 
     @GetMapping("/dashboard/tools")

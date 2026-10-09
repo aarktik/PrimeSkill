@@ -48,13 +48,34 @@ public class ToolServiceImpl implements ToolService {
     @Override
     @Transactional(readOnly = true)
     public ToolResponse getByIdOrSlug(String idOrSlug, Long actorUserId, boolean actorIsAdmin) {
+        return toolMapper.toResponse(findVisibleByIdOrSlug(idOrSlug, actorUserId, actorIsAdmin));
+    }
+
+    @Override
+    @Transactional
+    public ToolResponse getDetailByIdOrSlug(String idOrSlug, Long actorUserId, boolean actorIsAdmin) {
+        Tool tool = findVisibleByIdOrSlug(idOrSlug, actorUserId, actorIsAdmin);
+        boolean published = tool.getStatus() == ToolStatus.PUBLISHED;
+        boolean owner = actorUserId != null && actorUserId.equals(tool.getOwnerId());
+        if (published && !owner) {
+            if (actorUserId == null) {
+                toolRepository.incrementPublishedViewCount(tool.getId(), ToolStatus.PUBLISHED);
+            } else {
+                toolRepository.incrementPublishedViewCountExcludingOwner(
+                        tool.getId(), ToolStatus.PUBLISHED, actorUserId);
+            }
+        }
+        return toolMapper.toResponse(tool);
+    }
+
+    private Tool findVisibleByIdOrSlug(String idOrSlug, Long actorUserId, boolean actorIsAdmin) {
         Tool tool = findByIdOrSlug(idOrSlug);
         boolean publicTool = tool.getStatus() == ToolStatus.PUBLISHED;
         boolean owner = actorUserId != null && actorUserId.equals(tool.getOwnerId());
         if (!publicTool && !owner && !actorIsAdmin) {
             throw new ResourceNotFoundException("Tool not found: " + idOrSlug);
         }
-        return toolMapper.toResponse(tool);
+        return tool;
     }
 
     @Override
