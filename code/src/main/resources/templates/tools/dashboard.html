@@ -14,7 +14,7 @@
         <tbody><tr th:each="tool : ${tools}">
             <td><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a></td>
             <td th:text="${tool.status}">DRAFT</td>
-            <td><a th:href="@{/dashboard/tools/{id}/edit(id=${tool.id})}">แก้ไข</a>
+            <td><a th:if="${tool.status.name() == 'DRAFT'}" th:href="@{/dashboard/tools/{id}/edit(id=${tool.id})}">แก้ไข</a>
                 <form th:action="@{/dashboard/tools/{id}/delete(id=${tool.id})}" method="post" style="display:inline">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button type="submit">ลบ</button>

@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,11 +19,13 @@ import com.example.toolhub.dto.request.CreateToolRequest;
 import com.example.toolhub.dto.request.UpdateToolRequest;
 import com.example.toolhub.dto.response.ToolResponse;
 import com.example.toolhub.exception.CatalogConflictException;
+import com.example.toolhub.exception.InvalidStateTransitionException;
 import com.example.toolhub.exception.ResourceNotFoundException;
 import com.example.toolhub.mapper.ToolMapper;
 import com.example.toolhub.repository.CategoryRepository;
 import com.example.toolhub.repository.ToolRepository;
 import com.example.toolhub.service.impl.ToolServiceImpl;
+import jakarta.persistence.EntityManager;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -31,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -43,13 +48,14 @@ class ToolServiceImplTest {
     @Mock private ToolRepository toolRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private ToolMapper toolMapper;
+    @Mock private EntityManager entityManager;
 
     private ToolServiceImpl service;
     private Category category;
 
     @BeforeEach
     void setUp() {
-        service = new ToolServiceImpl(toolRepository, categoryRepository, toolMapper);
+        service = new ToolServiceImpl(toolRepository, categoryRepository, toolMapper, entityManager);
         category = new Category("Automation", "automation", "Automation tools");
     }
 
@@ -86,7 +92,7 @@ class ToolServiceImplTest {
     @Test
     void update_whenActorIsNotOwner_throwsAccessDenied() {
         Tool tool = new Tool(7L, category, "Calendar", "calendar", "Helper", "Details", null);
-        when(toolRepository.findById(1L)).thenReturn(java.util.Optional.of(tool));
+        when(toolRepository.findForUpdateById(1L)).thenReturn(java.util.Optional.of(tool));
         var request = new UpdateToolRequest("Changed", "changed", "Changed", "Details", 4L, null);
 
         assertThrows(AccessDeniedException.class, () -> service.update(1L, request, 8L, false));
@@ -96,7 +102,7 @@ class ToolServiceImplTest {
     @Test
     void update_whenAdmin_updatesTool() {
         Tool tool = new Tool(7L, category, "Calendar", "calendar", "Helper", "Details", null);
-        when(toolRepository.findById(1L)).thenReturn(java.util.Optional.of(tool));
+        when(toolRepository.findForUpdateById(1L)).thenReturn(java.util.Optional.of(tool));
         when(categoryRepository.findById(4L)).thenReturn(java.util.Optional.of(category));
         when(toolMapper.toResponse(tool)).thenReturn(ToolResponse.builder().name("Changed").build());
         var request = new UpdateToolRequest("Changed", "changed", "Changed", "New details", 4L, null);
@@ -107,27 +113,28 @@ class ToolServiceImplTest {
         assertEquals("changed", tool.getSlug());
     }
 
-    /**
-     * Records the existing B implementation, not the future B1 policy.
-     * Replace the owner/admin expectations after B/E confirm the policy in
-     * doc/role-b-tool-edit-policy-proposal.md; no production behavior changes here.
-     */
-    @Tag("b1-baseline")
-    @ParameterizedTest(name = "current behavior: {0}, {1}")
+    /** DRAFT-only metadata contract supplied in E's B1 handoff and A's review. */
+    @Tag("b1-acceptance")
+    @ParameterizedTest(name = "metadata policy: {0}, {1}")
     @MethodSource("currentUpdateCases")
-    void update_currentBehaviorAcrossStatusAndActor(ToolStatus status, UpdateActor actor) {
+    void update_enforcesDraftOnlyStatusAndActorMatrix(ToolStatus status, UpdateActor actor) {
         Tool tool = new Tool(7L, category, "Calendar", "calendar", "Helper",
                 "Details", "https://example.com/original");
         ReflectionTestUtils.setField(tool, "id", 1L);
         ReflectionTestUtils.setField(tool, "status", status);
         ReflectionTestUtils.setField(tool, "viewCount", 17L);
-        when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
+        when(toolRepository.findForUpdateById(1L)).thenReturn(Optional.of(tool));
         var request = new UpdateToolRequest("Changed", "changed", "Changed helper",
                 "New details", 4L, "https://example.com/changed");
 
-        if (actor == UpdateActor.OTHER_USER) {
-            assertThrows(AccessDeniedException.class,
-                    () -> service.update(1L, request, actor.id, actor.admin));
+        if (actor == UpdateActor.OTHER_USER || status != ToolStatus.DRAFT) {
+            if (actor == UpdateActor.OTHER_USER) {
+                assertThrows(AccessDeniedException.class,
+                        () -> service.update(1L, request, actor.id, actor.admin));
+            } else {
+                assertThrows(InvalidStateTransitionException.class,
+                        () -> service.update(1L, request, actor.id, actor.admin));
+            }
             verify(toolRepository, never()).existsBySlugAndIdNot(any(), any());
             verify(categoryRepository, never()).findById(any());
             verify(toolMapper, never()).toResponse(any());
@@ -164,6 +171,52 @@ class ToolServiceImplTest {
                 () -> assertEquals(7L, tool.getOwnerId()),
                 () -> assertEquals(status, tool.getStatus()),
                 () -> assertEquals(17L, tool.getViewCount()));
+        var order = inOrder(toolRepository, entityManager);
+        order.verify(toolRepository).findForUpdateById(1L);
+        order.verify(entityManager).refresh(tool);
+        verify(toolRepository, never()).findById(any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ToolStatus.class, names = {"PENDING", "PUBLISHED", "DEPRECATED"})
+    void update_rejectsNoOpOutsideDraftForOwnerAndAdmin(ToolStatus status) {
+        Tool tool = new Tool(7L, category, "Calendar", "calendar", "Helper", "Details", null);
+        ReflectionTestUtils.setField(tool, "status", status);
+        when(toolRepository.findForUpdateById(1L)).thenReturn(Optional.of(tool));
+        var unchanged = new UpdateToolRequest("Calendar", "calendar", "Helper", "Details", 4L, null);
+
+        for (UpdateActor actor : new UpdateActor[]{UpdateActor.OWNER, UpdateActor.ADMIN}) {
+            assertThrows(InvalidStateTransitionException.class,
+                    () -> service.update(1L, unchanged, actor.id, actor.admin));
+        }
+        assertEquals(status, tool.getStatus());
+        verify(categoryRepository, never()).findById(any());
+        verify(toolMapper, never()).toResponse(any());
+    }
+
+    @Test
+    void update_refreshesCachedDraftBeforeCheckingStatus() {
+        Tool tool = new Tool(7L, category, "Calendar", "calendar", "Helper", "Details", null);
+        when(toolRepository.findForUpdateById(1L)).thenReturn(Optional.of(tool));
+        doAnswer(invocation -> {
+            ReflectionTestUtils.setField(tool, "status", ToolStatus.PENDING);
+            return null;
+        }).when(entityManager).refresh(tool);
+        var request = new UpdateToolRequest("Changed", "changed", "New helper", "New details", 4L, null);
+
+        assertThrows(InvalidStateTransitionException.class, () -> service.update(1L, request, 7L, false));
+        assertEquals("Calendar", tool.getName());
+        verify(categoryRepository, never()).findById(any());
+    }
+
+    @Test
+    void update_whenToolIsMissing_doesNotRefreshOrMutate() {
+        when(toolRepository.findForUpdateById(1L)).thenReturn(Optional.empty());
+        var request = new UpdateToolRequest("Changed", "changed", "New helper", "New details", 4L, null);
+
+        assertThrows(ResourceNotFoundException.class, () -> service.update(1L, request, 7L, false));
+        verify(entityManager, never()).refresh(any());
+        verify(categoryRepository, never()).findById(any());
     }
 
     private static Stream<Arguments> currentUpdateCases() {

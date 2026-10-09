@@ -19,6 +19,7 @@ import com.example.toolhub.exception.ResourceNotFoundException;
 import com.example.toolhub.dto.response.ToolResponse;
 import com.example.toolhub.exception.AuthenticationRequiredException;
 import com.example.toolhub.exception.CatalogConflictException;
+import com.example.toolhub.exception.InvalidStateTransitionException;
 import com.example.toolhub.exception.GlobalExceptionHandler;
 import com.example.toolhub.security.CurrentActor;
 import com.example.toolhub.security.CurrentActorProvider;
@@ -183,6 +184,26 @@ class ToolRestControllerTest {
                 .andExpect(jsonPath("$.fieldErrors").isArray());
 
         verify(toolService, never()).update(anyLong(), any(), anyLong(), anyBoolean());
+    }
+
+    @Test
+    void update_whenStatusIsNotDraft_returnsStateConflict() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenThrow(new InvalidStateTransitionException("Tool metadata can only be edited in draft status"));
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("INVALID_STATE_TRANSITION"));
+    }
+
+    @Test
+    void update_whenLockFails_returnsRetryableServiceUnavailable() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenThrow(new org.springframework.dao.CannotAcquireLockException("test lock timeout"));
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("CONCURRENT_OPERATION_RETRY"));
     }
     @Test
 void create_withMalformedJson_returnsMalformedRequestError() throws Exception {

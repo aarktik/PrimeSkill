@@ -68,6 +68,18 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, "RESOURCE_CONFLICT", exception.getMessage(), request, List.of());
     }
 
+    @ExceptionHandler(InvalidStateTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidState(InvalidStateTransitionException exception,
+                                                           HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "INVALID_STATE_TRANSITION", exception.getMessage(), request, List.of());
+    }
+
+    @ExceptionHandler(org.springframework.dao.PessimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrentOperation(Exception exception, HttpServletRequest request) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, "CONCURRENT_OPERATION_RETRY",
+                "A concurrent operation is in progress; reload and try again", request, List.of());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityConflict(DataIntegrityViolationException exception,
                                                                       HttpServletRequest request) {

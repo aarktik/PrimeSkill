@@ -1,127 +1,92 @@
-# Task B1 — Tool metadata edit policy and test proposal
+# Task B1 — Role B metadata contract and handoff
 
-Date: 8 October 2026. Owner: B + E; requirements owner confirms the policy.
+Updated: 9 October 2026. Owner: B + E; C owns tool-tag guards and A reviews security.
 
-Status: **preparation only; policy NOT confirmed; production behavior unchanged**.
+Status: B metadata candidate follows the DRAFT-only contract supplied in A's
+9 October review and E's B1 handoff at `742a0fa`. Full B1 acceptance still
+requires C guards, a common integration SHA, and A/D review. No merge/deploy
+or team-database migration is approved by this document.
 
-Source snapshots: B `04a9023d7b393b04eaf00835256b98cf11395b74`,
-develop `d23228267a569867867fff876440a46a9529da27`, E `fd67569`.
-Reference: Task B1 in E's `docs/superpowers/plans/2026-10-07-team-handoff.md`.
-E publishing code is not integrated in this B checkout.
+## Metadata contract
 
-## Current behavior, not the approved future policy
-
-`ToolService.update(id, request, actorUserId, actorIsAdmin)` allows an owner or
-admin to edit metadata in every status and preserves that status. Other users
-are denied. It reads using `findById`; there is no shared publishing lock or
-revision check. E transitions use `findForUpdateById` with `PESSIMISTIC_WRITE`.
-E's version CRUD being DRAFT-only does not establish metadata edit policy.
-
-The new `b1-baseline` parameterized tests record this existing behavior in all
-4 statuses × owner/admin/other-user (12 cases). They check metadata, category,
-response mapping, denied-write invariants, and preservation of owner/status/
-viewCount. They use real Tool objects with mocked persistence and do **not**
-prove database persistence, concurrency, or approval correctness. Reflection
-sets status only in test fixtures; no production setter is added.
-
-Replace the owner/admin baseline expectations with the confirmed contract when
-implementing B1. Passing these baseline tests is not B1 acceptance.
-
-The additional REST tests cover trusted actor forwarding, validation, and
-401/403 error mapping. Standalone MockMvc has no security filter chain; CSRF
-and real session authorization must be verified after B/E integration.
-
-## Decisions needed from B/E/team
-
-For every allowed edit, specify both permission and resulting status. For
-every rejected edit, specify the shared exception and HTTP status/error code.
-
-| Current status | Owner edit → next status/error | Admin edit → next status/error | Other user |
+| Current status | Owner | Admin | Other user |
 | --- | --- | --- | --- |
-| DRAFT | Pending team decision | Pending team decision | Denied; existing 403 ACCESS_DENIED |
-| PENDING | Pending team decision | Pending team decision | Denied; existing 403 ACCESS_DENIED |
-| PUBLISHED | Pending team decision | Pending team decision | Denied; existing 403 ACCESS_DENIED |
-| DEPRECATED | Pending team decision | Pending team decision | Denied; existing 403 ACCESS_DENIED |
+| DRAFT | 200, remains DRAFT | 200, remains DRAFT | 403 ACCESS_DENIED |
+| PENDING | 409 INVALID_STATE_TRANSITION | 409 INVALID_STATE_TRANSITION | 403 ACCESS_DENIED |
+| PUBLISHED | 409 INVALID_STATE_TRANSITION | 409 INVALID_STATE_TRANSITION | 403 ACCESS_DENIED |
+| DEPRECATED | 409 INVALID_STATE_TRANSITION | 409 INVALID_STATE_TRANSITION | 403 ACCESS_DENIED |
 
-Decide whether each status rejects edits, allows them without transition, or
-allows them with a return to DRAFT requiring submit/approval again. Consider
-restricting PENDING edits to prevent changing a review candidate; do not treat
-this suggestion as an approved requirement.
+The rule covers `name`, `slug`, `shortDescription`, `description`, `categoryId`
+and `repositoryUrl`. A no-op outside DRAFT is still rejected; no automatic
+return to DRAFT occurs. Existing E reject/deprecate/restore transitions govern
+how an owner returns to an editable draft. Owner/status/viewCount/reviewRevision
+are not client-writable metadata fields. Existing validation/unique/FK rules
+remain in force after actor and status checks.
 
-Metadata currently means `name`, `slug`, `shortDescription`, `description`,
-`categoryId`, and `repositoryUrl`. Confirm whether all use the same rule,
-whether no-op PUT requests count as edits, and whether admin has an exception.
-Agree implications of mutable slugs and whether tags/version changes can also
-invalidate approval; those operations belong to C/E and are not changed here.
+Anonymous with valid CSRF receives 401. Missing/invalid CSRF can produce 403
+before authorization. Missing Tool returns the existing 404 contract. Other
+users are denied before status checks so a mutation error does not reveal a
+hidden status. Spring pessimistic locking failures map to 503
+CONCURRENT_OPERATION_RETRY; unrelated integrity errors retain their mapping.
 
-## Approval race proposal for E review
+## Coordination with E
 
-A shared row lock serializes transactions but does not by itself identify the
-content an admin previously reviewed. Review content A → edit to B commits →
-approve by ID may publish B even if the approval transaction reads a fresh row.
-If PENDING edits are allowed, invalidate the candidate (for example, return to
-DRAFT) and/or validate an expected review revision at approval. B/E must choose
-the contract, including stale approval errors and any API/schema changes.
-An expected revision must also reject an old approval after edit + re-submit.
+B update takes E's shared Tool `PESSIMISTIC_WRITE` lock, refreshes the managed
+entity, checks owner/admin then DRAFT, validates and mutates in one transaction.
+E owns `reviewRevision`, increments it on successful SUBMIT, and requires
+`expectedReviewRevision` for approve/reject. B does not create another state
+machine or increment/reset that submission token on metadata edits.
 
-After integration, use an isolated PostgreSQL DB with real B/E services and
-separate transactions/connections. Use barriers/latches, bounded waits and
-database lock evidence, not timing sleeps. Compare every metadata field,
-status, owner, and count in a new transaction after both workers finish.
+With DRAFT-only metadata guards, a submitted candidate cannot be edited by B.
+With E's submission revision, an old decision after reject → edit → resubmit
+cannot approve the new candidate. Both protections are necessary; C's tag
+guards must still be integrated to protect the complete candidate.
 
-| Scenario | Acceptance expectation to finalize after policy decision |
-| --- | --- |
-| Update obtains lock/commits before approve | Rejected edit leaves candidate unchanged, or changed candidate requires fresh review; old approval cannot publish changed content |
-| Approve obtains lock/commits before update | Update rechecks PUBLISHED policy; reject without mutation, or apply agreed transition; no unreviewed changed content remains PUBLISHED |
-| B preloads PENDING, then E approves | B must not use stale entity state to bypass PUBLISHED policy |
-| E preloads candidate A, then B commits edit B | Refresh/compare revision; never approve stale/unreviewed candidate |
-| Admin reviews A, edit B commits, B is re-submitted, old approval arrives | Reject stale approval or ensure edits were impossible while review candidate was pending |
-| Other user races with approve | Edit is denied without mutation in both commit orders |
-| Rollback/conflict/timeout | No partially changed metadata/status; use agreed safe error contract |
+Editor GET, invalid-form redisplay, and valid POST apply the same permission/
+state rules. Valid POST always rechecks through the locked service even if the
+form was opened before submit. Dashboard exposes edit links only for DRAFT.
+HTML error pages preserve the web flow without changing the REST error shape.
 
-Keep a consistent lock order with E and, if chosen, refresh already managed
-entities after locking. Preserve the public update signature unless B/E agree
-otherwise. Do not introduce a second publishing state machine in B.
+## Preparation and review history
 
-## Acceptance work after team confirmation
+On 8 October, preparation commit `4208e4562aaf728caefde4093664a17af0b6411b`
+added 12 **baseline** status/actor cases and five REST update checks without
+changing behavior. B's focused regression passed 46/46. The commit was pushed
+to `natchapol_6733802674_02`.
 
-- [ ] Record all 12 policy outcomes, covered fields, error contracts and approvers.
-- [ ] Replace baseline owner/admin expectations; run new policy tests FAIL before implementation.
-- [ ] Add persisted-row assertions for all 12 state/actor cases.
-- [ ] Add real security-filter HTTP coverage including session and CSRF.
-- [ ] Add both transaction orders and stale candidate/entity tests on PostgreSQL.
-- [ ] Implement agreed B/E policy and concurrency strategy; confirm PASS.
-- [ ] Run B regressions, integrated `verify`, and existing viewCount regressions.
-- [ ] Send branch, commit SHA, commands/results and limits to E/team for review.
+The user reported A's independent review: regression 46/46, actor forwarding
+and errors 401/403/400 matched the existing contract. A correctly identified
+the 12 cases as preparation, not acceptance. That report did not approve a
+policy implementation by itself.
 
-## Preparation verification
+On 9 October the user supplied A's review of E at
+`742a0fa40f35499abe452d81b2756eec198cddac`, explicitly assigning B shared
+lock + refresh + owner/admin + DRAFT guard, including non-DRAFT no-op rejection.
+B replaced baseline expectations with the supplied acceptance contract and
+added PostgreSQL session/persistence/race fixtures.
 
-Command:
+A's reported E-only evidence (450 Java tests, 28 reviewer-only additions in a
+478-test overlay, Python12 and matching Build and test CI) is separate from
+B's new runs. It does not certify B metadata/C tags or approve merge/deploy.
 
-```text
-mvn -B -f code/pom.xml "-Dtest=ToolServiceImplTest,CategoryServiceImplTest,ToolRestControllerTest,CategoryRestControllerTest,CurrentActorProviderTest,ToolWebControllerTest" test
-git diff --check
-```
+## Evidence and remaining work
 
-Result on 8 October 2026: **46 tests passed; failures/errors/skips = 0**;
-Maven BUILD SUCCESS on Java 17. This includes 12 new baseline matrix cases,
-5 new REST update checks, and the existing B regressions. `git diff --check`
-passed. The local log is `code/target/b1-preparation-tests.log` (ignored build
-output). Full `verify` and PostgreSQL approval-race tests are not claimed by
-this preparation. Existing viewCount implementation is unchanged.
+Read [B's actual test report](role-b-b1-test-report.md) and
+[composition instructions](../test/role-b-b1/README.md) for runtime, source
+hashes, red/green counts and limits. Existing viewCount code is unchanged.
+
+E needs the B candidate and C tag guards on a common source, then must rerun
+acceptance/races/CI and send the new SHA to A/D. A must inspect actual metadata/
+tag server guards, real sessions/CSRF and persisted denied-state invariants on
+that SHA. C coordinates Tool/Tag lock ordering and assign/delete races with E.
+Any shared database baseline/migration/backup/restore is a separate rollout.
 
 ## Message for E/team (draft, not sent)
 
-ฝั่ง B เตรียม tests B1 แล้ว: 4 สถานะ × owner/admin/คนอื่น รวม 12 กรณี
-บันทึก behavior ปัจจุบัน และเพิ่ม tests API update; regression รวมผ่าน 46/46
-ยังไม่เปลี่ยน production behavior และไม่ได้ทำ viewCount ซ้ำ
-
-ขอ E/ทีมยืนยันแต่ละสถานะ DRAFT/PENDING/PUBLISHED/DEPRECATED ว่า owner/admin
-แก้ metadata ได้ไหม ถ้าแก้แล้วคงสถานะหรือกลับ DRAFT และ error ที่ต้องคืนเมื่อ
-แก้ไม่ได้ รวมถึงขอบเขต fields และกรณีส่งค่าเดิมโดยไม่มีการเปลี่ยนแปลง
-
-ขอเลือกวิธีป้องกัน approve ข้อมูลคนละชุดกับที่ admin ตรวจด้วยครับ: row lock
-อย่างเดียวไม่ป้องกันกรณี admin ตรวจ A → มีการแก้เป็น B → กด approve ของ A
-โดยเฉพาะถ้าแก้แล้ว submit ใหม่ก่อน approval เก่าจะมาถึง เมื่อ policy ชัด B
-จะเปลี่ยน baseline tests เป็น acceptance tests แล้วทำร่วมกับ E และทดสอบ
-ทั้งสองลำดับ transaction บน PostgreSQL ก่อนเสนอรวมงาน
+B ทำ metadata DRAFT-only guard ตาม handoff E และรายงาน A แล้ว: shared Tool
+lock + refresh → owner/admin → DRAFT → validation/mutation. Non-DRAFT รวม no-op
+คืน 409; คนอื่น 403. Editor/dashboard ใช้กติกาเดียวกันและ stale form หลบ service
+guard ไม่ได้ มี session/CSRF และ PostgreSQL persisted/race fixtures ให้ E รวม
+ตาม README. ดู SHA/ผลรันทดสอบจากข้อความส่งมอบล่าสุดและ test report ก่อนตรวจ.
+ยังไม่รับรอง B1 ทั้งทีม ต้องรวม C tag guards และส่ง integration SHA ใหม่ให้ A/D
+ตรวจอีกครั้ง; ไม่ได้ merge/deploy/รันฐานทีม.

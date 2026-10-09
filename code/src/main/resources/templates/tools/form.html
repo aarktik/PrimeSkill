@@ -8,6 +8,7 @@
 <body>
 <main class="ps-page ps-tool-form">
     <h1 th:text="${pageTitle}">จัดการเครื่องมือ</h1>
+    <p>แก้ไขข้อมูลเครื่องมือได้เฉพาะสถานะแบบร่าง</p>
     <form th:action="${formAction}" th:object="${toolRequest}" method="post" novalidate>
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 

@@ -7,11 +7,13 @@ import com.example.toolhub.dto.request.CreateToolRequest;
 import com.example.toolhub.dto.request.UpdateToolRequest;
 import com.example.toolhub.dto.response.ToolResponse;
 import com.example.toolhub.exception.CatalogConflictException;
+import com.example.toolhub.exception.InvalidStateTransitionException;
 import com.example.toolhub.exception.ResourceNotFoundException;
 import com.example.toolhub.mapper.ToolMapper;
 import com.example.toolhub.repository.CategoryRepository;
 import com.example.toolhub.repository.ToolRepository;
 import com.example.toolhub.service.ToolService;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,13 +25,15 @@ public class ToolServiceImpl implements ToolService {
     private final ToolRepository toolRepository;
     private final CategoryRepository categoryRepository;
     private final ToolMapper toolMapper;
+    private final EntityManager entityManager;
 
     public ToolServiceImpl(ToolRepository toolRepository,
                            CategoryRepository categoryRepository,
-                           ToolMapper toolMapper) {
+                           ToolMapper toolMapper, EntityManager entityManager) {
         this.toolRepository = toolRepository;
         this.categoryRepository = categoryRepository;
         this.toolMapper = toolMapper;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -88,8 +92,13 @@ public class ToolServiceImpl implements ToolService {
     @Override
     @Transactional
     public ToolResponse update(Long id, UpdateToolRequest request, Long actorUserId, boolean actorIsAdmin) {
-        Tool tool = findTool(id);
+        Tool tool = toolRepository.findForUpdateById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tool not found: " + id));
+        entityManager.refresh(tool);
         assertCanMutate(tool, actorUserId, actorIsAdmin);
+        if (tool.getStatus() != ToolStatus.DRAFT) {
+            throw new InvalidStateTransitionException("Tool metadata can only be edited in draft status");
+        }
         if (toolRepository.existsBySlugAndIdNot(request.slug(), id)) {
             throw new CatalogConflictException("Tool slug already exists");
         }
