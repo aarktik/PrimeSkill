@@ -94,7 +94,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify E B1 report gate
+      - name: Verify B metadata and E B1 report gate
         run: |
           python scripts/test-review-ci-reports.py -v
           python scripts/test-role-e-b1-reports.py -v
