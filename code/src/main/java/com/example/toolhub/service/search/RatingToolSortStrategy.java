@@ -13,8 +13,8 @@ public class RatingToolSortStrategy implements ToolSortStrategy {
 
     @Override
     public Sort toSort() {
-        // Rating needs review aggregate, fall back to newest for now.
-        return Sort.by(Sort.Direction.DESC, "createdAt")
-                .and(Sort.by(Sort.Direction.ASC, "id"));
+        // The repository orders by the full-precision review aggregate before pagination.
+        // This strategy exposes the stable tie-break; it must not append newest-first.
+        return Sort.by(Sort.Direction.ASC, "id");
     }
 }

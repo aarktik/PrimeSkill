@@ -1,6 +1,7 @@
 package com.example.toolhub.controller.web;
 
 import com.example.toolhub.service.CategoryService;
+import com.example.toolhub.service.ReviewSummaryService;
 import com.example.toolhub.service.TagService;
 import com.example.toolhub.service.ToolSearchService;
 import com.example.toolhub.service.search.ToolSortOption;
@@ -18,13 +19,16 @@ public class ToolBrowseWebController {
     private final ToolSearchService toolSearchService;
     private final CategoryService categoryService;
     private final TagService tagService;
+    private final ReviewSummaryService reviewSummaryService;
 
     public ToolBrowseWebController(ToolSearchService toolSearchService,
                                    CategoryService categoryService,
-                                   TagService tagService) {
+                                   TagService tagService,
+                                   ReviewSummaryService reviewSummaryService) {
         this.toolSearchService = toolSearchService;
         this.categoryService = categoryService;
         this.tagService = tagService;
+        this.reviewSummaryService = reviewSummaryService;
     }
 
     @GetMapping("/tools")
@@ -48,6 +52,9 @@ public class ToolBrowseWebController {
         var result = toolSearchService.search(keyword, categoryId, tagSlugs, effectiveSort, safePage, safeSize);
 
         model.addAttribute("tools", result.getContent());
+        var toolIds = result.getContent().stream().map(tool -> tool.getId()).toList();
+        model.addAttribute("reviewSummaries", toolIds.isEmpty() ? java.util.Map.of()
+                : reviewSummaryService.summarizeByToolIds(toolIds));
         model.addAttribute("totalElements", result.getTotalElements());
         model.addAttribute("page", result.getNumber());
         model.addAttribute("size", result.getSize());
