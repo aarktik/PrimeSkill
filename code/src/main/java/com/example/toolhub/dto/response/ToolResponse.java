@@ -15,6 +15,7 @@ public final class ToolResponse {
     private final Long ownerId;
     private final String repositoryUrl;
     private final ToolStatus status;
+    private final long reviewRevision;
     private final long viewCount;
     private final Instant createdAt;
     private final Instant updatedAt;
@@ -31,6 +32,7 @@ public final class ToolResponse {
         this.ownerId = builder.ownerId;
         this.repositoryUrl = builder.repositoryUrl;
         this.status = builder.status;
+        this.reviewRevision = builder.reviewRevision;
         this.viewCount = builder.viewCount;
         this.createdAt = builder.createdAt;
         this.updatedAt = builder.updatedAt;
@@ -48,6 +50,7 @@ public final class ToolResponse {
     public Long getOwnerId() { return ownerId; }
     public String getRepositoryUrl() { return repositoryUrl; }
     public ToolStatus getStatus() { return status; }
+    public long getReviewRevision() { return reviewRevision; }
     public long getViewCount() { return viewCount; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
@@ -64,6 +67,7 @@ public final class ToolResponse {
         private Long ownerId;
         private String repositoryUrl;
         private ToolStatus status;
+        private long reviewRevision;
         private long viewCount;
         private Instant createdAt;
         private Instant updatedAt;
@@ -79,6 +83,7 @@ public final class ToolResponse {
         public Builder ownerId(Long value) { ownerId = value; return this; }
         public Builder repositoryUrl(String value) { repositoryUrl = value; return this; }
         public Builder status(ToolStatus value) { status = value; return this; }
+        public Builder reviewRevision(long value) { reviewRevision = value; return this; }
         public Builder viewCount(long value) { viewCount = value; return this; }
         public Builder createdAt(Instant value) { createdAt = value; return this; }
         public Builder updatedAt(Instant value) { updatedAt = value; return this; }

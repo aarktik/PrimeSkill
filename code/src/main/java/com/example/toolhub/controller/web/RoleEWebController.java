@@ -164,13 +164,13 @@ public class RoleEWebController {
     }
 
     @PostMapping("/admin/tools/{toolId}/approve")
-    public String approve(@PathVariable Long toolId, RedirectAttributes redirect) {
-        return adminTransition(toolId, PublishingAction.APPROVE, "อนุมัติเครื่องมือแล้ว", redirect);
+    public String approve(@PathVariable Long toolId, @RequestParam String expectedReviewRevision, RedirectAttributes redirect) {
+        return adminTransition(toolId, PublishingAction.APPROVE, parseRevision(expectedReviewRevision), "อนุมัติเครื่องมือแล้ว", redirect);
     }
 
     @PostMapping("/admin/tools/{toolId}/reject")
-    public String reject(@PathVariable Long toolId, RedirectAttributes redirect) {
-        return adminTransition(toolId, PublishingAction.REJECT, "ส่งเครื่องมือกลับไปเป็นแบบร่างแล้ว", redirect);
+    public String reject(@PathVariable Long toolId, @RequestParam String expectedReviewRevision, RedirectAttributes redirect) {
+        return adminTransition(toolId, PublishingAction.REJECT, parseRevision(expectedReviewRevision), "ส่งเครื่องมือกลับไปเป็นแบบร่างแล้ว", redirect);
     }
 
     private String ownerTransition(Long toolId, PublishingAction action, String message,
@@ -182,11 +182,20 @@ public class RoleEWebController {
         return versionsRedirect(toolId);
     }
 
-    private String adminTransition(Long toolId, PublishingAction action, String message,
+    private String adminTransition(Long toolId, PublishingAction action, long revision, String message,
                                    RedirectAttributes redirect) {
-        publishingService.transition(toolId, action, actorProvider.requireActor());
+        publishingService.decide(toolId, action, revision, actorProvider.requireActor());
         redirect.addFlashAttribute("successMessage", message);
         return "redirect:/admin/tools";
+    }
+
+    private long parseRevision(String value) {
+        try {
+            if (!value.matches("[0-9]+")) throw new NumberFormatException();
+            return Long.parseLong(value);
+        } catch (NumberFormatException exception) {
+            throw new com.example.toolhub.exception.InvalidRequestParameterException("Invalid submission revision");
+        }
     }
 
     private ToolResponse ownedTool(Long toolId, CurrentActor actor) {

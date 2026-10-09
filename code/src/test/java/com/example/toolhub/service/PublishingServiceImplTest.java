@@ -28,13 +28,14 @@ import org.springframework.security.access.AccessDeniedException;
 @ExtendWith(MockitoExtension.class)
 class PublishingServiceImplTest {
     @Mock private ToolRepository toolRepository;
+    @Mock private jakarta.persistence.EntityManager entityManager;
     @Mock private ToolMapper toolMapper;
     private PublishingServiceImpl service;
     private Tool tool;
 
     @BeforeEach
     void setUp() {
-        service = new PublishingServiceImpl(toolRepository, toolMapper, new PublishingStateMachine());
+        service = new PublishingServiceImpl(toolRepository, toolMapper, new PublishingStateMachine(), entityManager);
         tool = new Tool(7L, new Category("Automation", "automation", null),
                 "Tool", "tool", "Short", "Description", null);
     }
@@ -46,7 +47,7 @@ class PublishingServiceImplTest {
         service.transition(1L, PublishingAction.SUBMIT, new CurrentActor(7L, false));
         assertEquals(ToolStatus.PENDING, tool.getStatus());
 
-        service.transition(1L, PublishingAction.APPROVE, new CurrentActor(8L, true));
+        service.decide(1L, PublishingAction.APPROVE, 1L, new CurrentActor(8L, true));
         assertEquals(ToolStatus.PUBLISHED, tool.getStatus());
         verify(toolMapper, org.mockito.Mockito.times(2)).toResponse(tool);
     }
@@ -62,10 +63,9 @@ class PublishingServiceImplTest {
 
     @Test
     void ownerWithoutAdminRoleCannotApprove() {
-        when(toolRepository.findForUpdateById(1L)).thenReturn(Optional.of(tool));
 
         assertThrows(AccessDeniedException.class,
-                () -> service.transition(1L, PublishingAction.APPROVE, new CurrentActor(7L, false)));
+                () -> service.decide(1L, PublishingAction.APPROVE, 0L, new CurrentActor(7L, false)));
         assertEquals(ToolStatus.DRAFT, tool.getStatus());
     }
 
@@ -101,11 +101,11 @@ class PublishingServiceImplTest {
         CurrentActor admin = new CurrentActor(8L, true);
 
         service.transition(1L, PublishingAction.SUBMIT, owner);
-        service.transition(1L, PublishingAction.REJECT, admin);
+        service.decide(1L, PublishingAction.REJECT, 1L, admin);
         assertEquals(ToolStatus.DRAFT, tool.getStatus());
 
         service.transition(1L, PublishingAction.SUBMIT, owner);
-        service.transition(1L, PublishingAction.APPROVE, admin);
+        service.decide(1L, PublishingAction.APPROVE, 2L, admin);
         service.transition(1L, PublishingAction.DEPRECATE, admin);
         assertEquals(ToolStatus.DEPRECATED, tool.getStatus());
 

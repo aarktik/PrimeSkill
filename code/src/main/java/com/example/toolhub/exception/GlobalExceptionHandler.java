@@ -28,6 +28,17 @@ public class GlobalExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private static final Set<String> CONFLICT_SQL_STATES = Set.of("23503", "23505");
 
+    @ExceptionHandler(StaleReviewRevisionException.class)
+    public ResponseEntity<ErrorResponse> handleStaleRevision(StaleReviewRevisionException exception, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "STALE_REVIEW_REVISION", exception.getMessage(), request, List.of());
+    }
+
+    @ExceptionHandler(org.springframework.dao.PessimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrentOperation(RuntimeException exception, HttpServletRequest request) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, "CONCURRENT_OPERATION_RETRY",
+                "Concurrent operation; reload and confirm your action again", request, List.of());
+    }
+
     @ExceptionHandler(InvalidRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleInvalidParameter(
             InvalidRequestParameterException exception, HttpServletRequest request) {

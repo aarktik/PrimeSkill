@@ -80,6 +80,7 @@ jobs:
       PRIMESKILL_TEST_DB_URL: jdbc:postgresql://127.0.0.1:5432/primeskill_test_ci
       PRIMESKILL_TEST_DB_USERNAME: primeskill_test
       PRIMESKILL_TEST_DB_PASSWORD: ci-only-disposable-database
+      MAVEN_ARGS: ''
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -90,6 +91,16 @@ jobs:
           cache-dependency-path: code/pom.xml
       - name: Verify unit tests and PostgreSQL publishing regressions
         run: mvn -B -f code/pom.xml -Ppostgres-it verify
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify E B1 report gate
+        run: |
+          python scripts/test-review-ci-reports.py -v
+          python scripts/test-role-e-b1-reports.py -v
+          python scripts/check-role-e-b1-reports.py code/target --output code/target/b1-evidence/summary.json
+          git rev-parse HEAD > code/target/b1-evidence/source-sha.txt
+          java -version 2> code/target/b1-evidence/java-version.txt
       - name: Upload PostgreSQL integration reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,4 +109,5 @@ jobs:
           path: |
             code/target/surefire-reports/
             code/target/failsafe-reports/
+            code/target/b1-evidence/
           if-no-files-found: ignore

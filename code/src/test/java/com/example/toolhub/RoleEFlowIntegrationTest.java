@@ -59,10 +59,10 @@ class RoleEFlowIntegrationTest {
                 .andExpect(status().isConflict());
         mvc.perform(get("/api/v1/admin/tools/pending").session(admin.session))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].id").value(tool));
-        send(admin, post("/api/v1/admin/tools/" + tool + "/reject"), null)
+        send(admin, post("/api/v1/admin/tools/" + tool + "/reject"), "{\"expectedReviewRevision\":1}")
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("DRAFT"));
         send(owner, post("/api/v1/tools/" + tool + "/submit"), null).andExpect(status().isOk());
-        send(admin, post("/api/v1/admin/tools/" + tool + "/approve"), null)
+        send(admin, post("/api/v1/admin/tools/" + tool + "/approve"), "{\"expectedReviewRevision\":2}")
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("PUBLISHED"));
         mvc.perform(get(versions)).andExpect(status().isOk()).andExpect(jsonPath("$[0].version").value("1.1"));
         mvc.perform(get(versions + "/" + version)).andExpect(status().isOk());
@@ -127,7 +127,7 @@ class RoleEFlowIntegrationTest {
         jdbc.update("update tools set status = ? where id = ?", initial, tool);
         boolean moderation = action.equals("approve") || action.equals("reject");
         String path = "/api/v1/" + (moderation ? "admin/" : "") + "tools/" + tool + "/" + action;
-        send(moderation ? admin : owner, post(path), null)
+        send(moderation ? admin : owner, post(path), moderation ? "{\"expectedReviewRevision\":0}" : null)
                 .andExpect(status().is(next.equals("-") ? 409 : 200));
         assertEquals(next.equals("-") ? initial : next,
                 jdbc.queryForObject("select status from tools where id = ?", String.class, tool));
@@ -245,7 +245,7 @@ class RoleEFlowIntegrationTest {
                 .andExpect(status().is3xxRedirection());
         send(owner, post("/dashboard/tools/" + tool + "/submit"), null).andExpect(status().is3xxRedirection());
         mvc.perform(get("/admin/tools").session(admin.session)).andExpect(status().isOk());
-        send(admin, post("/admin/tools/" + tool + "/approve"), null).andExpect(status().is3xxRedirection());
+        send(admin, post("/admin/tools/" + tool + "/approve").param("expectedReviewRevision", "1"), null).andExpect(status().is3xxRedirection());
         mvc.perform(get("/tools/" + tool + "/versions")).andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(script))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("&lt;script&gt;")));

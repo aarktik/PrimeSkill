@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS tools (
     category_id BIGINT NOT NULL,
     owner_id BIGINT NOT NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+    review_revision BIGINT NOT NULL DEFAULT 0 CONSTRAINT ck_tools_review_revision_nonnegative CHECK (review_revision >= 0),
     view_count BIGINT NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,

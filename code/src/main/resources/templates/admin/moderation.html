@@ -25,11 +25,13 @@
                     <td><span class="ps-e-badge ps-e-badge--warning">รออนุมัติ</span></td>
                     <td><div class="ps-e-actions">
                         <form th:action="@{/admin/tools/{id}/approve(id=${tool.id})}" method="post">
+                            <input type="hidden" name="expectedReviewRevision" th:value="${tool.reviewRevision}">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                             <button class="ps-e-button ps-e-button--primary" type="submit">อนุมัติ</button>
                         </form>
                         <form th:action="@{/admin/tools/{id}/reject(id=${tool.id})}" method="post"
                               onsubmit="return confirm('ส่งเครื่องมือนี้กลับไปเป็นแบบร่างหรือไม่?')">
+                            <input type="hidden" name="expectedReviewRevision" th:value="${tool.reviewRevision}">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                             <button class="ps-e-button ps-e-button--secondary" type="submit">ส่งกลับ</button>
                         </form>

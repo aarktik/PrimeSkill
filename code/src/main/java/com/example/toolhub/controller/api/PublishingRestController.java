@@ -4,6 +4,9 @@ import com.example.toolhub.domain.enums.PublishingAction;
 import com.example.toolhub.dto.response.ToolResponse;
 import com.example.toolhub.exception.InvalidRequestParameterException;
 import java.util.Set;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestBody;
+import com.example.toolhub.dto.request.ReviewDecisionRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import com.example.toolhub.security.CurrentActorProvider;
@@ -41,14 +44,16 @@ public class PublishingRestController {
 
     @PostMapping("/admin/tools/{id}/approve")
     @Operation(summary = "Approve a pending tool")
-    public ResponseEntity<ToolResponse> approve(@PathVariable Long id) {
-        return transition(id, PublishingAction.APPROVE);
+    public ResponseEntity<ToolResponse> approve(@PathVariable Long id, @Valid @RequestBody ReviewDecisionRequest request) {
+        return ResponseEntity.ok(publishingService.decide(id, PublishingAction.APPROVE,
+                request.expectedReviewRevision(), currentActorProvider.requireActor()));
     }
 
     @PostMapping("/admin/tools/{id}/reject")
     @Operation(summary = "Reject a pending tool")
-    public ResponseEntity<ToolResponse> reject(@PathVariable Long id) {
-        return transition(id, PublishingAction.REJECT);
+    public ResponseEntity<ToolResponse> reject(@PathVariable Long id, @Valid @RequestBody ReviewDecisionRequest request) {
+        return ResponseEntity.ok(publishingService.decide(id, PublishingAction.REJECT,
+                request.expectedReviewRevision(), currentActorProvider.requireActor()));
     }
 
     @PostMapping("/tools/{id}/deprecate")

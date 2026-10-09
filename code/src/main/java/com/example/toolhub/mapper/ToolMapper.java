@@ -21,6 +21,7 @@ public class ToolMapper {
                 .ownerId(tool.getOwnerId())
                 .repositoryUrl(tool.getRepositoryUrl())
                 .status(tool.getStatus())
+                .reviewRevision(tool.getReviewRevision())
                 .viewCount(tool.getViewCount())
                 .createdAt(tool.getCreatedAt())
                 .updatedAt(tool.getUpdatedAt())

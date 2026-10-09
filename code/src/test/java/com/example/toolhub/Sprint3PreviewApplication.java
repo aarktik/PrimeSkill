@@ -41,8 +41,8 @@ public class Sprint3PreviewApplication {
                             "ตัวอย่าง " + stage, "preview-" + stage, "เครื่องมือสำหรับตรวจ Sprint 3",
                             "ข้อมูลชั่วคราวสำหรับลองฟอร์ม เวอร์ชัน และการอนุมัติ", category.getId(), null), owner.getId());
                     versions.create(tool.getId(), new com.example.toolhub.dto.request.ToolVersionRequest("1.0.0", "รุ่นตัวอย่างสำหรับตรวจงาน"), ownerActor);
-                    if (!stage.equals("draft")) publishing.transition(tool.getId(), com.example.toolhub.domain.enums.PublishingAction.SUBMIT, ownerActor);
-                    if (stage.equals("published")) publishing.transition(tool.getId(), com.example.toolhub.domain.enums.PublishingAction.APPROVE, adminActor);
+                    if (!stage.equals("draft")) tool = publishing.transition(tool.getId(), com.example.toolhub.domain.enums.PublishingAction.SUBMIT, ownerActor);
+                    if (stage.equals("published")) publishing.decide(tool.getId(), com.example.toolhub.domain.enums.PublishingAction.APPROVE, tool.getReviewRevision(), adminActor);
                 }
             };
         }

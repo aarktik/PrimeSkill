@@ -31,13 +31,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class ToolVersionServiceImplTest {
     @Mock private ToolRepository toolRepository;
+    @Mock private jakarta.persistence.EntityManager entityManager;
     @Mock private ToolVersionRepository versionRepository;
     private ToolVersionServiceImpl service;
     private Tool tool;
 
     @BeforeEach
     void setUp() {
-        service = new ToolVersionServiceImpl(toolRepository, versionRepository);
+        service = new ToolVersionServiceImpl(toolRepository, versionRepository, entityManager);
         tool = new Tool(7L, new Category("Automation", "automation", null),
                 "Tool", "tool", "Short", "Description", null);
         ReflectionTestUtils.setField(tool, "id", 1L);

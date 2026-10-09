@@ -9,5 +9,7 @@ import org.springframework.data.domain.Pageable;
 public interface PublishingService {
     ToolResponse transition(Long toolId, PublishingAction action, CurrentActor actor);
 
+    ToolResponse decide(Long toolId, PublishingAction action, long expectedReviewRevision, CurrentActor actor);
+
     Page<ToolResponse> listPending(Pageable pageable, CurrentActor actor);
 }

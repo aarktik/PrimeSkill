@@ -13,6 +13,7 @@ import com.example.toolhub.repository.ToolVersionRepository;
 import com.example.toolhub.security.CurrentActor;
 import com.example.toolhub.service.ToolVersionService;
 import java.util.List;
+import jakarta.persistence.EntityManager;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,10 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class ToolVersionServiceImpl implements ToolVersionService {
     private final ToolRepository toolRepository;
     private final ToolVersionRepository versionRepository;
+    private final EntityManager entityManager;
 
-    public ToolVersionServiceImpl(ToolRepository toolRepository, ToolVersionRepository versionRepository) {
+    public ToolVersionServiceImpl(ToolRepository toolRepository, ToolVersionRepository versionRepository, EntityManager entityManager) {
         this.toolRepository = toolRepository;
         this.versionRepository = versionRepository;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -91,8 +94,10 @@ public class ToolVersionServiceImpl implements ToolVersionService {
     }
 
     private Tool findToolForUpdate(Long toolId) {
-        return toolRepository.findForUpdateById(toolId)
+        Tool tool = toolRepository.findForUpdateById(toolId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tool not found: " + toolId));
+        entityManager.refresh(tool);
+        return tool;
     }
 
     private ToolVersion findVersion(Long toolId, Long versionId) {
