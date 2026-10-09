@@ -36,7 +36,7 @@ Prepared `.github/workflows/review-publishing.yml` for the expanded CI check. It
 6. Runs the expanded suite and checks required XML coverage: race 10, RoleDPostgresIT 28, concurrent rollback 4 and sequential rollback 4. Missing, skipped, failed or unexpectedly short suites fail the job.
 7. Uploads baseline/overlay XML, summary and revision evidence even when verification fails.
 
-This delivery includes the new workflow and its scripts. A successful expanded GitHub run remains pending verification after publication. It must not inherit the success label of run 37801303699.
+The expanded workflow was subsequently published and verified in run 37802871848; see the publication section below. Its success is supported by its own artifacts, separately from run 37801303699.
 
 ## Local validation of CI additions
 
@@ -47,7 +47,7 @@ This delivery includes the new workflow and its scripts. A successful expanded G
 
 ## Next action
 
-Publish the reviewed E delivery batch to the personal branch. Its push triggers the new expanded workflow; verify the resolved source/harness SHAs and baseline/overlay artifacts, then append that run URL/results here. No merge develop, PR approval or shared database migration has been performed by this CI task.
+Publication and expanded CI verification are complete as recorded below. Next, A/D review the exact combined source and decide the PR route using [E review readiness report](role-de-review-readiness.md). No develop merge, PR approval or shared database migration has been performed by this CI task.
 
 
 ## Expanded CI verified after publication — 2026-10-08

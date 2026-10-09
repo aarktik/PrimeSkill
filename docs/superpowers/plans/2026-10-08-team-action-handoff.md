@@ -4,6 +4,10 @@
 
 ## สิ่งที่ทำแล้วและไม่ต้องทำซ้ำ
 
+- **Java17 verification (9 ต.ค.):** ติดตั้ง JDK17 ควบคู่กับ26, เพิ่ม Maven Enforcer/Java17 wrapper และ default PostgreSQL runner. E candidate ที่ `D:\PrimeSkill-worktrees\b1-role-e` ผ่าน clean verify บน Java17 จริง450 tests (265+185, failures/errors/skips0) และ migration rehearsal/app validation ผ่าน; ดู `doc/java17-test-report.md` ใน worktree. ยังไม่ commit/push; local PG18.6 ไม่ใช่ CI/PG17 รอบใหม่.
+
+- **B1 รอบทำส่วน E ก่อน:** candidate แยกอยู่ที่ `D:\PrimeSkill-worktrees\b1-role-e` บน `codex/b1-role-e` จาก3187098 ยังไม่ commit/push. อ่าน `doc/b1-role-e-handoff.md` และ `doc/b1-implementation-test-report.md` ใน worktree. E ทำ revision/decision/version paths; B ต้องทำ metadata DRAFT guard และ C ต้องทำ tag DRAFT guard ก่อนถือว่า B1 รวมทีมเสร็จ. ผล CI392 ด้านล่างเป็นงานก่อน B1.
+
 - D นำ Tool row lock/refresh เข้า ReviewService แล้วใน d8c51e3 และ branch D ล่าสุดที่ตรวจคือ e4df8c0. ไม่ apply candidate patch ของ E ซ้ำ.
 - Branch `role-de-review-pg-rollback` ที่ `3187098fac9d91c14d1fdfe40bb765797cde8cfd` รวม D+E และการแก้ test config ของ A แล้ว. ไม่ cherry-pick 9b03565 ซ้ำโดยไม่ดู diff.
 - E รัน source 3187098 เดิมโดยไม่เติมเทส: Surefire 247 + PostgreSQL 107 = 354, failures/errors/skips = 0. [รายงาน](../../../doc/role-de-3187098-postgres-test-report.md).
@@ -20,6 +24,8 @@
 
 ## ลำดับที่ 2 — A ร่วม D/E: ตรวจรับโค้ดรวม
 
+- [x] E ตรวจ source/diff, เชื่อมหลักฐาน lock/rollback/security และเตรียมเส้นทาง PR แล้วใน [รายงานตรวจรับฝั่ง E](../../../doc/role-de-review-readiness.md). ยังไม่ถือว่า A/D approve.
+
 - [ ] A อ่าน baseline354, local expanded392 และ expanded CI เมื่อมีผล โดยแยกหลักฐานตาม source/harness SHA.
 - [ ] ตรวจ lock/refresh, ทั้งสอง commit orders, stale managed entity, rollback และ author/admin delete hidden review; อย่าให้ sequential rollback4แทน concurrent4/race10.
 - [ ] ตรวจ session/CSRF/error behavior และ diff จากการรวม SecurityConfig/ToolRepository/templates ของแต่ละ Role.
@@ -27,6 +33,10 @@
 - [ ] Reviewer เป็นผู้ตัดสินใจ approve/merge หลังผลครบ. เอกสารนี้ไม่สั่ง merge develop.
 
 ## ลำดับที่ 3 — B/E และคนยืนยัน requirement: ตัดสินใจ B1
+
+- [x] เตรียม [implementation plan B1](2026-10-08-b1-edit-approval-implementation.md) ตามคำขอผู้ใช้ เพื่อให้ตรวจก่อนทำ; ยังไม่อนุมัติ policy หรือเริ่ม implementation.
+
+- [x] E ตรวจ behavior ของ B/E/C และเตรียม [ข้อเสนอ policy/API/revision/acceptance ครบชุด](../specs/2026-10-08-b1-edit-approval-design.md). สถานะยังเป็นข้อเสนอรอยืนยัน ไม่ใช่ implementation หรือ acceptance ที่ผ่านแล้ว.
 
 B `4208e45` push แล้ว แต่เป็น baseline tests/ข้อเสนอ ยังไม่เปลี่ยน behavior. Read: [B policy proposal](https://github.com/aarktik/PrimeSkill/blob/4208e4562aaf728caefde4093664a17af0b6411b/doc/role-b-tool-edit-policy-proposal.md).
 
@@ -45,6 +55,8 @@ B `4208e45` push แล้ว แต่เป็น baseline tests/ข้อเ�
 - [ ] ส่งSHA/ผลทดสอบให้reviewer; ไม่ต้องรอรันV8กับฐานทีมเพื่อเริ่มทำกับฐานdisposable.
 
 ## ลำดับที่ 5 — E/DB owner ร่วม B/C/D: migration
+
+- [x] E เตรียม local candidate เพิ่ม (9 ต.ค.): inventory SQL ตรวจ schema fallback, checksum manifest, full-schema fixture backup/migrate/rerun/restore/re-migrate และ actual app validate แบบ SQL init=never. Java450ผ่าน (265+185; failures/errors/skips0), rehearsalผ่าน. ไฟล์อยู่ใน worktree `D:\PrimeSkill-worktrees\b1-role-e`: `doc/migration-rollout-runbook.md`, `doc/migration-rollout-test-report.md`, `doc/database-rollout-checklist.md`. ยังไม่ commit/push และไม่ใช่การอนุมัติฐานทีม; target/history/runner/operator/backup/window ด้านล่างยังต้องยืนยัน.
 
 - [ ] กรอก [database rollout checklist](../../../doc/database-rollout-checklist.md): target/schema/operator/history/version sequence/backup/restore/window.
 - [ ] ตรวจoversized commentsและconstraintdefinitionจริง, URL conflictsและcolumn lengthsก่อนรัน. ห้ามtruncateเงียบหรือเดาเลขV7/V8.
