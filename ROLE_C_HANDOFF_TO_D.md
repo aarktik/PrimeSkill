@@ -1,5 +1,7 @@
 # Role C → Role D: ขอ contract คะแนนรีวิวสำหรับ sort=rating
 
+> อัปเดต 9 ต.ค. 2026: C ต่อ batch summary และ DB rating sort ตาม contract ของ D แล้วใน worktree แยกบนฐาน E `51d195e` ดู `doc/role-c-followup-handoff.md` และผลทดสอบใน `doc/role-c-followup-test-report.md` ข้อความด้านล่างเป็น handoff ก่อน D ส่งงาน ไม่ใช่สถานะโค้ดชุดใหม่นี้
+
 > จาก branch `supakron_673380061-4_02` (Role C: Search/Browse/Tags/Strategy)
 > สถานะ C: โค้ด + unit tests เสร็จ (`compile` ผ่าน, tests ใหม่ 27/27, regression B 24/24)
 > สถานะ D (24 ก.ย. 2026): **ยังไม่เริ่มลงมือ** — ไฟล์นี้จึงเป็นรายการฝากไว้ล่วงหน้า **ไม่บล็อกการ merge งาน C** C รวมเข้า `develop` ได้เลยโดยไม่รอ D

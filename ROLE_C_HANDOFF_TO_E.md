@@ -1,5 +1,7 @@
 # Role C → Role E: ประสาน migration, test DB และ published fixture
 
+> อัปเดต 9 ต.ค. 2026: C1 tag guards และ C2 rating browse อยู่ใน worktree แยกบนฐาน E `51d195e` แล้ว ใช้ Tool→Tag lock สำหรับ assign/unassign และ Tag-only สำหรับ delete ดู `doc/role-c-followup-handoff.md` และ `doc/role-c-followup-test-report.md` ข้อความด้านล่างเป็น handoff เก่าก่อน E เริ่มงาน
+
 > จาก branch `supakron_673380061-4_02` (Role C: Search/Browse/Tags/Strategy)
 > สถานะ C: โค้ด + unit tests เสร็จ (`compile` ผ่าน, tests ใหม่ 27/27, regression B 24/24)
 > สถานะ E (24 ก.ย. 2026): **ยังไม่เริ่มลงมือ** — ไฟล์นี้จึงเป็นรายการฝากไว้ล่วงหน้า **ไม่บล็อกการ merge งาน C** เพราะตอนนี้ยังไม่มี Flyway/State machine ให้ชนกัน
