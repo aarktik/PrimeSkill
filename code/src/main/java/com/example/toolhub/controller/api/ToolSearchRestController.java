@@ -22,7 +22,9 @@ public class ToolSearchRestController {
     }
 
     @GetMapping
-    @Operation(summary = "Search published tools")
+    @Operation(summary = "Search published tools", description = "sort=rating orders by the full-precision "
+            + "average review rating descending, unrated tools last, then id ascending before pagination. "
+            + "Tags match ANY requested slug; size is 1-100.")
     public ResponseEntity<PagedResponse<ToolResponse>> search(
             @RequestParam(name = "q", required = false) String keyword,
             @RequestParam(name = "category", required = false) Long categoryId,

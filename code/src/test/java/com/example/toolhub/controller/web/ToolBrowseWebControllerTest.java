@@ -12,6 +12,8 @@ import com.example.toolhub.dto.response.CategoryResponse;
 import com.example.toolhub.dto.response.TagResponse;
 import com.example.toolhub.dto.response.ToolResponse;
 import com.example.toolhub.service.CategoryService;
+import com.example.toolhub.service.ReviewSummaryService;
+import com.example.toolhub.dto.response.ReviewSummary;
 import com.example.toolhub.service.TagService;
 import com.example.toolhub.service.ToolSearchService;
 import java.util.List;
@@ -30,12 +32,13 @@ class ToolBrowseWebControllerTest {
     @Mock private ToolSearchService toolSearchService;
     @Mock private CategoryService categoryService;
     @Mock private TagService tagService;
+    @Mock private ReviewSummaryService reviewSummaryService;
 
     private ToolBrowseWebController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new ToolBrowseWebController(toolSearchService, categoryService, tagService);
+        controller = new ToolBrowseWebController(toolSearchService, categoryService, tagService, reviewSummaryService);
     }
 
     @Test
@@ -48,6 +51,8 @@ class ToolBrowseWebControllerTest {
         when(categoryService.findAll())
                 .thenReturn(List.of(new CategoryResponse(1L, "Productivity", "productivity", null)));
         when(tagService.findAll()).thenReturn(List.of(new TagResponse(1L, "Calendar", "calendar")));
+        var summaries = java.util.Map.of(1L, new ReviewSummary(1L, 4.5, 2));
+        when(reviewSummaryService.summarizeByToolIds(List.of(1L))).thenReturn(summaries);
         ExtendedModelMap model = new ExtendedModelMap();
 
         String view = controller.browse("cal", 1L, "calendar", "newest", 0, 20, model);
@@ -57,6 +62,8 @@ class ToolBrowseWebControllerTest {
         assertEquals(1L, model.get("totalElements"));
         assertEquals("explore", model.get("activeNav"));
         assertEquals("สำรวจเครื่องมือ", model.get("pageTitle"));
+        assertEquals(summaries, model.get("reviewSummaries"));
+        verify(reviewSummaryService).summarizeByToolIds(List.of(1L));
         verify(toolSearchService).search(any(), any(), any(), anyString(), anyInt(), anyInt());
     }
 
@@ -74,6 +81,8 @@ class ToolBrowseWebControllerTest {
         org.mockito.ArgumentCaptor<Integer> pageCaptor = org.mockito.ArgumentCaptor.forClass(Integer.class);
         verify(toolSearchService).search(any(), any(), anyList(), anyString(), pageCaptor.capture(), anyInt());
         assertEquals(0, pageCaptor.getValue());
+        org.mockito.Mockito.verifyNoInteractions(reviewSummaryService);
+        assertEquals(java.util.Map.of(), model.get("reviewSummaries"));
     }
 
     @Test

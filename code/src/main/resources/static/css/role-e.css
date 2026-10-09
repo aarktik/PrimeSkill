@@ -145,3 +145,5 @@ td { overflow-wrap: anywhere; }
     .ps-tool-actions .ps-btn { width: 100%; }
     .ps-tool-description-panel { padding: 20px; }
 }
+/* Browse review summaries use text so the score is available without interpreting icons. */
+.ps-tool-rating { margin-top: 12px; color: var(--ps-muted); font-size: 14px; line-height: 1.6; }
