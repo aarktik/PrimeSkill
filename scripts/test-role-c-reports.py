@@ -83,8 +83,13 @@ class RoleCGateTests(unittest.TestCase):
 
     def test_partial_concurrency_execution_is_rejected(self):
         name = "com.example.toolhub.TagMutationConcurrencyPostgresIT"
-        self.write("failsafe-reports", name, 21)
+        self.write("failsafe-reports", name, 33)
         with self.assertRaisesRegex(ValueError, "C integration coverage"): validate(self.root)
+
+    def test_pre_reject_tag_coverage_is_rejected(self):
+        name = "com.example.toolhub.TagMutationConcurrencyPostgresIT"
+        self.write("failsafe-reports", name, 22)
+        with self.assertRaisesRegex(ValueError, self.expected_error(name)): validate(self.root)
 
     def test_skipped_failed_or_errored_cases_are_rejected(self):
         for counter in ("skipped", "failures", "errors"):

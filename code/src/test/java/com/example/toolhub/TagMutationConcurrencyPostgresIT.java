@@ -65,6 +65,7 @@ class TagMutationConcurrencyPostgresIT {
     void deleteTag() { tags.delete(tag, true); }
     void submit() { publishing.transition(tool, PublishingAction.SUBMIT, new CurrentActor(owner, false)); }
     void approve() { publishing.decide(tool, PublishingAction.APPROVE, 1, new CurrentActor(owner, true)); }
+    void reject() { publishing.decide(tool, PublishingAction.REJECT, 1, new CurrentActor(owner, true)); }
     void link() { jdbc.update("INSERT INTO tool_tags(tool_id,tag_id) VALUES(?,?)", tool, tag); }
     long links() { return jdbc.queryForObject("SELECT COUNT(*) FROM tool_tags WHERE tool_id=? AND tag_id=?", Long.class, tool, tag); }
     Map<String, Object> snapshot() { return jdbc.queryForMap("SELECT * FROM tools WHERE id=?", tool); }
@@ -98,6 +99,81 @@ class TagMutationConcurrencyPostgresIT {
                 mutationFirst ? InvalidStateTransitionException.class : null,
                 mutationFirst ? null : InvalidStateTransitionException.class, false);
         state("PUBLISHED", 1); assertEquals(assign ? 0 : 1, links());
+    }
+
+    @ParameterizedTest(name = "assign={0}/mutationFirst={1}") @MethodSource("orders")
+    void tagMutationAndRejectionSerializeBothOrders(boolean assign, boolean mutationFirst) throws Exception {
+        if (!assign) link(); submit();
+        Map<String, Object> before = snapshot();
+        Runnable mutation = assign ? this::assign : this::unassign;
+        // A writer locking PENDING first is denied. A writer waiting for a
+        // committed REJECT must refresh and may edit the resulting DRAFT.
+        raced(mutationFirst ? mutation : this::reject, mutationFirst ? this::reject : mutation,
+                mutationFirst ? InvalidStateTransitionException.class : null, null, false);
+        state("DRAFT", 1);
+        assertEquals(mutationFirst ? (assign ? 0 : 1) : (assign ? 1 : 0), links());
+        assertMetadataUnchanged(before);
+        assertTrue(tagRepository.existsById(tag));
+        submit(); state("PENDING", 2);
+        Map<String, Object> resubmitted = snapshot();
+        assertThrows(StaleReviewRevisionException.class, this::reject);
+        assertThrows(StaleReviewRevisionException.class, this::approve);
+        assertEquals(resubmitted, snapshot());
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {true, false})
+    void rolledBackRejectionKeepsWaitingTagMutationDenied(boolean assign) throws Exception {
+        if (!assign) link(); submit();
+        Map<String, Object> before = snapshot();
+        raced(this::reject, assign ? this::assign : this::unassign,
+                null, InvalidStateTransitionException.class, true);
+        state("PENDING", 1); assertEquals(assign ? 0 : 1, links());
+        assertEquals(before, snapshot(), "Rolled back REJECT must not persist any Tool changes");
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {true, false})
+    void rolledBackRejectionAndTagMutationDoNotLeakIntoWaitingRejection(boolean assign) throws Exception {
+        if (!assign) link(); submit();
+        Map<String, Object> before = snapshot();
+        raced(() -> { reject(); if (assign) assign(); else unassign(); }, this::reject,
+                null, null, true);
+        state("DRAFT", 1); assertEquals(assign ? 0 : 1, links());
+        assertMetadataUnchanged(before);
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {true, false})
+    void rolledBackTagMutationAfterRejectionDoesNotLeakIntoResubmission(boolean assign) throws Exception {
+        if (!assign) link(); submit(); reject();
+        Map<String, Object> before = snapshot();
+        raced(assign ? this::assign : this::unassign, this::submit, null, null, true);
+        state("PENDING", 2); assertEquals(assign ? 0 : 1, links());
+        assertMetadataUnchanged(before);
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {true, false})
+    void staleManagedPendingAllowsTagMutationAfterCommittedRejection(boolean assign) throws Exception {
+        if (!assign) link(); submit();
+        Map<String, Object> before = snapshot();
+        new TransactionTemplate(manager).executeWithoutResult(status -> {
+            Tool cached = em.find(Tool.class, tool);
+            assertEquals(ToolStatus.PENDING, cached.getStatus());
+            try { workers.submit(this::reject).get(15, TimeUnit.SECONDS); }
+            catch (Exception exception) { throw new AssertionError(exception); }
+            assertEquals(ToolStatus.PENDING, cached.getStatus(), "Prove cached PENDING is stale");
+            if (assign) assign(); else unassign();
+            assertEquals(ToolStatus.DRAFT, cached.getStatus(), "Shared lock must refresh committed REJECT");
+        });
+        state("DRAFT", 1); assertEquals(assign ? 1 : 0, links());
+        assertMetadataUnchanged(before);
+    }
+
+    void assertMetadataUnchanged(Map<String, Object> before) {
+        var expected = new HashMap<>(before);
+        var actual = new HashMap<>(snapshot());
+        for (String key : List.of("status", "review_revision", "updated_at")) {
+            expected.remove(key); actual.remove(key);
+        }
+        assertEquals(expected, actual, "Only publishing state/revision/timestamp may change");
     }
 
     @ParameterizedTest @ValueSource(booleans = {true, false})

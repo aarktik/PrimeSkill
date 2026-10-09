@@ -14,7 +14,7 @@ REQUIRED = {
     "failsafe-reports": {
         "com.example.toolhub.RatingBrowsePostgresIT": 9,
         "com.example.toolhub.TagGuardPostgresIT": 35,
-        "com.example.toolhub.TagMutationConcurrencyPostgresIT": 22,
+        "com.example.toolhub.TagMutationConcurrencyPostgresIT": 34,
         "com.example.toolhub.ToolMetadataContractPostgresIT": 38,
         "com.example.toolhub.ToolMetadataConcurrencyPostgresIT": 11,
     },

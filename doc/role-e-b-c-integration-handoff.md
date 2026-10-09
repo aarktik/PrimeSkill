@@ -1,5 +1,7 @@
 # E รวม B+C — candidate สำหรับตรวจ
 
+> บันทึก snapshot ก่อน commit ชุดที่ต่อมาเป็น `0cc966f` ซึ่ง A/D แจ้งไม่พบ blocker และ CI ผ่านแล้ว งานเติม REJECT–tag หลังชุดนี้อ่าน [handoff 10 ตุลาคม](reject-tag-race-handoff-2026-10-10.md); ไม่ใช้ข้อจำกัด22กรณีของ snapshot นี้แทนสถานะ tests ชุดใหม่
+
 ## Source และสถานะ
 
 - E/B/UI base: `24ec2ac326cdc97f76c0a37872fe5e6c311edca2`
