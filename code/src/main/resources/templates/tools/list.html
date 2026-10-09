@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${pageTitle} + ' · Primeskill'">สำรวจเครื่องมือ · Primeskill</title>
+    <link rel="stylesheet" th:href="@{/css/role-e.css}">
+    <script defer th:src="@{/js/role-e.js}"></script>
     <style>
         :root{--ps-bg:#f8fafc;--ps-surface:#fff;--ps-text:#102a43;--ps-muted:#526477;--ps-primary:#123b5d;--ps-primary-hover:#0b2942;--ps-link:#175cd3;--ps-soft:#eaf2ff;--ps-border:#d8e1ea;--ps-control-border:#7c8b9a;--ps-radius-control:8px;--ps-radius-card:16px;--ps-shadow:0 8px 24px rgba(16,42,67,.08)}
         *{box-sizing:border-box}body{margin:0;background:var(--ps-bg);color:var(--ps-text);font-family:"Noto Sans Thai",system-ui,sans-serif;font-size:16px;line-height:1.6}
@@ -11,27 +13,29 @@
         .ps-btn--primary{background:var(--ps-primary);color:#fff}.ps-btn--primary:hover{background:var(--ps-primary-hover)}
         .ps-btn--secondary{background:var(--ps-surface);border-color:var(--ps-control-border);color:var(--ps-text)}
         .ps-btn--ghost{background:transparent;color:var(--ps-text)}
-        .ps-layout{display:grid;grid-template-columns:240px 1fr;gap:24px;margin-top:24px}
+        .ps-layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:24px;margin-top:24px}
         .ps-filters{background:var(--ps-surface);border:1px solid var(--ps-border);border-radius:var(--ps-radius-card);padding:16px;height:fit-content}
         .ps-field{margin-bottom:24px}.ps-field label{display:block;font-size:14px;font-weight:600;margin-bottom:8px}
         .ps-field input,.ps-field select{min-height:44px;width:100%;background:#fff;border:1px solid var(--ps-control-border);border-radius:var(--ps-radius-control);padding:12px;font:inherit;font-size:16px}
-        .ps-search-row{display:flex;gap:12px}.ps-search-row input{flex:1;min-height:44px;border:1px solid var(--ps-control-border);border-radius:var(--ps-radius-control);padding:12px;font:inherit;font-size:16px}
-        .ps-tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
-        .ps-tool-card{background:var(--ps-surface);border:1px solid var(--ps-border);border-radius:var(--ps-radius-card);box-shadow:var(--ps-shadow);padding:16px}
+        .ps-search-row{display:flex;gap:12px}.ps-search-row input{flex:1;min-width:0;min-height:44px;border:1px solid var(--ps-control-border);border-radius:var(--ps-radius-control);padding:12px;font:inherit;font-size:16px}
+        .ps-tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+        .ps-layout>section{min-width:0}.ps-tool-card{min-width:0;overflow-wrap:anywhere;background:var(--ps-surface);border:1px solid var(--ps-border);border-radius:var(--ps-radius-card);box-shadow:var(--ps-shadow);padding:16px}
         .ps-tool-card h2{font-size:18px;margin:0 0 8px}.ps-tool-card a{color:var(--ps-link)}
         .ps-tool-card p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--ps-muted)}
         .ps-badge{display:inline-block;font-size:13px;border-radius:999px;padding:2px 10px;background:#eef2f6;margin-right:4px}
         .ps-pagination{display:flex;gap:8px;align-items:center;margin-top:24px}
         .ps-pagination .ps-btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
-        @media (max-width:1023px){.ps-tool-grid{grid-template-columns:repeat(2,1fr)}}
-        @media (max-width:767px){.ps-page{padding:16px}.ps-layout{grid-template-columns:1fr}.ps-tool-grid{grid-template-columns:1fr}.ps-search-row{flex-direction:column}}
+        @media (max-width:1023px){.ps-tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media (max-width:767px){.ps-page{padding:16px}.ps-layout{grid-template-columns:minmax(0,1fr)}.ps-tool-grid{grid-template-columns:minmax(0,1fr)}.ps-search-row{flex-direction:column}}
     </style>
 </head>
 <body>
-<main class="ps-page ps-tools-list">
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main id="main" tabindex="-1" class="ps-page ps-tools-list">
     <header>
         <h1 th:text="${pageTitle}">สำรวจเครื่องมือ</h1>
         <p>ค้นพบเครื่องมือสำหรับ AI agents</p>
+        <p><a th:href="@{/my/reviews}">รีวิวของฉัน</a></p>
     </header>
 
     <form method="get" th:action="@{/tools}" role="search" aria-label="ค้นหาเครื่องมือ">
@@ -83,7 +87,11 @@
                             <span class="ps-badge" th:text="${tool.categoryName}">หมวด</span>
                             <span style="font-size:13px;color:var(--ps-muted)" th:text="'เข้าชม ' + ${tool.viewCount}">เข้าชม 0</span>
                         </div>
-                        <p style="font-size:13px;color:var(--ps-muted)">ยังไม่มีรีวิว</p>
+                        <div class="ps-tool-rating" th:with="summary=${reviewSummaries[tool.id]}">
+                            <span th:if="${summary != null and summary.reviewCount() > 0}"
+                                  th:text="'คะแนน ' + ${#numbers.formatDecimal(summary.avgRating(), 1, 1)} + ' / 5 · ' + ${summary.reviewCount()} + ' รีวิว'">คะแนน 4.5 / 5 · 2 รีวิว</span>
+                            <span th:unless="${summary != null and summary.reviewCount() > 0}">ยังไม่มีรีวิว</span>
+                        </div>
                     </article>
                 </div>
                 <nav class="ps-pagination" th:if="${totalPages > 1}" aria-label="เปลี่ยนหน้า">
@@ -99,5 +107,6 @@
         </div>
     </form>
 </main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

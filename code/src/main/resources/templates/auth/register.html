@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>สมัครสมาชิก · Primeskill</title><link rel="stylesheet" th:href="@{/css/role-e.css}"><script defer th:src="@{/js/role-e.js}"></script></head>
+<body><header th:replace="~{fragments/layout :: navbar}"></header>
+<main id="main" tabindex="-1" class="ps-e-page ps-auth">
+    <h1>สมัครสมาชิก</h1><p>สร้างบัญชีเพื่อเผยแพร่เครื่องมือของคุณ</p>
+    <form class="ps-e-card ps-e-form" data-auth="register" th:action="@{/api/v1/auth/register}" method="post">
+        <p data-form-error role="alert" tabindex="-1" hidden></p>
+        <div><label for="displayName">ชื่อที่แสดง</label><input id="displayName" name="displayName" autocomplete="nickname" minlength="2" maxlength="100" required></div>
+        <div><label for="email">อีเมล</label><input id="email" name="email" type="email" autocomplete="username" maxlength="255" required></div>
+        <div><label for="password">รหัสผ่าน</label><input id="password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" aria-describedby="password-help" required><p id="password-help">ใช้รหัสผ่าน 8–72 ตัวอักษร</p></div>
+        <button class="ps-e-button ps-e-button--primary" type="submit">สมัครสมาชิก</button>
+    </form><p>มีบัญชีแล้ว? <a th:href="@{/login}">เข้าสู่ระบบ</a></p>
+    <noscript>หน้านี้ต้องเปิด JavaScript เพื่อเชื่อมกับระบบสมัครสมาชิก</noscript>
+</main><footer th:replace="~{fragments/layout :: footer}"></footer></body></html>

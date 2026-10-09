@@ -34,7 +34,8 @@ public class ToolTagAssociationController {
     }
 
     @PostMapping("/{tagId}")
-    @Operation(summary = "Assign a tag to an owned tool")
+    @Operation(summary = "Assign a tag to a draft tool", description = "Owner or ADMIN only. "
+            + "Non-DRAFT tools return 409 INVALID_STATE_TRANSITION, including duplicate assignments.")
     public ResponseEntity<Void> assign(@PathVariable Long toolId, @PathVariable Long tagId) {
         CurrentActor actor = currentActorProvider.requireActor();
         tagService.assignTag(toolId, tagId, actor.id(), actor.admin());
@@ -42,7 +43,8 @@ public class ToolTagAssociationController {
     }
 
     @DeleteMapping("/{tagId}")
-    @Operation(summary = "Remove a tag from an owned tool")
+    @Operation(summary = "Remove a tag from a draft tool", description = "Owner or ADMIN only. "
+            + "Non-DRAFT tools return 409 INVALID_STATE_TRANSITION, including missing associations.")
     public ResponseEntity<Void> unassign(@PathVariable Long toolId, @PathVariable Long tagId) {
         CurrentActor actor = currentActorProvider.requireActor();
         tagService.unassignTag(toolId, tagId, actor.id(), actor.admin());

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' · Primeskill'">เครื่องมือรออนุมัติ · Primeskill</title>
+    <link rel="stylesheet" th:href="@{/css/role-e.css}">
+    <script defer th:src="@{/js/role-e.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main id="main" tabindex="-1" class="ps-e-page">
+    <nav aria-label="เส้นทางนำทาง"><a th:href="@{/dashboard/tools}">เครื่องมือของฉัน</a></nav>
+    <header class="ps-e-header"><div><h1 th:text="${pageTitle}">เครื่องมือรออนุมัติ</h1><p>ตรวจรายการที่เจ้าของส่งมา</p></div></header>
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <section class="ps-e-card" aria-labelledby="queue-title">
+        <h2 id="queue-title">คิวอนุมัติ</h2>
+        <p th:if="${#lists.isEmpty(tools)}">ไม่มีเครื่องมือรออนุมัติ</p>
+        <div role="region" aria-label="รายการ" tabindex="0" class="ps-e-table-wrap" th:unless="${#lists.isEmpty(tools)}">
+            <table>
+                <thead><tr><th scope="col">เครื่องมือ</th><th scope="col">ผู้เผยแพร่</th><th scope="col">สถานะ</th><th scope="col">การตัดสินใจ</th></tr></thead>
+                <tbody><tr th:each="tool : ${tools}">
+                    <td><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a></td>
+                    <td th:text="${tool.ownerId}">1</td>
+                    <td><span class="ps-e-badge ps-e-badge--warning">รออนุมัติ</span></td>
+                    <td><div class="ps-e-actions">
+                        <form th:action="@{/admin/tools/{id}/approve(id=${tool.id})}" method="post">
+                            <input type="hidden" name="expectedReviewRevision" th:value="${tool.reviewRevision}">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button class="ps-e-button ps-e-button--primary" type="submit">อนุมัติ</button>
+                        </form>
+                        <form th:action="@{/admin/tools/{id}/reject(id=${tool.id})}" method="post"
+                              onsubmit="return confirm('ส่งเครื่องมือนี้กลับไปเป็นแบบร่างหรือไม่?')">
+                            <input type="hidden" name="expectedReviewRevision" th:value="${tool.reviewRevision}">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button class="ps-e-button ps-e-button--secondary" type="submit">ส่งกลับ</button>
+                        </form>
+                    </div></td>
+                </tr></tbody>
+            </table>
+        </div>
+    </section>
+    <nav th:if="${toolPage.totalPages > 1}" class="ps-e-pagination" aria-label="แบ่งหน้าคิวอนุมัติ">
+        <span th:if="${toolPage.first}">ก่อนหน้า</span>
+        <a th:unless="${toolPage.first}" th:href="@{/admin/tools(page=${toolPage.number - 1})}">ก่อนหน้า</a>
+        <span th:text="|${toolPage.number + 1} / ${toolPage.totalPages}|">1 / 1</span>
+        <span th:if="${toolPage.last}">ถัดไป</span>
+        <a th:unless="${toolPage.last}" th:href="@{/admin/tools(page=${toolPage.number + 1})}">ถัดไป</a>
+    </nav>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

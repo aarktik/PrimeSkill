@@ -31,6 +31,11 @@ public class RestSecurityExceptionHandler
             HttpServletResponse response,
             AuthenticationException exception
     ) throws IOException {
+        if (!request.getRequestURI().startsWith("/api/") && "GET".equals(request.getMethod())
+                && request.getHeader("Accept") != null && request.getHeader("Accept").contains("text/html")) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
         writeError(
                 request,
                 response,

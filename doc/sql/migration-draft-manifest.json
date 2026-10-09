@@ -1,0 +1,35 @@
+{
+  "status": "unapproved drafts; official versions/order require actual history",
+  "base": "3187098fac9d91c14d1fdfe40bb765797cde8cfd",
+  "workingTree": "uncommitted candidate",
+  "files": [
+    {
+      "file": "doc/sql/V7__align_existing_tool_catalog.sql",
+      "sha256": "e4663ff3e39379d3ec049678f238628d9575b61247d5cff2cf6cb6eb6f7b7402"
+    },
+    {
+      "file": "doc/sql/V8__limit_review_comment_length.sql",
+      "sha256": "6d8da60ef2f81f91a28baf04e34055e25bee6bebb3da1c4e83bb85b7b8a3d7f0"
+    },
+    {
+      "file": "doc/sql/drafts/B1__add_tool_review_revision.sql",
+      "sha256": "deae24a3782bd730001b370f5e126ccfe5bb26e434a03fca9960a3e0eea86552"
+    },
+    {
+      "file": "doc/sql/preflight/rollout-inventory.sql",
+      "sha256": "75934d579cfec79597a382927abda19c0a3994458f8f3dac3eef4cb8a8d88fcc"
+    },
+    {
+      "file": "code/src/main/resources/schema.sql",
+      "sha256": "ee42f90a024e38d8afd08b581fbd16eeb73fb330481254b1a665f019f978e46c"
+    },
+    {
+      "file": "scripts/rehearse-migration-rollout.ps1",
+      "sha256": "3dad2c36725e5b136e5d4b599c6d4098f5eacf4242a6ca6b4b4e9e89627adc35"
+    },
+    {
+      "file": "code/src/test/java/com/example/toolhub/MigrationSchemaValidationApplication.java",
+      "sha256": "9711b0cdf7fd38d8a49a20635e1423e4f1f4fe219f895f073189276f9f792cc7"
+    }
+  ]
+}

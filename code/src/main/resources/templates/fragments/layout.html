@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header th:fragment="navbar" class="ps-nav">
+    <a class="ps-skip" href="#main">ข้ามไปเนื้อหา</a>
+    <a class="ps-brand" th:href="@{/}">Primeskill</a>
+    <button type="button" class="ps-menu-button ps-e-button ps-e-button--secondary" aria-controls="main-nav" aria-expanded="false">เมนู</button>
+    <nav id="main-nav" aria-label="เมนูหลัก">
+        <a th:href="@{/tools}" th:attr="aria-current=${activeNav == 'explore' ? 'page' : null}">สำรวจเครื่องมือ</a>
+        <a th:if="${signedIn == true}" th:href="@{/dashboard/tools}" th:attr="aria-current=${activeNav == 'my-tools' ? 'page' : null}">เครื่องมือของฉัน</a>
+        <a th:if="${isAdmin == true}" th:href="@{/admin/tools}" th:attr="aria-current=${activeNav == 'moderation' ? 'page' : null}">คิวอนุมัติ</a>
+        <a th:unless="${signedIn == true}" th:href="@{/login}">เข้าสู่ระบบ</a>
+        <a th:unless="${signedIn == true}" th:href="@{/register}">สมัครสมาชิก</a>
+        <form th:if="${signedIn == true}" data-logout th:action="@{/api/v1/auth/logout}" method="post">
+            <button type="submit" class="ps-e-button ps-e-button--secondary">ออกจากระบบ</button>
+            <span role="alert" data-logout-error></span>
+        </form>
+    </nav>
+</header>
+<footer th:fragment="footer" class="ps-footer">Primeskill · แบ่งปันเครื่องมือและติดตามเวอร์ชัน</footer>
+<div th:fragment="alerts">
+    <p th:if="${successMessage}" class="ps-e-alert ps-e-alert--success" role="status" th:text="${successMessage}"></p>
+</div>
+<span th:fragment="statusBadge(status)"
+      class="ps-e-badge"
+      th:classappend="${status.name() == 'PUBLISHED' ? ' ps-e-badge--success' : (status.name() == 'PENDING' ? ' ps-e-badge--warning' : ' ps-e-badge--neutral')}"
+      th:text="${status.name() == 'DRAFT' ? 'แบบร่าง' : (status.name() == 'PENDING' ? 'รออนุมัติ' : (status.name() == 'PUBLISHED' ? 'เผยแพร่แล้ว' : 'เลิกเผยแพร่'))}">สถานะ</span>
+</body>
+</html>

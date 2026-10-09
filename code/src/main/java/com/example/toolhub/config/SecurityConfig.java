@@ -45,18 +45,31 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/api/v1/auth/csrf"
                         ).permitAll()
+                        .requestMatchers("/css/role-e.css", "/js/role-e.js", "/", "/login", "/register", "/error")
+                        .permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/categories",
                                 "/api/v1/tools",
                                 "/api/v1/tools/*",
                                 "/api/v1/tools/*/tags",
+                                "/api/v1/tools/*/reviews",
+                                "/api/v1/tools/*/versions",
+                                "/api/v1/tools/*/versions/*",
                                 "/api/v1/tags",
                                 "/tools",
-                                "/tools/*"
+                                "/tools/*",
+                                "/tools/*/versions",
+                                "/actuator/health"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/categories/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/tags/**").hasRole("ADMIN")
+                        .requestMatchers(
+                                "/api/v1/admin/tools",
+                                "/api/v1/admin/tools/**",
+                                "/admin/tools",
+                                "/admin/tools/**"
+                        ).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable)

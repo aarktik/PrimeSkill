@@ -50,6 +50,18 @@ public class Tool extends BaseEntity {
     @Column(name = "view_count", nullable = false)
     private long viewCount;
 
+    @Column(name = "review_revision", nullable = false)
+    private long reviewRevision;
+
+    public long getReviewRevision() { return reviewRevision; }
+
+    public void advanceReviewRevision() {
+        if (reviewRevision == Long.MAX_VALUE) {
+            throw new com.example.toolhub.exception.CatalogConflictException("Submission revision limit reached");
+        }
+        reviewRevision++;
+    }
+
     protected Tool() {
     }
 
@@ -78,6 +90,7 @@ public class Tool extends BaseEntity {
     public long getViewCount() { return viewCount; }
 
     public void updateCategory(Category category) { this.category = category; }
+    public void changeStatus(ToolStatus status) { this.status = status; }
     public void updateDetails(String name, String slug, String shortDescription,
                               String description, String repositoryUrl) {
         this.name = name;

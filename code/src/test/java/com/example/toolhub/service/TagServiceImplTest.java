@@ -29,6 +29,7 @@ import org.springframework.security.access.AccessDeniedException;
 
 @ExtendWith(MockitoExtension.class)
 class TagServiceImplTest {
+    @Mock private jakarta.persistence.EntityManager entityManager;
     @Mock private TagRepository tagRepository;
     @Mock private ToolRepository toolRepository;
     @Mock private ToolTagRepository toolTagRepository;
@@ -37,7 +38,7 @@ class TagServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        tagService = new TagServiceImpl(tagRepository, toolRepository, toolTagRepository, new TagMapper());
+        tagService = new TagServiceImpl(tagRepository, toolRepository, toolTagRepository, new TagMapper(), entityManager);
     }
 
     @Test
@@ -68,7 +69,7 @@ class TagServiceImplTest {
 
     @Test
     void delete_whenTagIsReferenced_throwsConflict() {
-        when(tagRepository.findById(1L)).thenReturn(Optional.of(new Tag("Calendar", "calendar")));
+        when(tagRepository.findForUpdateById(1L)).thenReturn(Optional.of(new Tag("Calendar", "calendar")));
         when(toolTagRepository.countByIdTagId(1L)).thenReturn(2L);
 
         assertThrows(CatalogConflictException.class, () -> tagService.delete(1L, true));
@@ -78,8 +79,9 @@ class TagServiceImplTest {
     void assignTag_whenAlreadyAssigned_throwsConflict() {
         Tool tool = org.mockito.Mockito.mock(Tool.class);
         when(tool.getOwnerId()).thenReturn(7L);
-        when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
-        when(tagRepository.findById(2L)).thenReturn(Optional.of(new Tag("Calendar", "calendar")));
+        when(tool.getStatus()).thenReturn(ToolStatus.DRAFT);
+        when(toolRepository.findForUpdateById(1L)).thenReturn(Optional.of(tool));
+        when(tagRepository.findForUpdateById(2L)).thenReturn(Optional.of(new Tag("Calendar", "calendar")));
         when(toolTagRepository.existsByIdToolIdAndIdTagId(1L, 2L)).thenReturn(true);
 
         assertThrows(CatalogConflictException.class,
@@ -90,8 +92,7 @@ class TagServiceImplTest {
     void assignTag_whenNonOwner_throwsAccessDenied() {
         Tool tool = org.mockito.Mockito.mock(Tool.class);
         when(tool.getOwnerId()).thenReturn(7L);
-        when(toolRepository.findById(1L)).thenReturn(Optional.of(tool));
-        when(tagRepository.findById(2L)).thenReturn(Optional.of(new Tag("Calendar", "calendar")));
+        when(toolRepository.findForUpdateById(1L)).thenReturn(Optional.of(tool));
 
         assertThrows(AccessDeniedException.class,
                 () -> tagService.assignTag(1L, 2L, 9L, false));

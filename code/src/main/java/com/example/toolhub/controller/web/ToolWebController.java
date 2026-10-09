@@ -3,16 +3,26 @@ package com.example.toolhub.controller.web;
 import com.example.toolhub.dto.request.CreateToolRequest;
 import com.example.toolhub.dto.request.UpdateToolRequest;
 import com.example.toolhub.dto.response.ToolResponse;
+import com.example.toolhub.dto.request.CreateReviewRequest;
+import com.example.toolhub.dto.response.ReviewSummary;
+import com.example.toolhub.domain.enums.ToolStatus;
+import com.example.toolhub.exception.InvalidStateTransitionException;
 import com.example.toolhub.security.CurrentActor;
 import com.example.toolhub.security.CurrentActorProvider;
 import com.example.toolhub.service.CategoryService;
+import com.example.toolhub.service.ReviewService;
+import com.example.toolhub.service.ReviewSummaryService;
 import com.example.toolhub.service.ToolService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,22 +38,43 @@ public class ToolWebController {
     private final ToolService toolService;
     private final CategoryService categoryService;
     private final CurrentActorProvider currentActorProvider;
+    private final ReviewService reviewService;
+    private final ReviewSummaryService reviewSummaryService;
 
     public ToolWebController(ToolService toolService, CategoryService categoryService,
-                             CurrentActorProvider currentActorProvider) {
+                             CurrentActorProvider currentActorProvider, ReviewService reviewService,
+                             ReviewSummaryService reviewSummaryService) {
         this.toolService = toolService;
         this.categoryService = categoryService;
         this.currentActorProvider = currentActorProvider;
+        this.reviewService = reviewService;
+        this.reviewSummaryService = reviewSummaryService;
     }
 
     @GetMapping("/tools/{idOrSlug}")
-    public String detail(@PathVariable String idOrSlug, Model model) {
+    public String detail(@PathVariable String idOrSlug,
+                         @RequestParam(defaultValue = "0") int page, Model model) {
         CurrentActor actor = currentActorProvider.currentActor();
         ToolResponse tool = toolService.getDetailByIdOrSlug(idOrSlug, actor.id(), actor.admin());
         model.addAttribute("tool", tool);
         model.addAttribute("pageTitle", tool.getName());
         model.addAttribute("activeNav", "explore");
+        populateReviews(model, tool, actor.id(), actor.admin(), page);
         return "tools/detail";
+    }
+
+    private void populateReviews(Model model, ToolResponse tool, Long actorId, boolean admin, int page) {
+        var reviews = reviewService.listForTool(tool.getId(), actorId, admin,
+                PageRequest.of(Math.max(page, 0), 20));
+        ReviewSummary summary = reviewSummaryService.summarizeByToolIds(java.util.List.of(tool.getId()))
+                .get(tool.getId());
+        model.addAttribute("reviews", reviews.getContent());
+        model.addAttribute("reviewPage", reviews);
+        model.addAttribute("reviewSummary", summary);
+        model.addAttribute("myReview", reviewService.findMineForTool(tool.getId(), actorId));
+        model.addAttribute("currentActorId", actorId);
+        model.addAttribute("currentActorAdmin", admin);
+        model.addAttribute("createReviewRequest", new CreateReviewRequest(null, null));
     }
 
     @GetMapping("/dashboard/tools")
@@ -85,7 +116,7 @@ public class ToolWebController {
     @GetMapping("/dashboard/tools/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         CurrentActor actor = currentActorProvider.requireActor();
-        ToolResponse tool = toolService.getByIdOrSlug(String.valueOf(id), actor.id(), actor.admin());
+        ToolResponse tool = editableTool(id, actor);
         model.addAttribute("tool", tool);
         model.addAttribute("toolRequest", new UpdateToolRequest(tool.getName(), tool.getSlug(),
                 tool.getShortDescription(), tool.getDescription(), tool.getCategoryId(), tool.getRepositoryUrl()));
@@ -102,6 +133,7 @@ public class ToolWebController {
                          RedirectAttributes redirectAttributes) {
         CurrentActor actor = currentActorProvider.requireActor();
         if (bindingResult.hasErrors()) {
+            model.addAttribute("tool", editableTool(id, actor));
             model.addAttribute("categories", categoryService.findAll());
             model.addAttribute("pageTitle", "แก้ไขเครื่องมือ");
             model.addAttribute("formAction", "/dashboard/tools/" + id);
@@ -124,5 +156,37 @@ public class ToolWebController {
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("pageTitle", "เพิ่มเครื่องมือ");
         model.addAttribute("formAction", "/dashboard/tools");
+    }
+
+    private ToolResponse editableTool(Long id, CurrentActor actor) {
+        ToolResponse tool = toolService.getByIdOrSlug(String.valueOf(id), actor.id(), actor.admin());
+        if (!actor.admin() && !actor.id().equals(tool.getOwnerId())) {
+            throw new AccessDeniedException("You do not own this tool");
+        }
+        if (tool.getStatus() != ToolStatus.DRAFT) {
+            throw new InvalidStateTransitionException("Tool metadata can only be edited in draft status");
+        }
+        return tool;
+    }
+
+    @ExceptionHandler(InvalidStateTransitionException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public String invalidEditState(Model model) {
+        model.addAttribute("message", "แก้ไขข้อมูลได้เฉพาะเครื่องมือที่เป็นแบบร่าง กรุณากลับไปตรวจสถานะล่าสุด");
+        return "tools/edit-error";
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public String deniedEdit(Model model) {
+        model.addAttribute("message", "คุณไม่มีสิทธิ์แก้ไขเครื่องมือนี้");
+        return "tools/edit-error";
+    }
+
+    @ExceptionHandler(org.springframework.dao.PessimisticLockingFailureException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public String concurrentEdit(Model model) {
+        model.addAttribute("message", "เครื่องมือกำลังถูกใช้งาน กรุณาตรวจข้อมูลล่าสุดแล้วลองอีกครั้ง");
+        return "tools/edit-error";
     }
 }
