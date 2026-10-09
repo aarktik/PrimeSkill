@@ -86,6 +86,17 @@ class MigrationPreflightPostgresIT {
     }
 
     @Test
+    void rolloutInventoryRejectsSearchPathFallbackToPublicTables() throws Exception {
+        // This schema has only tools/categories; the other tables exist in public.
+        sql("SET search_path TO " + schema + ", public");
+        String inventory = Files.readString(Path.of("../doc/sql/preflight/rollout-inventory.sql"));
+        SQLException failure = assertThrows(SQLException.class, () -> sql(inventory));
+        sql("ROLLBACK");
+        assertTrue(failure.getMessage().contains("Required table missing from intended schema"), failure.getMessage());
+        assertEquals("1", value("SELECT count(*) FROM " + schema + ".tools"));
+    }
+
+    @Test
     void rerunningDraftPreservesEditedValuesAndViewCount() throws Exception {
         migrate();
         sql("UPDATE tools SET short_description='ข้อความที่ผู้ใช้แก้', view_count=9");

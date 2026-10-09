@@ -1,4 +1,6 @@
-# Database rollout checklist — V7/V8 drafts
+# Database rollout checklist — V7/V8/B1 drafts
+
+Local preparation update (9 October 2026): see [runbook](migration-rollout-runbook.md) and [local evidence](migration-rollout-test-report.md). Candidate includes B1 revision draft, read-only inventory and disposable full-schema backup/restore rehearsal. Unchecked target fields below remain required before shared rollout. No production version numbers have been allocated.
 
 Preparation only. No shared database has been inspected or migrated by this checklist. Role E / the database owner fills in the target facts and coordinates B/C/D review before any rollout.
 
@@ -45,6 +47,8 @@ ORDER BY conname;
 - [ ] Existing `ck_reviews_comment_length`: verify its definition enforces the agreed <=2000 limit and is validated. V8 checks the name/table, not equivalence of its existing definition; a mismatch needs a reviewed forward migration.
 - [ ] Inventory V7 lengths before narrowing: category.description 500, tool.name 150, slug 170, short_description 300, URL 500. If both website_url/repository_url exist, check conflicts before choosing a reconciliation rule.
 - [ ] Confirm tags/version field names and lengths with B/C; include C's required tag index in the approved schema sequence.
+- [ ] Review B1 `review_revision` type/default/NOT NULL/nonnegative constraint and API/web token compatibility; integrate B/C DRAFT guards before enabling full B1. Stop old writers during coordinated schema/code rollout.
+- [ ] Use `doc/sql/preflight/rollout-inventory.sql` to capture read-only evidence after confirming schema/search_path. Zero oversized counts do not prove constraint definitions/history are correct.
 
 ## Staging execution gate
 
@@ -63,4 +67,4 @@ ORDER BY conname;
 - [ ] Record start/end, migration and application versions, validation results and operator sign-off before resuming normal writes.
 - [ ] If validation fails, use the rehearsed recovery procedure with the database owner. A committed migration is not undone by rolling back the application alone; account for writes since backup before restore.
 
-References: [handoff plan](../docs/superpowers/plans/2026-10-07-postgres-race-handoff.md), [V7 report](role-e-migration-test-report.md), [V8 report](role-e-v8-test-report.md).
+References: [current runbook](migration-rollout-runbook.md), [V7 report](role-e-migration-test-report.md), [V8 report](role-e-v8-test-report.md), [draft manifest](sql/migration-draft-manifest.json).
