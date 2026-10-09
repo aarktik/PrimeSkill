@@ -15,15 +15,39 @@
 <body>
 <header th:replace="~{fragments/layout :: navbar}"></header>
 <main id="main" tabindex="-1" class="ps-page ps-tool-detail">
-    <p><a th:href="@{/tools}">กลับไปสำรวจเครื่องมือ</a> · <a th:href="@{/my/reviews}">รีวิวของฉัน</a></p>
+    <nav class="ps-tool-crumb" aria-label="เส้นทางนำทาง">
+        <a th:href="@{/tools}">สำรวจเครื่องมือ</a>
+        <a th:href="@{/my/reviews}">รีวิวของฉัน</a>
+        <span aria-hidden="true"> / </span>
+        <span th:text="${tool.name}">ชื่อเครื่องมือ</span>
+    </nav>
+    <header class="ps-tool-hero">
+        <div class="ps-tool-title-row">
+            <h1 th:text="${tool.name}">ชื่อเครื่องมือ</h1>
+            <span th:replace="~{fragments/layout :: statusBadge(${tool.status})}">แบบร่าง</span>
+        </div>
+        <p class="ps-tool-summary" th:text="${tool.shortDescription}">คำอธิบายสั้น</p>
+        <div class="ps-tool-meta">
+            <span class="ps-tool-category">
+                <span class="ps-tool-category-label">หมวดหมู่</span>
+                <span th:text="${tool.categoryName}">หมวดหมู่</span>
+            </span>
+        </div>
+    </header>
     <div th:replace="~{fragments/layout :: alerts}"></div>
-    <header><h1 th:text="${tool.name}">ชื่อเครื่องมือ</h1><p th:text="${tool.shortDescription}">คำอธิบายสั้น</p></header>
-    <p th:if="${viewerId == tool.ownerId}"><a th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">จัดการเวอร์ชันและสถานะ</a></p>
-    <p><strong>หมวดหมู่:</strong> <span th:text="${tool.categoryName}">หมวดหมู่</span></p>
-    <p><strong>สถานะ:</strong> <span th:replace="~{fragments/layout :: statusBadge(${tool.status})}">แบบร่าง</span></p>
-    <p><a th:href="@{/tools/{slug}/versions(slug=${tool.slug})}">ดูเวอร์ชัน</a></p>
-    <p class="ps-tool-description" th:text="${tool.description}">รายละเอียด</p>
-    <a th:if="${tool.repositoryUrl != null}" th:href="${tool.repositoryUrl}" target="_blank" rel="noopener" class="ps-link">เปิด repository</a>
+    <nav class="ps-tool-actions" aria-label="การดำเนินการกับเครื่องมือ">
+        <a th:if="${viewerId == tool.ownerId}"
+           class="ps-btn ps-btn--secondary"
+           th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">จัดการเวอร์ชัน</a>
+        <a class="ps-btn ps-btn--primary" th:href="@{/tools/{slug}/versions(slug=${tool.slug})}">ดูเวอร์ชัน</a>
+        <a th:if="${!#strings.isEmpty(tool.repositoryUrl)}"
+           class="ps-btn ps-btn--secondary"
+           th:href="${tool.repositoryUrl}" target="_blank" rel="noopener">เปิด repository</a>
+    </nav>
+    <section class="ps-tool-description-panel" aria-labelledby="tool-description-title">
+        <h2 id="tool-description-title">เกี่ยวกับเครื่องมือนี้</h2>
+        <p class="ps-tool-description" th:text="${tool.description}">รายละเอียด</p>
+    </section>
 
     <section aria-labelledby="reviews-heading">
         <h2 id="reviews-heading">รีวิว</h2>
