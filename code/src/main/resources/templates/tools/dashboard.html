@@ -17,7 +17,7 @@
         <tbody><tr th:each="tool : ${tools}">
             <td><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a></td>
             <td><span th:replace="~{fragments/layout :: statusBadge(${tool.status})}">แบบร่าง</span></td>
-            <td><a th:href="@{/dashboard/tools/{id}/edit(id=${tool.id})}">แก้ไข</a>
+            <td><a th:if="${tool.status.name() == 'DRAFT'}" th:href="@{/dashboard/tools/{id}/edit(id=${tool.id})}">แก้ไข</a>
                 <a th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">เวอร์ชันและสถานะ</a>
                 <form th:action="@{/dashboard/tools/{id}/delete(id=${tool.id})}" method="post" style="display:inline"
                       onsubmit="return confirm('ลบเครื่องมือนี้และประวัติเวอร์ชันทั้งหมดหรือไม่?')">

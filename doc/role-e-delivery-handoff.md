@@ -66,5 +66,15 @@
 - Python coverage-checker tests12 ผ่าน; workflow YAML parse และ `git diff --check` ผ่าน.
 - Full-schema migration/backup/restore/remigrate/app startup validation **PASS**; restore/remigrate23.82วินาที บน fixture local.
 - หลักฐาน local: `D:/PrimeSkill-worktrees/evidence/delivery/final-verify.log`, `final-coverage.json`; rehearsal `code/target/migration-rollout/bb5284002be24edda20d967dad343caa/summary.json` (ไฟล์ generated ไม่รวม Git).
-- GitHub CI ต้องอ่าน run ของ SHA ที่ push จริง; ผล local ข้างต้นไม่ใช่คำรับรองว่า GitHub CI ผ่านแล้ว.
+- GitHub CI ของ742a0fa ตรวจแล้ว completed/success ทั้ง Build and test และ Review and publishing integration; อ่าน [หลักฐาน CI และขอบเขต source](role-e-ci-evidence-2026-10-09.md). ตัวเลข450ข้างต้นเป็นผล local ไม่ใช่การนับ artifacts CI ใหม่.
 - ไม่มีการรัน migration กับฐานทีม และไม่มีการ merge develop. B/C guards และ A/D review ยังรอทีม.
+
+## เอกสารพร้อมใช้ระหว่างรอทีม
+
+- [หน้าที่ A–E และข้อความข้อมูลส่งกลับ](team-role-handoff-2026-10-09.md)
+- [ชุดตรวจรับ B/C เมื่อส่ง implementation](b1-bc-integration-acceptance.md)
+- [ข้อมูล rollout ที่ตรวจจาก repo แล้วและข้อมูลที่ต้องขอ operator](role-e-rollout-preparation.md)
+
+## รับงาน B เพิ่มหลัง742a0fa
+
+รวม B ad58522 และนำ PostgreSQL fixtures49กรณีเข้า Maven แล้ว Local Java17/PostgreSQL18.6 ผ่าน Surefire294 + Failsafe234 =528 ไม่มี failure/error/skip; Python12ผ่าน อ่าน [รายงานรวม B+E](role-e-b-integration-report.md) งาน C tag guards และการ review ชุดรวมใหม่โดย A/D ยังรออยู่ ผล450/CI742a0faข้างบนเป็นหลักฐานชุด E เดิม ไม่ใช่ผลของชุด B+E ใหม่
