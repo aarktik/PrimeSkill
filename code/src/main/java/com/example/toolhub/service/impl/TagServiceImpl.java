@@ -7,12 +7,14 @@ import com.example.toolhub.domain.enums.ToolStatus;
 import com.example.toolhub.dto.request.TagRequest;
 import com.example.toolhub.dto.response.TagResponse;
 import com.example.toolhub.exception.CatalogConflictException;
+import com.example.toolhub.exception.InvalidStateTransitionException;
 import com.example.toolhub.exception.ResourceNotFoundException;
 import com.example.toolhub.mapper.TagMapper;
 import com.example.toolhub.repository.TagRepository;
 import com.example.toolhub.repository.ToolRepository;
 import com.example.toolhub.repository.ToolTagRepository;
 import com.example.toolhub.service.TagService;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -24,15 +26,17 @@ public class TagServiceImpl implements TagService {
     private final ToolRepository toolRepository;
     private final ToolTagRepository toolTagRepository;
     private final TagMapper tagMapper;
+    private final EntityManager entityManager;
 
     public TagServiceImpl(TagRepository tagRepository,
                           ToolRepository toolRepository,
                           ToolTagRepository toolTagRepository,
-                          TagMapper tagMapper) {
+                          TagMapper tagMapper, EntityManager entityManager) {
         this.tagRepository = tagRepository;
         this.toolRepository = toolRepository;
         this.toolTagRepository = toolTagRepository;
         this.tagMapper = tagMapper;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -69,7 +73,9 @@ public class TagServiceImpl implements TagService {
     @Transactional
     public void delete(Long id, boolean actorIsAdmin) {
         assertAdmin(actorIsAdmin);
-        Tag tag = findTag(id);
+        // Deletion locks only Tag. Association writes always lock Tool then Tag;
+        // no path may acquire a Tool lock while holding this Tag lock.
+        Tag tag = lockTag(id);
         if (toolTagRepository.countByIdTagId(id) > 0) {
             throw new CatalogConflictException("Tag is still referenced by a tool");
         }
@@ -79,10 +85,8 @@ public class TagServiceImpl implements TagService {
     @Override
     @Transactional
     public void assignTag(Long toolId, Long tagId, Long actorUserId, boolean actorIsAdmin) {
-        Tool tool = toolRepository.findById(toolId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tool not found: " + toolId));
-        Tag tag = findTag(tagId);
-        assertCanMutate(tool, actorUserId, actorIsAdmin);
+        Tool tool = lockEditableTool(toolId, actorUserId, actorIsAdmin);
+        Tag tag = lockTag(tagId);
         if (toolTagRepository.existsByIdToolIdAndIdTagId(toolId, tagId)) {
             throw new CatalogConflictException("Tag is already assigned to this tool");
         }
@@ -92,10 +96,8 @@ public class TagServiceImpl implements TagService {
     @Override
     @Transactional
     public void unassignTag(Long toolId, Long tagId, Long actorUserId, boolean actorIsAdmin) {
-        Tool tool = toolRepository.findById(toolId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tool not found: " + toolId));
-        findTag(tagId);
-        assertCanMutate(tool, actorUserId, actorIsAdmin);
+        lockEditableTool(toolId, actorUserId, actorIsAdmin);
+        lockTag(tagId);
         if (!toolTagRepository.existsByIdToolIdAndIdTagId(toolId, tagId)) {
             throw new ResourceNotFoundException("Tag is not assigned to this tool");
         }
@@ -120,6 +122,24 @@ public class TagServiceImpl implements TagService {
     private Tag findTag(Long id) {
         return tagRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + id));
+    }
+
+    private Tool lockEditableTool(Long toolId, Long actorUserId, boolean actorIsAdmin) {
+        Tool tool = toolRepository.findForUpdateById(toolId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tool not found: " + toolId));
+        entityManager.refresh(tool);
+        assertCanMutate(tool, actorUserId, actorIsAdmin);
+        if (tool.getStatus() != ToolStatus.DRAFT) {
+            throw new InvalidStateTransitionException("Tool tags can only be edited in draft status");
+        }
+        return tool;
+    }
+
+    private Tag lockTag(Long tagId) {
+        Tag tag = tagRepository.findForUpdateById(tagId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + tagId));
+        entityManager.refresh(tag);
+        return tag;
     }
 
     private void ensureUnique(TagRequest request, Long currentId) {
