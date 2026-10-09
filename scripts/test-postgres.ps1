@@ -1,7 +1,7 @@
 param(
     [string]$PostgresBin = 'C:\Program Files\PostgreSQL\18\bin',
     [ValidateRange(1024, 65535)][int]$Port = 15432,
-    [string]$MavenCommand = 'mvn'
+    [string]$MavenCommand = (Join-Path $PSScriptRoot 'mvn-java17.ps1')
 )
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
