@@ -99,6 +99,8 @@ jobs:
           python scripts/test-review-ci-reports.py -v
           python scripts/test-role-e-b1-reports.py -v
           python scripts/check-role-e-b1-reports.py code/target --output code/target/b1-evidence/summary.json
+          python scripts/test-role-c-reports.py -v
+          python scripts/check-role-c-reports.py code/target --output code/target/b1-evidence/role-c-summary.json
           git rev-parse HEAD > code/target/b1-evidence/source-sha.txt
           java -version 2> code/target/b1-evidence/java-version.txt
       - name: Upload PostgreSQL integration reports
