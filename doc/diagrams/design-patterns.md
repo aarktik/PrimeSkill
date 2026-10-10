@@ -256,7 +256,7 @@ sequenceDiagram
 
     Browser->>Web: GET /tools?q=...&category=...&tags=...&sort=...
     Web->>Search: search(keyword, categoryId, tagSlugs, sort, page, size)
-    Search->>Search: normalize input; enforce paging bounds
+    Search->>Search: normalize input, enforce paging bounds
     alt newest or popular sort
         Search->>Strategy: resolve sort strategy
         Strategy-->>Search: Sort definition
@@ -357,7 +357,7 @@ flowchart TD
     draft --> submit[เจ้าของกด Submit]
     submit --> auth{เป็นเจ้าของและสถานะยังเป็น DRAFT?}
     auth -- ไม่ใช่ --> denied[ปฏิเสธคำขอ]
-    denied --> end((จบ))
+    denied --> finish((จบ))
     auth -- ใช่ --> lock[ล็อกและ refresh Tool]
     lock --> inc[เพิ่ม submission revision]
     inc --> pending[บันทึกสถานะ PENDING]
@@ -370,7 +370,7 @@ flowchart TD
     revision -- ตรง --> result{ผลการตรวจ}
     result -- Approve --> published[บันทึกสถานะ PUBLISHED]
     result -- Reject --> rejected[บันทึกสถานะ DRAFT]
-    published --> end
+    published --> finish
     rejected --> draft
 ```
 
