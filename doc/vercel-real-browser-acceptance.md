@@ -63,13 +63,37 @@ member-review-browse-four-stars.jpg and member-owner-pending-readonly.jpg.
 
 ## Rollout and remaining checks
 
-1. Verify final PR8 SHA CI and patched Preview navigation.
-2. Complete admin moderation of another user's Tool, deprecation/restore and
-   approved deletion acceptance, or explicitly record untested operations.
-3. Integrate PR8 into develop and verify its Production deployment source SHA.
-4. Smoke Production public routes, login/session/logout and role flows. A hostname
-   change may require the operator to sign in again.
-5. Keep S1 session tables and existing business data. S1 was already applied:
+### Production rollout on 10 October 2026
+
+PR8 merged as `812e07ad2492d9eecaf2d3ab2bbe47a4a48367a5` after all eight
+head checks passed. Vercel Production deployment
+`91NwhhvxgAW4ZJ1p21HKcdDaAssA` became Ready and serves
+https://primeskill-zeta.vercel.app with the real Supabase database.
+The merged tree equals the tested PR head. Merge-SHA verify and PostgreSQL
+integration checks passed.
+
+Production HTTP acceptance passed 16/16 checks, including public pages/API,
+health, unauthenticated workspace redirects/admin API denial, disabled API docs,
+Secure session cookie, persisted CSRF retrieval, missing-CSRF rejection and
+invalid-credential rejection. Health requires a JSON Accept header.
+
+Operator login and browser checks verified admin approval of USER-owned Tool2,
+deprecation and logout. The USER owner restored Tool2 to DRAFT. Member review
+creation (5), edit (4), detail/home/Browse summary (4.0), and permanent deletion
+of test review id=2 passed; the operator explicitly approved that deletion.
+My reviews returned to empty. USER admin access and cross-owner tag access were
+denied. Tool1 remains PUBLISHED; Tool2 is DRAFT; test reference data remains.
+
+Production still logged browser ViewTransition cancellations despite the narrow
+JavaScript handler. The follow-up disables optional cross-document transitions;
+normal navigation and existing in-page motion remain. A regression first failed
+against `navigation:auto` and passes against `navigation:none`. Live confirmation
+on the follow-up deployment remains required. Prior console logs are preserved.
+
+1. Verify follow-up SHA CI and Preview navigation without cross-document transitions.
+2. Integrate the follow-up and verify its Production source SHA, public routes and
+   navigation console. Role workflows above are from Production 812e07a.
+3. Keep S1 session tables and existing business data. S1 was already applied:
    do not rerun it. Roll application back to a compatible verified deployment if
    rollout fails; do not drop session/business tables as automatic rollback.
 

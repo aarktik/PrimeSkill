@@ -1,1 +1,4 @@
-@media(prefers-reduced-motion:no-preference){@view-transition{navigation:auto}::view-transition-old(root),::view-transition-new(root){animation-duration:180ms}}
+/* Cross-document transitions repeatedly abort during real navigation. Keep
+   normal navigation until browser support is reliable; in-page motion remains
+   controlled by primeskill.css and the user's reduced-motion preference. */
+@view-transition{navigation:none}

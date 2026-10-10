@@ -4,6 +4,13 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { test } = require('node:test');
 
+test('cross-document transitions stay disabled after live browser cancellations', () => {
+  const css = fs.readFileSync(path.join(__dirname,
+    '../code/src/main/resources/static/css/public-motion.css'), 'utf8');
+  assert.doesNotMatch(css, /navigation\s*:\s*auto/);
+  assert.match(css, /@view-transition\s*\{\s*navigation\s*:\s*none/);
+});
+
 function loadThemeScript() {
   const listeners = new Map();
   const document = { documentElement: { dataset: {} } };
