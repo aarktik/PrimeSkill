@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<div class="ps-workspace"><aside th:replace="~{fragments/layout :: sidebar}"></aside><main id="main" tabindex="-1" class="ps-workspace-main ps-e-page">
+    <nav class="ps-crumb" aria-label="Breadcrumb"><a th:href="@{/dashboard/tools}">My tools</a></nav>
+    <header class="ps-e-header"><div><h1 th:text="${pageTitle}">Review submissions</h1><p>Review the tools creators have submitted.</p></div></header>
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <section class="ps-e-card" aria-labelledby="queue-title">
+        <h2 id="queue-title">Review queue</h2>
+        <p th:if="${#lists.isEmpty(tools)}">The review queue is clear.</p>
+<div class="ps-submission-list"><article class="ps-submission ps-panel" th:each="tool : ${tools}"><div class="ps-submission-head"><div><span class="ps-e-badge ps-e-badge--warning">Pending review</span><h3><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a></h3><p th:text="${tool.shortDescription}">Description</p></div><span class="ps-muted">Creator #<span th:text="${tool.ownerId}">1</span></span></div><div class="ps-submission-actions"><a class="ps-text-link" th:href="@{/tools/{slug}(slug=${tool.slug})}">Inspect submission <svg th:replace="~{fragments/layout :: icon('arrow')}"/></a><div class="ps-e-actions"><form th:action="@{/admin/tools/{id}/approve(id=${tool.id})}" method="post" data-confirm="Approve this submission and publish it to Explore?" data-confirm-title="Publish this tool?"><input type="hidden" name="expectedReviewRevision" th:value="${tool.reviewRevision}"><button class="ps-btn ps-btn--primary" type="submit">Approve & publish</button></form><form th:action="@{/admin/tools/{id}/reject(id=${tool.id})}" method="post" data-confirm="Return this submission to draft?" data-confirm-danger="true"><input type="hidden" name="expectedReviewRevision" th:value="${tool.reviewRevision}"><button class="ps-btn ps-btn--secondary" type="submit">Return to draft</button></form></div></div></article></div>
+    </section>
+    <nav th:if="${toolPage.totalPages > 1}" class="ps-e-pagination" aria-label="Review queue pagination">
+        <span th:if="${toolPage.first}">Previous</span>
+        <a th:unless="${toolPage.first}" th:href="@{/admin/tools(page=${toolPage.number - 1})}">Previous</a>
+        <span th:text="|${toolPage.number + 1} / ${toolPage.totalPages}|">1 / 1</span>
+        <span th:if="${toolPage.last}">Next</span>
+        <a th:unless="${toolPage.last}" th:href="@{/admin/tools(page=${toolPage.number + 1})}">Next</a>
+    </nav>
+</main></div>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html><html lang="en" xmlns:th="http://www.thymeleaf.org"><body>
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Discover, review, and publish tools for your AI workflow on PrimeSkill.">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}">
+    <title th:text="${title} + ' · PrimeSkill'">PrimeSkill</title>
+    <script th:src="@{/js/theme-init.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/primeskill.css}">
+    <link rel="stylesheet" th:href="@{/css/public-motion.css}">
+    <script defer th:src="@{/js/role-e.js}"></script><script defer th:src="@{/js/ui.js}"></script>
+</head>
+<svg th:fragment="icon(name)" class="ps-icon" aria-hidden="true" focusable="false"><use th:href="@{'/img/ui-icons.svg#' + ${name}}"/></svg>
+<a th:fragment="brand" class="ps-brand" th:href="@{/}"><span class="ps-brand-mark"><svg th:replace="~{fragments/layout :: icon('layers')}"></svg></span>PrimeSkill</a>
+<header th:fragment="navbar" class="ps-nav">
+    <a class="ps-skip" href="#main">Skip to content</a>
+    <a th:replace="~{fragments/layout :: brand}"></a>
+    <button type="button" class="ps-menu-button" aria-label="Open navigation" aria-controls="main-nav" aria-expanded="false"><svg th:replace="~{fragments/layout :: icon('menu')}"></svg></button>
+    <nav id="main-nav" aria-label="Main navigation">
+        <a th:href="@{/tools}" th:attr="aria-current=${activeNav == 'explore' ? 'page' : null}">Explore tools</a>
+        <a th:href="@{/#how-it-works}">How it works</a>
+        <a th:if="${signedIn == true}" th:href="@{/dashboard/tools}" th:attr="aria-current=${activeNav == 'my-tools' ? 'page' : null}">Workspace</a>
+        <a th:if="${signedIn == true}" th:href="@{/profile}" th:attr="aria-current=${activeNav == 'profile' ? 'page' : null}">Profile</a><div class="ps-nav-end">
+            <button type="button" class="ps-theme-toggle" data-theme-toggle aria-label="Switch to dark theme" aria-pressed="false" hidden>
+                <span class="ps-moon"><svg th:replace="~{fragments/layout :: icon('moon')}"></svg></span><span class="ps-sun"><svg th:replace="~{fragments/layout :: icon('sun')}"></svg></span>
+            </button>
+            <a th:unless="${signedIn == true}" class="ps-btn ps-btn--ghost" th:href="@{/login}">Sign in</a>
+            <a th:unless="${signedIn == true}" class="ps-btn ps-btn--primary" th:href="@{/register}">Get started <svg th:replace="~{fragments/layout :: icon('arrow')}"></svg></a>
+            <a th:if="${signedIn == true}" class="ps-btn ps-btn--primary" th:href="@{/dashboard/tools/new}"><svg th:replace="~{fragments/layout :: icon('plus')}"></svg>New tool</a>
+            <form th:if="${signedIn == true}" data-logout th:action="@{/api/v1/auth/logout}" method="post"><button type="submit" class="ps-btn ps-btn--ghost">Sign out</button><span role="alert" data-logout-error></span></form>
+        </div>
+    </nav>
+</header>
+<aside th:fragment="sidebar" class="ps-sidebar" aria-label="Workspace navigation">
+    <div class="ps-sidebar-title">Your workspace</div>
+    <a th:href="@{/dashboard/tools}" th:attr="aria-current=${activeNav == 'my-tools' ? 'page' : null}"><svg th:replace="~{fragments/layout :: icon('box')}"></svg>My tools</a>
+    <a th:href="@{/my/reviews}" th:attr="aria-current=${activeNav == 'my-reviews' ? 'page' : null}"><svg th:replace="~{fragments/layout :: icon('star')}"></svg>My reviews</a>
+    <a th:if="${isAdmin == true}" th:href="@{/admin/tools}" th:attr="aria-current=${activeNav == 'moderation' ? 'page' : null}"><svg th:replace="~{fragments/layout :: icon('shield')}"></svg>Moderation</a>
+    <a th:href="@{/profile}" th:attr="aria-current=${activeNav == 'profile' ? 'page' : null}"><svg th:replace="~{fragments/layout :: icon('user')}"></svg>Profile</a><a th:if="${isAdmin == true}" th:href="@{/admin/categories}" th:attr="aria-current=${activeNav == 'categories' ? 'page' : null}"><svg th:replace="~{fragments/layout :: icon('grid')}"></svg>Categories</a><a th:if="${isAdmin == true}" th:href="@{/admin/tags}" th:attr="aria-current=${activeNav == 'tags' ? 'page' : null}"><svg th:replace="~{fragments/layout :: icon('layers')}"></svg>Tags</a><a th:href="@{/tools}"><svg th:replace="~{fragments/layout :: icon('grid')}"></svg>Explore tools</a>
+    <div class="ps-sidebar-note"><strong>Build something useful.</strong>Share your tool, manage its releases, and help the community discover it.</div>
+</aside>
+<footer th:fragment="footer" class="ps-footer">
+    <div class="ps-footer-inner"><div><a th:replace="~{fragments/layout :: brand}"></a><p>Better tools. Better AI workflows.</p></div><div class="ps-footer-links"><a th:href="@{/tools}">Explore</a><a th:href="@{/#how-it-works}">How it works</a><a th:href="${signedIn == true} ? @{/dashboard/tools} : @{/register}">For creators</a></div></div>
+    <dialog id="ps-confirm" class="ps-dialog" aria-labelledby="ps-confirm-title" aria-describedby="ps-confirm-copy"><h2 id="ps-confirm-title">Confirm action</h2><p id="ps-confirm-copy"></p><div class="ps-dialog-actions"><button type="button" class="ps-btn ps-btn--secondary" data-confirm-cancel>Cancel</button><button type="button" class="ps-btn ps-btn--primary" data-confirm-accept>Confirm</button></div></dialog>
+</footer>
+<div th:fragment="errorActions" class="ps-e-actions">
+    <a class="ps-btn ps-btn--secondary" th:href="@{/tools}">Explore tools</a>
+    <a th:if="${signedIn == true}" class="ps-btn ps-btn--secondary" th:href="@{${recoveryUrl != null ? recoveryUrl : '/dashboard/tools'}}">Go back</a>
+    <a th:unless="${signedIn == true}" class="ps-btn ps-btn--primary" th:href="@{/login}">Sign in</a>
+    <a th:if="${isAdmin == true}" class="ps-btn ps-btn--secondary" th:href="@{/admin/tools}">Moderation</a>
+</div>
+<div th:fragment="alerts"><p th:if="${successMessage}" class="ps-e-alert ps-e-alert--success" role="status" th:text="${successMessage}"></p><p th:if="${errorMessage}" class="ps-e-alert ps-e-alert--error" role="alert" th:text="${errorMessage}"></p></div>
+<span th:fragment="statusBadge(status)" class="ps-e-badge" th:classappend="${status.name() == 'PUBLISHED' ? ' ps-e-badge--success' : (status.name() == 'PENDING' ? ' ps-e-badge--warning' : ' ps-e-badge--neutral')}" th:text="${status.name() == 'DRAFT' ? 'Draft' : (status.name() == 'PENDING' ? 'Pending review' : (status.name() == 'PUBLISHED' ? 'Published' : 'Deprecated'))}">Draft</span>
+<article th:fragment="toolCard(tool, summaries)" class="ps-tool-card" data-reveal th:with="summary=${summaries[tool.id]}">
+    <div class="ps-card-top"><span class="ps-tool-mark" th:text="${#strings.substring(tool.name, 0, 1)}">P</span><span class="ps-card-arrow"><svg th:replace="~{fragments/layout :: icon('arrow-up')}"></svg></span></div>
+    <h3><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool name</a></h3><p class="ps-card-description" th:text="${tool.shortDescription}">Tool description</p>
+    <div class="ps-card-meta"><span class="ps-badge" th:text="${tool.categoryName}">Category</span><span th:text="${tool.viewCount} + ' views'">0 views</span></div>
+    <div class="ps-tool-rating"><svg class="ps-icon ps-rating-star" aria-hidden="true"><use th:href="@{/img/ui-icons.svg#star}"/></svg><th:block th:if="${summary != null and summary.reviewCount() > 0}"><strong th:text="${#numbers.formatDecimal(summary.avgRating(),1,1)}">4.5</strong><span>/ 5</span><span class="ps-rating-count" th:text="${summary.reviewCount()} + (${summary.reviewCount() == 1} ? ' review' : ' reviews')">2 reviews</span></th:block><span th:unless="${summary != null and summary.reviewCount() > 0}">No reviews yet</span></div>
+</article>
+<th:block th:fragment="errorSummary(objectName,prefix)" th:with="result=${#vars['org.springframework.validation.BindingResult.' + objectName]}"><section th:if="${result != null and result.hasErrors()}" class="ps-form-error-summary" role="alert" tabindex="-1" data-error-summary><h2>Please check your details.</h2><ul><li th:each="error : ${result.fieldErrors}"><a th:href="${'#' + prefix + error.field}" th:text="${@uiText.field(error)}"></a></li><li th:each="error : ${result.globalErrors}" th:text="${error.defaultMessage}"></li></ul></section></th:block>
+</body></html>
+

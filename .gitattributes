@@ -1,2 +1,4 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+# Keep distributable diffs applyable across Windows/Linux checkouts.
+*.patch text eol=lf
