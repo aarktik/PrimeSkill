@@ -51,6 +51,12 @@ public class ToolServiceImpl implements ToolService {
 
     @Override
     @Transactional(readOnly = true)
+    public ToolResponse getById(Long id, Long actorUserId, boolean actorIsAdmin) {
+        return toolMapper.toResponse(requireVisible(findTool(id), actorUserId, actorIsAdmin));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ToolResponse getByIdOrSlug(String idOrSlug, Long actorUserId, boolean actorIsAdmin) {
         return toolMapper.toResponse(findVisibleByIdOrSlug(idOrSlug, actorUserId, actorIsAdmin));
     }
@@ -73,11 +79,14 @@ public class ToolServiceImpl implements ToolService {
     }
 
     private Tool findVisibleByIdOrSlug(String idOrSlug, Long actorUserId, boolean actorIsAdmin) {
-        Tool tool = findByIdOrSlug(idOrSlug);
+        return requireVisible(findByIdOrSlug(idOrSlug), actorUserId, actorIsAdmin);
+    }
+
+    private Tool requireVisible(Tool tool, Long actorUserId, boolean actorIsAdmin) {
         boolean publicTool = tool.getStatus() == ToolStatus.PUBLISHED;
         boolean owner = actorUserId != null && actorUserId.equals(tool.getOwnerId());
         if (!publicTool && !owner && !actorIsAdmin) {
-            throw new ResourceNotFoundException("Tool not found: " + idOrSlug);
+            throw new ResourceNotFoundException("Tool not found: " + tool.getId());
         }
         return tool;
     }

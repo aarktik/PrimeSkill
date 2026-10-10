@@ -172,6 +172,6 @@ public class ReviewWebController {
     }
 
     private ToolResponse visibleTool(Long toolId, CurrentActor actor) {
-        return toolService.getByIdOrSlug(String.valueOf(toolId), actor.id(), actor.admin());
+        return toolService.getById(toolId, actor.id(), actor.admin());
     }
 }

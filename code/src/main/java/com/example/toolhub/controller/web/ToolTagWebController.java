@@ -43,7 +43,7 @@ public class ToolTagWebController {
         redirect.addFlashAttribute("successMessage", "Tag removed."); return "redirect:/dashboard/tools/" + id + "/tags";
     }
     private ToolResponse authorizedTool(Long id, CurrentActor actor) {
-        var tool = tools.getByIdOrSlug(String.valueOf(id), actor.id(), actor.admin());
+        var tool = tools.getById(id, actor.id(), actor.admin());
         if (!actor.admin() && !actor.id().equals(tool.getOwnerId())) throw new AccessDeniedException("You do not own this tool");
         return tool;
     }

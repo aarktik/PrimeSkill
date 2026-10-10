@@ -42,7 +42,7 @@ class RoleEWebControllerTest {
     void versionPageRendersOwnerActions() throws Exception {
         CurrentActor actor = new CurrentActor(7L, false);
         when(actorProvider.requireActor()).thenReturn(actor);
-        when(toolService.getByIdOrSlug("1", 7L, false)).thenReturn(tool(ToolStatus.DRAFT));
+        when(toolService.getById(1L, 7L, false)).thenReturn(tool(ToolStatus.DRAFT));
         when(versionService.list(1L, actor)).thenReturn(List.of());
 
         mockMvc.perform(get("/dashboard/tools/1/versions"))
@@ -55,7 +55,7 @@ class RoleEWebControllerTest {
     void versionFormKeepsValidationErrors() throws Exception {
         CurrentActor actor = new CurrentActor(7L, false);
         when(actorProvider.requireActor()).thenReturn(actor);
-        when(toolService.getByIdOrSlug("1", 7L, false)).thenReturn(tool(ToolStatus.DRAFT));
+        when(toolService.getById(1L, 7L, false)).thenReturn(tool(ToolStatus.DRAFT));
 
         mockMvc.perform(post("/dashboard/tools/1/versions").param("version", ""))
                 .andExpect(status().isOk())
@@ -91,7 +91,7 @@ class RoleEWebControllerTest {
     void nonOwnerCannotOpenDashboardVersions() throws Exception {
         CurrentActor actor = new CurrentActor(8L, false);
         when(actorProvider.requireActor()).thenReturn(actor);
-        when(toolService.getByIdOrSlug("1", 8L, false)).thenReturn(tool(ToolStatus.PUBLISHED));
+        when(toolService.getById(1L, 8L, false)).thenReturn(tool(ToolStatus.PUBLISHED));
 
         mockMvc.perform(get("/dashboard/tools/1/versions"))
                 .andExpect(status().isForbidden())
@@ -102,7 +102,7 @@ class RoleEWebControllerTest {
     void invalidSubmitShowsSafeConflictPage() throws Exception {
         CurrentActor actor = new CurrentActor(7L, false);
         when(actorProvider.requireActor()).thenReturn(actor);
-        when(toolService.getByIdOrSlug("1", 7L, false)).thenReturn(tool(ToolStatus.PENDING));
+        when(toolService.getById(1L, 7L, false)).thenReturn(tool(ToolStatus.PENDING));
         when(publishingService.transition(1L, com.example.toolhub.domain.enums.PublishingAction.SUBMIT, actor))
                 .thenThrow(new InvalidStateTransitionException("internal state details"));
 
@@ -117,7 +117,7 @@ class RoleEWebControllerTest {
     void cannotOpenVersionFormForPendingTool() throws Exception {
         CurrentActor actor = new CurrentActor(7L, false);
         when(actorProvider.requireActor()).thenReturn(actor);
-        when(toolService.getByIdOrSlug("1", 7L, false)).thenReturn(tool(ToolStatus.PENDING));
+        when(toolService.getById(1L, 7L, false)).thenReturn(tool(ToolStatus.PENDING));
 
         mockMvc.perform(get("/dashboard/tools/1/versions/new"))
                 .andExpect(status().isConflict())

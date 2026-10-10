@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface ToolService {
     ToolResponse create(CreateToolRequest request, Long actorUserId);
+    ToolResponse getById(Long id, Long actorUserId, boolean actorIsAdmin);
     ToolResponse getByIdOrSlug(String idOrSlug, Long actorUserId, boolean actorIsAdmin);
     ToolResponse getDetailByIdOrSlug(String idOrSlug, Long actorUserId, boolean actorIsAdmin);
     Page<ToolResponse> listOwnedBy(Long actorUserId, Pageable pageable);

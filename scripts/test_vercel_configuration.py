@@ -27,6 +27,6 @@ class VercelConfigurationTests(unittest.TestCase):
         text = (ROOT / 'code/src/main/resources/application-vercel.properties').read_text()
         for setting in ('spring.sql.init.mode=never', 'spring.jpa.hibernate.ddl-auto=validate',
                         'server.servlet.session.cookie.secure=true', 'server.forward-headers-strategy=framework',
-                        'springdoc.api-docs.enabled=false', 'springdoc.swagger-ui.enabled=false'):
+                        'springdoc.api-docs.enabled=true', 'springdoc.swagger-ui.enabled=true'):
             self.assertIn(setting, text)
 if __name__ == '__main__': unittest.main()
