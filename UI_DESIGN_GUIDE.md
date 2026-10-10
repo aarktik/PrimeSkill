@@ -1,75 +1,71 @@
-# Primeskill — Shared UI Design Guide
+# PrimeSkill shared UI design guide
 
-> คู่มือหน้าตาเว็บร่วมสำหรับ A–E · v1.0  
-> ใช้ร่วมกับ [Implementation Plan](IMPLEMENTATION_PLAN.md); เอกสารนี้กำหนดวิธีแสดงผล ไม่เปลี่ยน feature/authorization contract
+Version 2 — local redesign for user review, 10 October 2026.
 
-## Direction and tokens
+## Direction
 
-โทน light, สะอาด อ่านง่าย มี whitespace; reference คือบรรยากาศ Calendly ใน Land-book ไม่ใช่การคัดลอก. ใช้ภาษาไทยเป็นหลัก, Noto Sans Thai + `system-ui, sans-serif`; primary button น้ำเงินเข้มเหมือนกันทุกหน้า, gradient เฉพาะ hero/banner, ไม่มี animation ซับซ้อน.
+Bright, professional SaaS directory with generous spacing, clear hierarchy, geometric SVG icons and restrained motion. UI copy is English; user content can remain Thai. Self-hosted Plus Jakarta Sans is the primary font, with Noto Sans Thai as the Thai fallback. Font licenses are included alongside seven WOFF2 subsets in `code/src/main/resources/static/fonts`.
 
-| Token | Value |
+Light is the default. The theme toggle persists a preference under `primeskill-theme`; `theme-init.js` applies it before styles load. Dark mode has its own semantic colors and native control color scheme.
+
+| Token | Light | Dark |
+|---|---|---|
+| Background | `#F8FAFC` | `#0B1220` |
+| Surface | `#FFFFFF` | `#111C2D` |
+| Text | `#102A43` | `#E8EEF7` |
+| Muted text | `#526477` | `#A8B4C4` |
+| Primary | `#2563EB` | `#60A5FA` |
+| On primary | `#FFFFFF` | `#0B1220` |
+| Divider | `#D8E1EA` | `#2A3A50` |
+| Form boundary | `#7C8B9A` | `#60728C` |
+
+Primary button text has 5.17:1 contrast in light mode; muted text on the light soft surface has 5.41:1. Muted dark text on the dark surface has 8.14:1. Form boundaries have 3.49:1 against their respective surfaces. These are token checks, not a formal accessibility certification of every possible state.
+
+## Structure
+
+The shared Thymeleaf fragments in `templates/fragments/layout.html` own the head, brand, navigation, workspace sidebar, footer, alerts, status badge and tool card. `primeskill.css` is the shared stylesheet; `role-e.css` remains a compatibility import. There are no page-local stylesheets or inline page CSS blocks.
+
+Public content uses a 1,280px maximum width. The workspace uses a 1,440px maximum width, a 224px sidebar, and a flexible main column. Gutters shrink on phones. The sidebar becomes a horizontal navigation row; public navigation becomes an expandable menu. Without JavaScript, the mobile navigation and Browse filters remain visible.
+
+| Page | Main layout |
 |---|---|
-| `--ps-bg`, `--ps-surface`, `--ps-text`, `--ps-muted` | `#F8FAFC`, `#FFF`, `#102A43`, `#526477` |
-| `--ps-primary`, `--ps-primary-hover`, `--ps-link`, `--ps-soft` | `#123B5D`, `#0B2942`, `#175CD3`, `#EAF2FF` |
-| `--ps-border`, `--ps-control-border` | `#D8E1EA`, `#7C8B9A` |
-| `--ps-success`, `--ps-warning`, `--ps-danger` | `#166534`, `#92400E`, `#B42318` |
+| `/` | Search hero, real directory preview, categories, popular/recent cards, contribution steps |
+| `/tools` | Search, category/tag rail or mobile drawer, sort, cards and pagination |
+| Tool detail | Tool identity, actions, overview/reviews/release navigation, review forms |
+| Login/register | Brand story and a compact labeled form |
+| My tools | Workspace header, status table with mobile rows, safe empty state |
+| Tool editor | Essentials, description and discovery/source groups |
+| My reviews | Review cards without hidden tool metadata |
+| Releases | Publishing panel and release-note cards |
+| Moderation | Submission cards with inspection and revision-safe decisions |
+| Profile | Editable display name, bio and avatar; read-only account identity and role |
+| Categories/tags | Admin lists, create/edit forms and protected deletion |
+| Tool tags | Owner/admin assignment and removal in DRAFT; read-only in other states |
+| Errors | Shared signed-in shell, safe message and contextual recovery links |
 
-Badge backgrounds: success `#DCFCE7`, warning `#FEF3C7`, danger `#FEE4E2`, neutral `#EEF2F6`. Hero: `linear-gradient(135deg,#E2EFF2 0%,#D9E9FF 55%,#E9E4FA 100%)`. Status always has text, never color-only.
+The UI now exposes the existing profile, category/tag administration, tool tag assignment and admin tool actions. These screens reuse existing services, permissions and DTO limits; they do not introduce new REST or database contracts.
 
-Type: hero 48/32px 700, H1 32/26px 700, H2 24/22px 600, H3 18px 600, body/input 16px, button/label 14px 600, caption/badge 13px. Thai line-height 1.6; headings 1.3. Spacing scale 4/8/12/16/24/32/48/64px; controls radius 8px, cards 16px, badges pill; card shadow `0 8px 24px rgba(16,42,67,.08)`.
+## Interaction and motion
 
-## Layout and navigation
+Vanilla JavaScript progressively enhances native controls. Browse tag checkboxes serialize to the existing comma-separated `tags` parameter and preserve ANY-tag matching. GET forms and pagination retain the search contract. The mobile filter drawer handles Escape, keyboard focus cycling, focus return and inert background content. Enhanced navigation collapses at 1,100px; the Browse drawer is used below 768px. Enhancement classes are applied only after handlers initialize, so missing scripts leave navigation usable.
 
-Public: sticky white 72px navbar, page header/hero, centered max-width 1200px content, normal footer. Gutters: 24px desktop, 16px mobile. Dashboard: navbar + 240px white sidebar below it and main background `--ps-bg`; main padding 32px desktop/16px mobile. Auth: logo plus max 440px form card, no sidebar.
+Native mutation forms keep CSRF and server validation. The shared confirmation dialog runs before duplicate-submit locking; Cancel/Escape restores focus without locking the form. Approval keeps the submitted `expectedReviewRevision`. Password visibility controls do not change validation rules. Login/register preserve a validated same-origin return destination. Missing auth scripts leave the submit button disabled with an explanation; failed requests restore the button and its icon.
 
-Navbar: logo `/`, explore `/tools`; anonymous gets login ghost + register primary; authenticated gets add-tool primary + avatar menu (my tools/profile/admin only for ADMIN/logout POST with CSRF). At <768px use one accessible menu/drawer; `aria-expanded`, Escape and focus return apply. Sidebar active uses soft background, primary 600 text, `aria-current="page"`; hide admin items for USER but enforce backend authorization.
+Search inputs do not show an inner blue focus rectangle. Focus uses a muted border and subtle outer shadow on the complete search bar, and other controls use muted keyboard outlines. Text fields, textareas and selects use the same subtle focus border/shadow across all forms; invalid fields retain their red boundary. Forms use linked error summaries plus messages at each invalid field, preserving entered values. Profile fields normalize whitespace before validation. Your own review editor remains available independently of the community review page.
 
-Page header order: breadcrumb → one H1 plus primary action → short description. On mobile action moves below and may be full width.
+Names, category labels, chips, breadcrumbs and release headings wrap within their containers, including maximum-length unbroken content. Mobile inputs use 16px text. Broken avatar images fall back to initials.
 
-## Components
+Control feedback uses 150ms transitions; drawers/dialogs use 220ms; public entrances use 400ms and the first six cards reveal at 360ms with 35ms stagger. Shared route transitions are an optional browser enhancement in `public-motion.css`. `prefers-reduced-motion` disables animations, transitions and smooth scrolling. Content is visible without observers or JavaScript.
 
-Buttons use `.ps-btn`: min height 44px, padding 12px 20px, gap 8px. Variants: `--primary` save/register/submit/add, `--secondary` cancel/back, `--ghost` navigation/edit/menu, `--danger` destructive confirmation. Use `<a>` for navigation and `<button>` for mutation; non-submit buttons state `type="button"`; icon-only buttons need accessible names. Focus visible uses 3px link outline/3px offset; disabled uses `.5` opacity and explains why when relevant; loading locks resubmission and says “กำลังบันทึก…”.
+## Data and ownership contracts
 
-Forms: labels always above controls (placeholder only example), input/select min 44px, textarea min 120px, white/control border/padding 12px. Label gap 8px, field gap 24px. Errors use danger border/text plus `aria-invalid`/`aria-describedby`. Proper input types and autocomplete; preserve safe values after validation but never password. Inline post-redirect alerts: success `role=status`, important error `role=alert`, never leak server internals.
+The homepage requests two six-item published-tool pages and shares one deduplicated review summary batch across both sections. Scores, counts and views come from the existing services. Browse rating sorting still occurs in the database before pagination, with unrated items last and the existing tie-break.
 
-Tool card order: 48px icon/initial + linked name; category/short description max 3 lines; max 3 tags + `+N`; real rating or “ยังไม่มีรีวิว”; publisher/date. White bordered 16px card, subtle hover, equal grid height; do not nest controls inside card link. Status mapping: DRAFT=แบบร่าง neutral, PENDING=รออนุมัติ warning, PUBLISHED=เผยแพร่แล้ว success, DEPRECATED=เลิกเผยแพร่ neutral. User changes status only through allowed actions.
+Authentication, REST DTOs, error codes, tool locks, DRAFT mutation guards and approval revisions keep their existing contracts. Presentation-only validation messages live in `UiText`. Static assets alone receive additional anonymous GET/HEAD access. Hidden tool metadata stays private in My reviews.
 
-Search is GET: full-row labeled search, category/tag filters, result count and allowed sort labels (ใหม่ล่าสุด/ยอดนิยม/คะแนนสูงสุด/เกี่ยวข้องที่สุด). Desktop filter 240px left; mobile collapsible filter with apply/reset. Changing filter/sort resets page; pagination preserves query and disabled endpoints are not clickable.
+## Review workflow
 
-Tables have 56px rows, background header, action last; use empty state; mobile horizontal scroll in table boundary or stacked cards. Detail tabs: รายละเอียด/เวอร์ชัน/รีวิว. Dropdown and modal must support Escape/outside close/focus management; destructive confirmation starts focus on cancel. Modal max 480px, 24px padding, 40% overlay and names actual effect.
+This redesign is kept in the local worktree `worktrees/primeskill-redesign`. Do not push or merge it until the user has inspected and accepted the local preview. Verification details and preview accounts are in `doc/redesign-local-review.md`.
 
-Empty states have simple icon, title, one-line explanation and relevant action. Required copy: no search result “ไม่พบเครื่องมือที่ตรงกับการค้นหา”; none of own tools “เริ่มเผยแพร่เครื่องมือแรกของคุณ”; no reviews “ยังไม่มีรีวิวสำหรับเครื่องมือนี้”; 404/403/server error use short safe messages + return/retry action.
 
-## Pages and responsive rules
-
-| Owner/page | Layout/components/action |
-|---|---|
-| B+C home | public hero/search/cards; explore |
-| A auth/profile | auth form or dashboard form/alert; register-login/save |
-| C browse | public header/search/filter/grid/pagination; search |
-| B+D+E detail | tool header/tags/rating/tabs; valid external website action |
-| B my tools/editor | dashboard table/form/status; add/save draft |
-| D reviews | detail section; accessible 1–5 radio rating + textarea/list; submit/save |
-| E versions/moderation | dashboard list/form/badges or admin queue/confirm; add/approve |
-
-At <768px: one column, drawer, collapsible filter, full-width forms. 768–1023: two-card grid and dashboard drawer. ≥1024: 240px sidebar and three cards only if card content area remains ≥240px. Test 375, 768, 1280; never allow whole-page horizontal overflow.
-
-## Thymeleaf implementation agreement
-
-```text
-templates/fragments/{head,navbar,sidebar,footer,page-header,alerts,tool-card,pagination,status-badge}.html
-templates/{auth,profile,tools,reviews,versions,admin}/
-static/css/{tokens,components,pages}.css
-static/js/ui.js
-```
-
-Use `th:replace`/`th:insert`, never copied navigation. Controllers provide `pageTitle`, `activeNav` (`explore|my-tools|profile|moderation|categories|tags`), necessary user data and common flash shape. Prefix CSS `ps-`; scope page styles (e.g. `.ps-profile`), load tokens → components → pages. Shared baseline must be one CSS system; if Bootstrap is chosen, choose one version and map it to tokens. Web controllers use the same services as REST; mutations contain CSRF and redirect after success.
-
-```css
-:root { --ps-bg:#f8fafc; --ps-surface:#fff; --ps-text:#102a43; --ps-muted:#526477; --ps-primary:#123b5d; --ps-primary-hover:#0b2942; --ps-link:#175cd3; --ps-soft:#eaf2ff; --ps-border:#d8e1ea; --ps-control-border:#7c8b9a; --ps-success:#166534; --ps-warning:#92400e; --ps-danger:#b42318; --ps-radius-control:8px; --ps-radius-card:16px; --ps-shadow:0 8px 24px rgba(16,42,67,.08); --ps-nav-height:72px; --ps-sidebar-width:240px; --ps-content-width:1200px; }
-* { box-sizing:border-box; } body { margin:0; background:var(--ps-bg); color:var(--ps-text); font-family:"Noto Sans Thai",system-ui,sans-serif; font-size:16px; line-height:1.6; }
-.ps-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:12px 20px; border:1px solid transparent; border-radius:var(--ps-radius-control); font:inherit; font-size:14px; font-weight:600; text-decoration:none; cursor:pointer; transition:background-color 150ms,border-color 150ms; }
-.ps-btn--primary { background:var(--ps-primary); color:#fff; }.ps-btn--primary:hover:not(:disabled){background:var(--ps-primary-hover)}.ps-btn--secondary{background:var(--ps-surface);border-color:var(--ps-control-border);color:var(--ps-text)}.ps-btn--ghost{background:transparent;color:var(--ps-text)}.ps-btn--secondary:hover:not(:disabled),.ps-btn--ghost:hover:not(:disabled){background:var(--ps-soft)}.ps-btn--danger{background:var(--ps-danger);color:#fff}.ps-btn--danger:hover:not(:disabled){background:#912018}.ps-btn:disabled{opacity:.5;cursor:not-allowed}:focus-visible{outline:3px solid var(--ps-link);outline-offset:3px}@media (prefers-reduced-motion:reduce){.ps-btn{transition:none}}
-```
-
-Before splitting pages: appoint shared UI owner; implement tokens/buttons/inputs/layout fragments; add a development component showcase; all A–E consume it; change shared components only at source via PR and review all callers. Pre-merge check: tokens/spacings/labels consistent, common nav active, state handling, keyboard/focus/labels, 375px works, UI hides unauthorized options but server rechecks, and page CSS does not leak globally.
+E follow-up: blank tool names use Thai presentation-only validation with form retention. Error handlers restore the shared session menu model; error actions expose sign-in/workspace/moderation according to the current actor. Verification and the credential-free handoff bundle are recorded in `doc/role-c-new-ui-local-2026-10-10.md`.

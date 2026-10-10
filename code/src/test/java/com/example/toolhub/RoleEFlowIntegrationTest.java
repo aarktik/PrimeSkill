@@ -456,7 +456,7 @@ class RoleEFlowIntegrationTest {
         mvc.perform(get("/register")).andExpect(status().isOk()).andExpect(view().name("auth/register"));
         mvc.perform(get("/js/role-e.js")).andExpect(status().isOk());
         mvc.perform(get("/dashboard/tools").accept(MediaType.TEXT_HTML))
-                .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));
+                .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login?next=%2Fdashboard%2Ftools"));
         mvc.perform(get("/api/v1/admin/tools/pending").accept(MediaType.TEXT_HTML)).andExpect(status().isUnauthorized());
         Client owner = registerAndLogin(false);
         mvc.perform(get("/dashboard/tools").session(owner.session)).andExpect(status().isOk())
@@ -471,7 +471,7 @@ class RoleEFlowIntegrationTest {
         Client owner = registerAndLogin(false);
         createTool(owner);
         mvc.perform(get("/dashboard/tools").session(owner.session)).andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("ลบเครื่องมือนี้และประวัติเวอร์ชันทั้งหมดหรือไม่?")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Delete this tool and all its version history?")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("_csrf")));
     }
 

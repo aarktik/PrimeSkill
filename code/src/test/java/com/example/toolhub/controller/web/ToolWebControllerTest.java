@@ -42,13 +42,14 @@ class ToolWebControllerTest {
     @Mock private CurrentActorProvider currentActorProvider;
     @Mock private ReviewService reviewService;
     @Mock private ReviewSummaryService reviewSummaryService;
+    @Mock private com.example.toolhub.service.TagService tagService;
 
     private ToolWebController controller;
 
     @BeforeEach
     void setUp() {
         controller = new ToolWebController(toolService, categoryService, currentActorProvider,
-                reviewService, reviewSummaryService);
+                reviewService, reviewSummaryService, tagService);
     }
 
     @Test

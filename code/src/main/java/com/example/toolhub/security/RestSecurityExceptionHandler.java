@@ -33,7 +33,10 @@ public class RestSecurityExceptionHandler
     ) throws IOException {
         if (!request.getRequestURI().startsWith("/api/") && "GET".equals(request.getMethod())
                 && request.getHeader("Accept") != null && request.getHeader("Accept").contains("text/html")) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            String target = request.getRequestURI().substring(request.getContextPath().length());
+            if (request.getQueryString() != null) target += "?" + request.getQueryString();
+            response.sendRedirect(request.getContextPath() + "/login?next=" + java.net.URLEncoder.encode(
+                    com.example.toolhub.controller.web.ReturnTarget.safe(target), StandardCharsets.UTF_8));
             return;
         }
         writeError(
