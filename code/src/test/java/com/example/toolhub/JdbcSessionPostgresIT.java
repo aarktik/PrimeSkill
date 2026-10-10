@@ -136,6 +136,12 @@ class JdbcSessionPostgresIT {
     @Test void deploymentProfileSetsSecureCookieAndDisablesDocumentation() throws Exception {
         try(var deployment=servers.start(true)) {
             String host=servers.address(deployment);
+            // Exercise first-use initialization, not just a successfully bound port.
+            assertEquals(200,send(host,"/login",null,null,null).statusCode());
+            assertEquals(200,send(host,"/tools",null,null,null).statusCode());
+            assertEquals(302,send(host,"/dashboard/tools",null,null,null).statusCode());
+            assertEquals(401,send(host,"/api/v1/auth/me",null,null,null).statusCode());
+            assertEquals(403,send(host,"/api/v1/auth/login",null,null,"{}").statusCode());
             var csrf=send(host,"/api/v1/auth/csrf",null,null,null);
             assertEquals(200,csrf.statusCode());
             String header=csrf.headers().firstValue("Set-Cookie").orElseThrow();

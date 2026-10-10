@@ -86,6 +86,22 @@ Before production execution:
 
 ## Session lifecycle and rollback
 
+### Cold-start budget
+
+The observed container startup budget is approximately 28.5 seconds. The Vercel
+profile uses lazy bean/repository initialization so HTTP can bind before
+request-only components initialize. Hibernate schema validation remains enabled;
+acceptance must exercise database-backed routes after startup, not only inspect
+the provider's Ready badge. Lazy initialization can move errors to the first
+request. The container uses `-XX:TieredStopAtLevel=1` to favor startup latency over
+peak JIT throughput; local/default JVM invocations are unchanged.
+
+Each container has a maximum of4 JDBC connections,0 minimum idle connections and
+a10-second acquisition timeout. Total connections still scale with the number of
+containers: check Supabase pooler capacity before increasing traffic. A runtime
+timeout is not evidence that the configured port is wrong; inspect the Java
+startup milestones and database connection result first.
+
 Idle timeout is1800 seconds. Expired sessions are refused on access even if the
 scheduled cleanup has not run. Spring Session cleanup runs every minute while
 an instance is running; cleanup can wait while all Functions are scaled to zero.

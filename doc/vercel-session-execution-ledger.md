@@ -49,4 +49,11 @@ role and branch before deploy.
 - Preview B3Xg14NJh8yaByJpDoqgLzsfzg2g from14dcefd also emitted empty output in304ms without Docker/Maven. Root directory empty, overrides off, Fluid enabled.
 - Ruling: explicitly declare one container service and catch-all rewrite using documented services configuration; test on personal branch before merge. Cost if unsupported: failed preview, no database changes.
 - New route-to-container configuration test failed because vercel.json was absent, then passed with explicit config; all3 configuration tests passed. Platform acceptance remains pending.
-
+## Cold-start repair 2026-10-10
+- ca21be5 CI: 8/8 checks passed. Actual container Preview built successfully.
+- Operator manually created primeskill_runtime, set its password, granted scoped app/session table CRUD and owned ID-sequence USAGE, then entered username/password in Vercel. Password was not read by the agent.
+- Redeploy 5ef35p5a1UL7TW64vN1pdoL2xyu8 on ca21be5 received current environment variables. Logs prove successful Hikari PostgreSQL 17.6 connection and Hibernate schema validation/EntityManagerFactory initialization.
+- Runtime still failed: no TCP listener before Vercel startup timeout (~28.5s). Tomcat initialized for8080 correctly; port configuration is not the root cause.
+- Scoped repair: Vercel-only lazy bean/repository initialization and JVM tier1 startup compilation; retain SQL init=never, Hibernate validate, session/CSRF/security, Java17 and non-root runtime. Bound each container's pool to4 connections with0 idle and10s acquire timeout.
+- Acceptance must include real HTTP requests after the listener is bound; lazy initialization can defer failures until first use. Build/Ready alone is insufficient.
+- Local gate: Java17 Surefire381 + PostgreSQL Failsafe349 =730 tests passed, no failures/errors/skips. Expanded first-use deployment-profile HTTP checks passed. Vercel configuration checks3/3 passed. Disposable PostgreSQL stopped cleanly.
