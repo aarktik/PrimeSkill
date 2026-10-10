@@ -1,0 +1,107 @@
+diff --git a/code/src/main/java/com/example/toolhub/repository/ToolRepository.java b/code/src/main/java/com/example/toolhub/repository/ToolRepository.java
+index 57728a6..efb5954 100644
+--- a/code/src/main/java/com/example/toolhub/repository/ToolRepository.java
++++ b/code/src/main/java/com/example/toolhub/repository/ToolRepository.java
+@@ -13,6 +13,9 @@ import org.springframework.data.jpa.repository.Query;
+ import org.springframework.data.repository.query.Param;
+ 
+ public interface ToolRepository extends JpaRepository<Tool, Long> {
++    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
++    @Query("select t from Tool t where t.id = :id")
++    Optional<Tool> findForUpdateById(@Param("id") Long id);
+     @EntityGraph(attributePaths = "category")
+     Optional<Tool> findBySlug(String slug);
+ 
+diff --git a/code/src/main/java/com/example/toolhub/service/impl/ReviewServiceImpl.java b/code/src/main/java/com/example/toolhub/service/impl/ReviewServiceImpl.java
+index 27c5415..d0bcfe3 100644
+--- a/code/src/main/java/com/example/toolhub/service/impl/ReviewServiceImpl.java
++++ b/code/src/main/java/com/example/toolhub/service/impl/ReviewServiceImpl.java
+@@ -19,6 +19,7 @@ import com.example.toolhub.repository.UserRepository;
+ import com.example.toolhub.service.ReviewService;
+ import com.example.toolhub.service.ToolService;
+ import java.util.Objects;
++import jakarta.persistence.EntityManager;
+ import org.springframework.context.ApplicationEventPublisher;
+ import org.springframework.data.domain.Page;
+ import org.springframework.data.domain.Pageable;
+@@ -35,16 +36,19 @@ public class ReviewServiceImpl implements ReviewService {
+     private final ToolService toolService;
+     private final ReviewMapper reviewMapper;
+     private final ApplicationEventPublisher eventPublisher;
++    private final EntityManager entityManager;
+ 
+     public ReviewServiceImpl(ReviewRepository reviewRepository, ToolRepository toolRepository,
+                              UserRepository userRepository, ToolService toolService,
+-                             ReviewMapper reviewMapper, ApplicationEventPublisher eventPublisher) {
++                             ReviewMapper reviewMapper, ApplicationEventPublisher eventPublisher,
++                             EntityManager entityManager) {
+         this.reviewRepository = reviewRepository;
+         this.toolRepository = toolRepository;
+         this.userRepository = userRepository;
+         this.toolService = toolService;
+         this.reviewMapper = reviewMapper;
+         this.eventPublisher = eventPublisher;
++        this.entityManager = entityManager;
+     }
+ 
+     @Override
+@@ -69,6 +73,7 @@ public class ReviewServiceImpl implements ReviewService {
+     public ReviewResponse create(Long toolId, CreateReviewRequest request,
+                                  Long actorUserId, boolean actorIsAdmin) {
+         requireActor(actorUserId);
++        lockToolForReview(toolId);
+         ToolResponse visibleTool = visibleTool(toolId, actorUserId, actorIsAdmin);
+         requirePublished(visibleTool);
+         if (Objects.equals(visibleTool.getOwnerId(), actorUserId)) {
+@@ -91,6 +96,7 @@ public class ReviewServiceImpl implements ReviewService {
+     public ReviewResponse update(Long toolId, Long reviewId, UpdateReviewRequest request,
+                                  Long actorUserId, boolean actorIsAdmin) {
+         requireActor(actorUserId);
++        lockToolForReview(toolId);
+         ToolResponse visibleTool = visibleTool(toolId, actorUserId, actorIsAdmin);
+         requirePublished(visibleTool);
+         Review review = findReview(toolId, reviewId);
+@@ -123,6 +129,13 @@ public class ReviewServiceImpl implements ReviewService {
+                 .orElse(null);
+     }
+ 
++    private void lockToolForReview(Long toolId) {
++        Tool tool = toolRepository.findForUpdateById(toolId)
++                .orElseThrow(() -> new ResourceNotFoundException("Tool not found: " + toolId));
++        // Publishing holds the same row lock. Refresh also replaces any previously cached status.
++        entityManager.refresh(tool);
++    }
++
+     private ToolResponse visibleTool(Long toolId, Long actorUserId, boolean actorIsAdmin) {
+         return toolService.getByIdOrSlug(String.valueOf(toolId), actorUserId, actorIsAdmin);
+     }
+diff --git a/code/src/test/java/com/example/toolhub/service/ReviewServiceImplTest.java b/code/src/test/java/com/example/toolhub/service/ReviewServiceImplTest.java
+index 9819904..8ee0c69 100644
+--- a/code/src/test/java/com/example/toolhub/service/ReviewServiceImplTest.java
++++ b/code/src/test/java/com/example/toolhub/service/ReviewServiceImplTest.java
+@@ -26,6 +26,7 @@ import com.example.toolhub.repository.ToolRepository;
+ import com.example.toolhub.repository.UserRepository;
+ import com.example.toolhub.service.impl.ReviewServiceImpl;
+ import java.util.Optional;
++import jakarta.persistence.EntityManager;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+@@ -44,6 +45,7 @@ class ReviewServiceImplTest {
+     @Mock private ToolService toolService;
+     @Mock private ReviewMapper reviewMapper;
+     @Mock private ApplicationEventPublisher eventPublisher;
++    @Mock private EntityManager entityManager;
+ 
+     private ReviewServiceImpl service;
+     private ToolResponse publishedTool;
+@@ -51,7 +53,8 @@ class ReviewServiceImplTest {
+     @BeforeEach
+     void setUp() {
+         service = new ReviewServiceImpl(reviewRepository, toolRepository, userRepository,
+-                toolService, reviewMapper, eventPublisher);
++                toolService, reviewMapper, eventPublisher, entityManager);
++        lenient().when(toolRepository.findForUpdateById(3L)).thenReturn(Optional.of(org.mockito.Mockito.mock(Tool.class)));
+         publishedTool = ToolResponse.builder().id(3L).ownerId(9L).status(ToolStatus.PUBLISHED).build();
+         lenient().when(toolService.getByIdOrSlug("3", 7L, false)).thenReturn(publishedTool);
+     }

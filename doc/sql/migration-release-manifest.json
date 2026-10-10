@@ -1,0 +1,43 @@
+{
+  "status": "drafts for review; versions/runner/target not approved",
+  "branch": "thaninton_673380043-6_02",
+  "lineEndings": "repositorySha256 hashes Git normalized contents; localSha256 hashes actual Windows files. Verify approved runner bytes before rollout.",
+  "files": [
+    {
+      "file": "doc/sql/V7__align_existing_tool_catalog.sql",
+      "gitBlob": "8ae4cbfd4336ea7f4a03dc52e3ffa8c55b79735a",
+      "repositorySha256": "11140a874fd911049563420c0c43cfd0ec10d3aac3bc267aa40f53de29c0a9b0",
+      "localSha256": "2b9e4708d1086f317ff729a1eea313c427f3525057e86e1d8e83c7b3d5871f79"
+    },
+    {
+      "file": "doc/sql/V8__limit_review_comment_length.sql",
+      "gitBlob": "3a612cbbd02c6cee9aac62090f64a625a39d030f",
+      "repositorySha256": "b9b17b7e23848638496f19271b45647eaf34c3adda99396c17d1f08737a62e52",
+      "localSha256": "6d8da60ef2f81f91a28baf04e34055e25bee6bebb3da1c4e83bb85b7b8a3d7f0"
+    },
+    {
+      "file": "doc/sql/drafts/B1__add_tool_review_revision.sql",
+      "gitBlob": "b84555521b0db2b21292c9aff9760b768d77df9d",
+      "repositorySha256": "deae24a3782bd730001b370f5e126ccfe5bb26e434a03fca9960a3e0eea86552",
+      "localSha256": "deae24a3782bd730001b370f5e126ccfe5bb26e434a03fca9960a3e0eea86552"
+    },
+    {
+      "file": "doc/sql/preflight/rollout-inventory.sql",
+      "gitBlob": "9bd1cb3dab9f38a60ae111003ffc084fb6f263c2",
+      "repositorySha256": "75934d579cfec79597a382927abda19c0a3994458f8f3dac3eef4cb8a8d88fcc",
+      "localSha256": "75934d579cfec79597a382927abda19c0a3994458f8f3dac3eef4cb8a8d88fcc"
+    },
+    {
+      "file": "code/src/main/resources/schema.sql",
+      "gitBlob": "da8eb058ac26508dbd2501ad0d631c21c0433ca3",
+      "repositorySha256": "f6788193060ac98d3c863a23047ff44835aee4a0617f657624130a20aaf1dd3b",
+      "localSha256": "ee42f90a024e38d8afd08b581fbd16eeb73fb330481254b1a665f019f978e46c"
+    },
+    {
+      "file": "scripts/rehearse-migration-rollout.ps1",
+      "gitBlob": "cd70727c6eaf1ab545973d88d36998d9b09d8813",
+      "repositorySha256": "1edf30f947de07bc26ccddb1e21e1e1356638b05ab1f379a99a80de5525ce131",
+      "localSha256": "3dad2c36725e5b136e5d4b599c6d4098f5eacf4242a6ca6b4b4e9e89627adc35"
+    }
+  ]
+}

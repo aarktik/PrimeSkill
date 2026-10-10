@@ -1,0 +1,252 @@
+{
+  "status": "PASS",
+  "browser": "edge",
+  "cases": [
+    {
+      "label": "Anonymous controller and framework errors use signed-out shared layout",
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews empty uses shared themes and mobile layout",
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews populated uses shared themes and mobile layout",
+      "status": "PASS"
+    },
+    {
+      "label": "USER errors and forbidden admin page retain signed-in shared navigation",
+      "status": "PASS"
+    },
+    {
+      "label": "Create blank-name empty shows Thai and preserves all fields",
+      "status": "PASS"
+    },
+    {
+      "label": "Create blank-name spaces shows Thai and preserves all fields",
+      "status": "PASS"
+    },
+    {
+      "label": "Edit blank-name empty shows Thai and preserves all fields",
+      "status": "PASS"
+    },
+    {
+      "label": "Edit blank-name spaces shows Thai and preserves all fields",
+      "status": "PASS"
+    },
+    {
+      "label": "ADMIN errors and forbidden owner-only page retain shared admin recovery actions",
+      "status": "PASS"
+    }
+  ],
+  "layouts": [
+    {
+      "label": "ANONYMOUS 404 error",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "ANONYMOUS 404 error",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews empty light 375",
+      "width": 375,
+      "scrollWidth": 375,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews empty light 1440",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews empty dark 375",
+      "width": 375,
+      "scrollWidth": 375,
+      "theme": "dark",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews empty dark 1440",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews populated light 375",
+      "width": 375,
+      "scrollWidth": 375,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews populated light 1440",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews populated dark 375",
+      "width": 375,
+      "scrollWidth": 375,
+      "theme": "dark",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "My reviews populated dark 1440",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "dark",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "USER 404 error",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "USER 404 error",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "USER 403 error",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "Thai validation create empty",
+      "width": 1440,
+      "scrollWidth": 1425,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "Thai validation create spaces",
+      "width": 1440,
+      "scrollWidth": 1425,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "Thai validation edit empty",
+      "width": 1440,
+      "scrollWidth": 1425,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "Thai validation edit spaces",
+      "width": 1440,
+      "scrollWidth": 1425,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "ADMIN 404 error",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "ADMIN 404 error",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    },
+    {
+      "label": "ADMIN 403 error",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "theme": "light",
+      "sharedCss": true,
+      "header": true,
+      "footer": true,
+      "status": "PASS"
+    }
+  ],
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Edg/155.0.4283.45",
+    "revision": "@50f24ef2aa5369a074b8888b7db82d9c0652d642",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+    "jsVersion": "15.5.9.4"
+  },
+  "javascriptExceptions": []
+}

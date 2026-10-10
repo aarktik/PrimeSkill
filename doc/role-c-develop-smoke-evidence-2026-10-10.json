@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-10",
+  "timezone": "Asia/Bangkok",
+  "testedSha": "fc9421a086ecf7fabb9bd8ca7d246e843e64cff7",
+  "environment": "User-authorized local develop; no shared database",
+  "javaTests": {
+    "surefire-reports": {
+      "tests": 338,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failsafe-reports": {
+      "tests": 312,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "javaTotal": 650,
+  "pythonTests": 25,
+  "requiredPostgresSuites": {
+    "com.example.toolhub.RatingBrowsePostgresIT": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "com.example.toolhub.TagGuardPostgresIT": {
+      "tests": 35,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "com.example.toolhub.TagMutationConcurrencyPostgresIT": {
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "http": {
+    "status": "PASS",
+    "checks": [
+      "Actual login/session/CSRF for owner/admin/reviewers",
+      "Real API create/tag/submit/approve/review flow commits",
+      "Rating + category + ANY tags: no duplicates/count inflation",
+      "Stable rating pagination and unrated last",
+      "newest accepts missing/blank keyword with category/tag filters",
+      "popular accepts missing/blank keyword with category/tag filters",
+      "relevance accepts missing/blank keyword with category/tag filters",
+      "rating accepts missing/blank keyword with category/tag filters",
+      "Empty search response",
+      "Browse renders real average/count and unrated text",
+      "Hidden tag visibility: anonymous/other 404, owner/admin 200",
+      "Denied actual HTTP requests leave committed tool/tag state unchanged",
+      "Reject returns Tool to DRAFT without resetting revision",
+      "Tag edit/resubmit rejects old approval revision",
+      "PENDING actual-session tag matrix preserves committed state",
+      "PUBLISHED actual-session tag matrix preserves committed state",
+      "DEPRECATED actual-session tag matrix preserves committed state",
+      "Catalog delete preserves in-use tag",
+      "New review appears in subsequent rating search",
+      "Edited review updates Browse score",
+      "Deleted review restores unrated-last order",
+      "Invalid pagination/sort retain 400 validation contract"
+    ],
+    "checkGroups": 22,
+    "database": "isolated in-memory H2"
+  },
+  "browser": {
+    "status": "PASS",
+    "sourceSha": "fc9421a086ecf7fabb9bd8ca7d246e843e64cff7",
+    "checks": [
+      "Search form submission finds only published matching tools",
+      "Category + multiple tags + rating selection work through actual form events",
+      "Real rating/count and unrated text render correctly",
+      "Next/previous retain every filter and show stable rating pages",
+      "Desktop/mobile: no horizontal overflow and visible search focus",
+      "Mobile navigation opens and closes",
+      "Browser empty search state",
+      "No unhandled page JavaScript exceptions"
+    ],
+    "viewports": [
+      {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "cards": 5
+      },
+      {
+        "width": 390,
+        "scrollWidth": 390,
+        "cards": 5
+      }
+    ],
+    "exceptions": []
+  },
+  "blockers": []
+}

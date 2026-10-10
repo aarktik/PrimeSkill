@@ -1,0 +1,160 @@
+{
+  "status": "INTEGRATION_OBSERVATION",
+  "message": "InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled",
+  "functionalGroupsPassed": 16,
+  "exceptions": [
+    {
+      "exceptionId": 1,
+      "text": "Uncaught (in promise)",
+      "lineNumber": 0,
+      "columnNumber": 0,
+      "scriptId": "1",
+      "url": "http://127.0.0.1:18088/tools?q=c-accept-1791611658308&size=2&category=2&tags=alpha-c-accept-1791611658308%2Cbeta-c-accept-1791611658308&sort=rating",
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "DOMException",
+        "description": "InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "code",
+              "type": "number",
+              "value": "11"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "value": "InvalidStateError"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Transition was aborted because of invalid state. ViewTransition opt-in disabled"
+            }
+          ]
+        }
+      },
+      "executionContextId": 6
+    },
+    {
+      "exceptionId": 2,
+      "text": "Uncaught (in promise)",
+      "lineNumber": 0,
+      "columnNumber": 0,
+      "scriptId": "1",
+      "url": "http://127.0.0.1:18088/tools?q=c-accept-1791611658308&category=2&tags=alpha-c-accept-1791611658308,beta-c-accept-1791611658308&sort=rating&page=2&size=2",
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "DOMException",
+        "description": "InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "code",
+              "type": "number",
+              "value": "11"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "value": "InvalidStateError"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Transition was aborted because of invalid state. ViewTransition opt-in disabled"
+            }
+          ]
+        }
+      },
+      "executionContextId": 8
+    },
+    {
+      "exceptionId": 7,
+      "text": "Uncaught (in promise)",
+      "lineNumber": 0,
+      "columnNumber": 0,
+      "scriptId": "1",
+      "url": "http://127.0.0.1:18088/tools",
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "DOMException",
+        "description": "InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "code",
+              "type": "number",
+              "value": "11"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "value": "InvalidStateError"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Transition was aborted because of invalid state. ViewTransition opt-in disabled"
+            }
+          ]
+        }
+      },
+      "executionContextId": 16
+    },
+    {
+      "exceptionId": 9,
+      "text": "Uncaught (in promise)",
+      "lineNumber": 0,
+      "columnNumber": 0,
+      "scriptId": "1",
+      "url": "http://127.0.0.1:18088/tools?q=c-accept-1791611658308&size=20&category=2&tags=beta-c-accept-1791611658308&sort=rating",
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "DOMException",
+        "description": "InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "code",
+              "type": "number",
+              "value": "11"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "value": "InvalidStateError"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Transition was aborted because of invalid state. ViewTransition opt-in disabled"
+            }
+          ]
+        }
+      },
+      "executionContextId": 18
+    }
+  ],
+  "finalRuns": "All functional groups passed; final selected Chrome/Edge runs show no unhandled exceptions. Complete resolution across environments is not claimed."
+}

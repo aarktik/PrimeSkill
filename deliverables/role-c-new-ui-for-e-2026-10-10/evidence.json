@@ -1,0 +1,81 @@
+{
+  "completedAt": "2026-10-10T06:09:51.261253+00:00",
+  "status": "PASS_WITH_INTEGRATION_OBSERVATION",
+  "sourceSnapshotSha256": "2ff17cdbb681b525876e8207f630cd4ff61204f818d5cb6dc4b8150e8a138eaf",
+  "baselineSha": "fc9421a086ecf7fabb9bd8ca7d246e843e64cff7",
+  "uiGitSha": null,
+  "java": {
+    "surefire-reports": {
+      "tests": 377,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failsafe-reports": {
+      "tests": 335,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "python": {
+    "tests": 25,
+    "status": "PASS"
+  },
+  "http": {
+    "groups": 22,
+    "status": "PASS"
+  },
+  "browsers": {
+    "chrome-role-c": {
+      "status": "PASS",
+      "workflowGroups": 16,
+      "layouts": 6,
+      "version": "Chrome/154.0.8037.98",
+      "unhandledExceptions": 0
+    },
+    "edge-role-c": {
+      "status": "PASS",
+      "workflowGroups": 16,
+      "layouts": 6,
+      "version": "Edg/155.0.4283.45",
+      "unhandledExceptions": 0
+    },
+    "chrome-e-followup": {
+      "status": "PASS",
+      "workflowGroups": 9,
+      "layouts": 20,
+      "version": "Chrome/154.0.8037.98",
+      "unhandledExceptions": 0
+    },
+    "edge-e-followup": {
+      "status": "PASS",
+      "workflowGroups": 9,
+      "layouts": 20,
+      "version": "Edg/155.0.4283.45",
+      "unhandledExceptions": 0
+    }
+  },
+  "eConfirmations": {
+    "myReviews": "COMPLETE",
+    "thaiBlankNameAndFormRetention": "COMPLETE",
+    "errorMenusForAllSessionRoles": "COMPLETE",
+    "owner": "Role C UI"
+  },
+  "credentialFreeEvidence": true,
+  "externalMessageSent": false,
+  "gitCommandsUsed": true,
+  "commitPushStatus": "user authorized delivery to Role C branch on 2026-10-10; actual Git SHA and remote confirmation supplied with final handoff links",
+  "previewUrl": "http://127.0.0.1:18089/",
+  "observations": [
+    "observations/view-transition.json"
+  ],
+  "unverified": [
+    "physical Android",
+    "Safari",
+    "deployed Supabase",
+    "future combined integration SHA"
+  ],
+  "deliveryBranch": "supakron_673380061-4_02",
+  "uiGitShaNote": "Prepared before its enclosing Git commit; use the repository commit supplied with the final handoff links."
+}

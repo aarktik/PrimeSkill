@@ -1,0 +1,230 @@
+package com.example.toolhub.controller.api;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.example.toolhub.exception.ResourceNotFoundException;
+import com.example.toolhub.dto.response.ToolResponse;
+import com.example.toolhub.exception.AuthenticationRequiredException;
+import com.example.toolhub.exception.CatalogConflictException;
+import com.example.toolhub.exception.InvalidStateTransitionException;
+import com.example.toolhub.exception.GlobalExceptionHandler;
+import com.example.toolhub.security.CurrentActor;
+import com.example.toolhub.security.CurrentActorProvider;
+import com.example.toolhub.service.ToolService;
+import java.sql.SQLException;
+import org.hibernate.exception.ConstraintViolationException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+class ToolRestControllerTest {
+    private static final String VALID_UPDATE = """
+            {"name":"Changed","slug":"changed","shortDescription":"Changed helper",
+             "description":"New details","categoryId":4,"repositoryUrl":"https://example.com/repo"}
+            """;
+    private MockMvc mockMvc;
+    private ToolService toolService;
+    private CurrentActorProvider currentActorProvider;
+
+    @BeforeEach
+    void setUp() {
+        toolService = mock(ToolService.class);
+        currentActorProvider = mock(CurrentActorProvider.class);
+        mockMvc = MockMvcBuilders.standaloneSetup(new ToolRestController(toolService, currentActorProvider))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
+
+    @Test
+    void getBySlug_returnsOkForAnonymousRequest() throws Exception {
+        when(currentActorProvider.currentActor()).thenReturn(new CurrentActor(null, false));
+        when(toolService.getDetailByIdOrSlug(anyString(), isNull(), anyBoolean()))
+                .thenReturn(ToolResponse.builder().id(1L).name("Calendar").slug("calendar").build());
+
+        mockMvc.perform(get("/api/v1/tools/calendar"))
+                .andExpect(status().isOk());
+        verify(toolService).getDetailByIdOrSlug("calendar", null, false);
+    }
+
+    @Test
+    void create_whenRequestIsInvalid_returnsStandardValidationError() throws Exception {
+        mockMvc.perform(post("/api/v1/tools")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\",\"slug\":\"INVALID SLUG\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.fieldErrors").isArray());
+    }
+
+    @Test
+    void create_whenSlugConflicts_returnsConflict() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
+        when(toolService.create(any(), anyLong())).thenThrow(new CatalogConflictException("Tool slug already exists"));
+
+        mockMvc.perform(post("/api/v1/tools")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Calendar\",\"slug\":\"calendar\",\"shortDescription\":\"Helper\",\"description\":\"Details\",\"categoryId\":1}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("RESOURCE_CONFLICT"));
+    }
+
+    @Test
+    void create_whenAuthenticationIsMissing_returnsUnauthorized() throws Exception {
+        when(currentActorProvider.requireActor()).thenThrow(new AuthenticationRequiredException());
+
+        mockMvc.perform(post("/api/v1/tools")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Calendar\",\"slug\":\"calendar\",\"shortDescription\":\"Helper\",\"description\":\"Details\",\"categoryId\":1}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
+    }
+
+    @Test
+    void create_whenUniqueConstraintFails_returnsConflictWithoutDatabaseMessage() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
+        when(toolService.create(any(), anyLong()))
+                .thenThrow(new DataIntegrityViolationException("constraint uq_tools_slug failed",
+                        new ConstraintViolationException("duplicate slug",
+                                new SQLException("duplicate", "23505"), "tools_slug_key")));
+
+        mockMvc.perform(post("/api/v1/tools")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Calendar\",\"slug\":\"calendar\",\"shortDescription\":\"Helper\",\"description\":\"Details\",\"categoryId\":1}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Resource conflicts with existing data"))
+                .andExpect(jsonPath("$.traceId").isNotEmpty());
+    }
+
+    @Test
+    void create_whenIntegrityFailureIsNotAConflict_returnsSafeServerError() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
+        when(toolService.create(any(), anyLong()))
+                .thenThrow(new DataIntegrityViolationException("null value in internal field"));
+
+        mockMvc.perform(post("/api/v1/tools")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Calendar\",\"slug\":\"calendar\",\"shortDescription\":\"Helper\",\"description\":\"Details\",\"categoryId\":1}"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
+                .andExpect(jsonPath("$.message").value("An unexpected error occurred"))
+                .andExpect(jsonPath("$.traceId").isNotEmpty());
+    }
+
+    @Test
+    void update_passesAuthenticatedOwnerToService() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenReturn(ToolResponse.builder().id(1L).name("Changed").build());
+
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Changed"));
+
+        verify(toolService).update(eq(1L), any(), eq(7L), eq(false));
+    }
+
+    @Test
+    void update_passesAuthenticatedAdminToService() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(8L, true));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenReturn(ToolResponse.builder().id(1L).name("Changed").build());
+
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isOk());
+
+        verify(toolService).update(eq(1L), any(), eq(8L), eq(true));
+    }
+
+    @Test
+    void update_whenServiceDeniesOtherUser_returnsStandardForbiddenError() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(9L, false));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenThrow(new AccessDeniedException("You do not own this tool"));
+
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.path").value("/api/v1/tools/1"));
+    }
+
+    @Test
+    void update_whenAuthenticationIsMissing_doesNotCallService() throws Exception {
+        when(currentActorProvider.requireActor()).thenThrow(new AuthenticationRequiredException());
+
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
+
+        verify(toolService, never()).update(anyLong(), any(), anyLong(), anyBoolean());
+    }
+
+    @Test
+    void update_whenRequestIsInvalid_doesNotCallService() throws Exception {
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\",\"slug\":\"INVALID SLUG\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.fieldErrors").isArray());
+
+        verify(toolService, never()).update(anyLong(), any(), anyLong(), anyBoolean());
+    }
+
+    @Test
+    void update_whenStatusIsNotDraft_returnsStateConflict() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenThrow(new InvalidStateTransitionException("Tool metadata can only be edited in draft status"));
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("INVALID_STATE_TRANSITION"));
+    }
+
+    @Test
+    void update_whenLockFails_returnsRetryableServiceUnavailable() throws Exception {
+        when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
+        when(toolService.update(anyLong(), any(), anyLong(), anyBoolean()))
+                .thenThrow(new org.springframework.dao.CannotAcquireLockException("test lock timeout"));
+        mockMvc.perform(put("/api/v1/tools/1").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("CONCURRENT_OPERATION_RETRY"));
+    }
+    @Test
+void create_withMalformedJson_returnsMalformedRequestError() throws Exception {
+    mockMvc.perform(post("/api/v1/tools")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"name\":"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"))
+            .andExpect(jsonPath("$.message").value("Request body is malformed"))
+            .andExpect(jsonPath("$.path").value("/api/v1/tools"));
+}
+    @Test
+void getBySlug_whenToolDoesNotExist_returnsNotFoundError() throws Exception {
+    when(currentActorProvider.currentActor())
+            .thenReturn(new CurrentActor(null, false));
+    when(toolService.getDetailByIdOrSlug(anyString(), isNull(), anyBoolean()))
+            .thenThrow(new ResourceNotFoundException("Tool not found"));
+
+    mockMvc.perform(get("/api/v1/tools/missing"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
+            .andExpect(jsonPath("$.path").value("/api/v1/tools/missing"));
+}
+}

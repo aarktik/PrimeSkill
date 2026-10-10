@@ -1,0 +1,67 @@
+{
+  "sourceKind": "local uncommitted new UI",
+  "baselineSha": "fc9421a086ecf7fabb9bd8ca7d246e843e64cff7",
+  "baseUrl": "http://127.0.0.1:18088",
+  "database": "isolated in-memory H2",
+  "status": "PASS",
+  "checks": [
+    "Actual login/session/CSRF for owner/admin/reviewers",
+    "Real API create/tag/submit/approve/review flow commits",
+    "Rating + category + ANY tags: no duplicates/count inflation",
+    "Stable rating pagination and unrated last",
+    "newest accepts missing/blank keyword with category/tag filters",
+    "popular accepts missing/blank keyword with category/tag filters",
+    "relevance accepts missing/blank keyword with category/tag filters",
+    "rating accepts missing/blank keyword with category/tag filters",
+    "Empty search response",
+    "Browse renders real average/count and unrated text",
+    "Hidden tag visibility: anonymous/other 404, owner/admin 200",
+    "Denied actual HTTP requests leave committed tool/tag state unchanged",
+    "Reject returns Tool to DRAFT without resetting revision",
+    "Tag edit/resubmit rejects old approval revision",
+    "PENDING actual-session tag matrix preserves committed state",
+    "PUBLISHED actual-session tag matrix preserves committed state",
+    "DEPRECATED actual-session tag matrix preserves committed state",
+    "Catalog delete preserves in-use tag",
+    "New review appears in subsequent rating search",
+    "Edited review updates Browse score",
+    "Deleted review restores unrated-last order",
+    "Invalid pagination/sort retain 400 validation contract"
+  ],
+  "prefix": "c-accept-1791611658308",
+  "tagIds": [
+    1,
+    2
+  ],
+  "categoryId": 2,
+  "tagSlugs": [
+    "alpha-c-accept-1791611658308",
+    "beta-c-accept-1791611658308"
+  ],
+  "tools": {
+    "High": {
+      "id": 4,
+      "slug": "high-c-accept-1791611658308"
+    },
+    "Tied": {
+      "id": 5,
+      "slug": "tied-c-accept-1791611658308"
+    },
+    "Middle": {
+      "id": 6,
+      "slug": "middle-c-accept-1791611658308"
+    },
+    "Low": {
+      "id": 7,
+      "slug": "low-c-accept-1791611658308"
+    },
+    "Unrated": {
+      "id": 8,
+      "slug": "unrated-c-accept-1791611658308"
+    },
+    "Hidden": {
+      "id": 9,
+      "slug": "hidden-c-accept-1791611658308"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /workspace
+COPY code/pom.xml code/pom.xml
+COPY code/src code/src
+RUN mvn -B -q -f code/pom.xml -DskipTests package
+
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+COPY --from=build /workspace/code/target/toolhub-0.0.1-SNAPSHOT.jar app.jar
+USER 10001:10001
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main id="main" tabindex="-1" class="ps-page ps-tool-detail">
+    <nav class="ps-crumb" aria-label="Breadcrumb">
+        <a th:href="@{/tools}">Explore tools</a>
+
+        <span aria-hidden="true"> / </span>
+        <span th:text="${tool.name}">Tool name</span>
+    </nav>
+    <header class="ps-tool-hero"><span class="ps-detail-mark ps-tool-mark" th:text="${#strings.substring(tool.name,0,1)}">P</span><div>
+        <div class="ps-tool-title-row">
+            <h1 th:text="${tool.name}">Tool name</h1>
+            <span th:replace="~{fragments/layout :: statusBadge(${tool.status})}">Draft</span>
+        </div>
+        <p class="ps-tool-summary" th:text="${tool.shortDescription}">Short description</p>
+        <div class="ps-tool-meta">
+            <span class="ps-tool-category">
+                <span class="ps-tool-category-label">Category</span>
+                <span th:text="${tool.categoryName}">Category</span>
+            </span>
+        </div>
+<div class="ps-detail-tags" th:if="${toolTags != null}"><a class="ps-badge ps-badge--blue" th:each="tag : ${toolTags}" th:href="@{/tools(tags=${tag.slug()})}" th:text="${tag.name()}"></a></div></div></header>
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <nav class="ps-tool-actions" aria-label="Tool actions"><a class="ps-btn ps-btn--secondary" th:if="${tool.status.name() == 'DRAFT' and (viewerId == tool.ownerId or isAdmin == true)}" th:href="@{/dashboard/tools/{id}/edit(id=${tool.id})}">Edit details</a><a class="ps-btn ps-btn--secondary" th:if="${viewerId == tool.ownerId or isAdmin == true}" th:href="@{/dashboard/tools/{id}/tags(id=${tool.id})}">Manage tags</a>
+        <a th:if="${viewerId == tool.ownerId}"
+           class="ps-btn ps-btn--secondary"
+           th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">Manage releases</a>
+        <a class="ps-btn ps-btn--primary" th:href="@{/tools/{slug}/versions(slug=${tool.slug})}">View releases</a>
+        <a th:if="${!#strings.isEmpty(tool.repositoryUrl)}"
+           class="ps-btn ps-btn--secondary"
+           th:href="${tool.repositoryUrl}" target="_blank" rel="noopener">Open repository</a>
+    </nav>
+    <nav class="ps-detail-tabs" aria-label="Tool sections"><a href="#tool-description-title">Overview</a><a href="#reviews-heading">Reviews</a><a th:href="@{/tools/{slug}/versions(slug=${tool.slug})}">Releases</a></nav><section class="ps-tool-description-panel ps-panel" aria-labelledby="tool-description-title">
+        <h2 id="tool-description-title">About this tool</h2>
+        <p class="ps-tool-description" th:text="${tool.description}">Description</p>
+    </section>
+
+    <section class="ps-reviews-section" aria-labelledby="reviews-heading">
+        <h2 id="reviews-heading">Community reviews</h2>
+        <p th:if="${reviewSummary.reviewCount == 0}" class="muted">No reviews yet</p>
+        <p th:if="${reviewSummary.reviewCount > 0}">
+            Average rating <strong th:text="${#numbers.formatDecimal(reviewSummary.avgRating, 1, 1)}">0.0</strong> / 5
+            · <span th:text="${reviewSummary.reviewCount}">0</span> reviews
+        </p>
+
+        <p th:if="${tool.status.name() != 'PUBLISHED'}" class="muted">This tool is not published. New reviews and review edits are unavailable.</p>
+
+        <form class="ps-panel ps-e-form ps-review-compose" th:if="${currentActorId != null and tool.status.name() == 'PUBLISHED' and tool.ownerId != currentActorId and myReview == null}"
+              method="post" th:action="@{/tools/{toolId}/reviews(toolId=${tool.id})}" th:object="${createReviewRequest}">
+            <h3>Write a review</h3><div th:replace="~{fragments/layout :: errorSummary('createReviewRequest','new-')}"></div>
+            <label for="new-rating">Rating</label>
+            <select id="new-rating" th:field="*{rating}" th:aria-invalid="${#fields.hasErrors('rating')}" th:aria-describedby="${#fields.hasErrors('rating') ? 'new-rating-error' : null}" required>
+                <option value="">Choose a rating</option>
+                <option th:each="score : ${#numbers.sequence(1,5)}" th:value="${score}" th:text="${score}">5</option>
+            </select>
+<p id="new-rating-error" class="ps-field-error" th:if="${#fields.hasErrors('rating')}" th:text="${@uiText.field(#vars['org.springframework.validation.BindingResult.createReviewRequest'].getFieldError('rating'))}"></p><label for="new-comment">Comment (optional, up to 2,000 characters)</label>
+            <textarea id="new-comment" th:field="*{comment}" maxlength="2000" th:aria-invalid="${#fields.hasErrors('comment')}" th:aria-describedby="${#fields.hasErrors('comment') ? 'new-comment-error' : null}"></textarea><p id="new-comment-error" class="ps-field-error" th:if="${#fields.hasErrors('comment')}" th:text="${@uiText.field(#vars['org.springframework.validation.BindingResult.createReviewRequest'].getFieldError('comment'))}"></p>
+            <button class="ps-btn ps-btn--primary" type="submit">Publish review</button>
+        </form>
+        <p th:if="${currentActorId == null and tool.status.name() == 'PUBLISHED'}" class="muted"><a th:href="@{/login(next=${'/tools/' + tool.slug + '#reviews-heading'})}">Sign in</a> to share your experience.</p>
+        <p th:if="${tool.ownerId == currentActorId and tool.status.name() == 'PUBLISHED'}" class="muted">Creators cannot review their own tools.</p>
+        <p th:if="${myReview != null and tool.status.name() == 'PUBLISHED'}" class="muted">You have already reviewed this tool. Manage your review below.</p>
+
+
+        <section id="your-review" class="ps-panel ps-review" th:if="${myReview != null and tool.status.name() == 'PUBLISHED'}" aria-labelledby="your-review-heading">
+            <h3 id="your-review-heading">Your review</h3>
+            <details class="ps-review-edit" th:open="${updateReviewErrors != null}"><summary>Edit your review</summary>
+            <div th:replace="~{fragments/layout :: errorSummary('updateReviewRequest','your-')}"></div>
+            <form class="ps-e-form" method="post" th:action="@{/tools/{id}/reviews/{reviewId}(id=${tool.id},reviewId=${myReview.id})}">
+                <input type="hidden" name="page" th:value="${reviewPage.number}">
+                <label for="your-rating">Rating</label><select id="your-rating" name="rating" required th:aria-invalid="${updateReviewErrors != null and !updateReviewErrors.?[field == 'rating'].isEmpty()}" th:aria-describedby="${updateReviewErrors != null and !updateReviewErrors.?[field == 'rating'].isEmpty() ? 'your-rating-error' : null}">
+                    <option th:each="score : ${#numbers.sequence(1,5)}" th:value="${score}" th:text="${score}" th:selected="${updateReviewErrors != null ? score == updateReviewRequest.rating : score == myReview.rating}">5</option>
+                </select><th:block th:if="${updateReviewErrors != null}"><p id="your-rating-error" class="ps-field-error" th:each="error : ${updateReviewErrors.?[field == 'rating']}" th:text="${@uiText.field(error)}"></p></th:block>
+                <label for="your-comment">Comment</label><textarea id="your-comment" name="comment" maxlength="2000" th:text="${updateReviewErrors != null ? updateReviewRequest.comment : myReview.comment}" th:aria-invalid="${updateReviewErrors != null and !updateReviewErrors.?[field == 'comment'].isEmpty()}" th:aria-describedby="${updateReviewErrors != null and !updateReviewErrors.?[field == 'comment'].isEmpty() ? 'your-comment-error' : null}"></textarea><th:block th:if="${updateReviewErrors != null}"><p id="your-comment-error" class="ps-field-error" th:each="error : ${updateReviewErrors.?[field == 'comment']}" th:text="${@uiText.field(error)}"></p></th:block>
+                <button class="ps-btn ps-btn--primary" type="submit">Save changes</button>
+            </form></details>
+            <form method="post" th:action="@{/tools/{id}/reviews/{reviewId}/delete(id=${tool.id},reviewId=${myReview.id})}" data-confirm="Delete your review? This cannot be undone." data-confirm-action="Delete review" data-confirm-danger="true"><input type="hidden" name="page" th:value="${reviewPage.number}"><button class="ps-e-link-danger" type="submit">Delete review</button></form>
+        </section>
+        <p th:if="${#lists.isEmpty(reviews) and reviewSummary.reviewCount > 0}" class="muted">No reviews on this page.</p>
+        <article class="ps-panel ps-review" th:each="review : ${reviews}">
+            <p><strong th:text="${review.authorDisplayName != null ? review.authorDisplayName : 'Member'}">Member</strong>
+                · Rating <strong th:text="${review.rating}">5</strong> / 5
+                · <time th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm')}">Date</time></p>
+            <p class="ps-review-comment" th:if="${review.comment != null and !review.comment.isBlank()}" th:text="${review.comment}">Comment</p>
+            <form data-confirm="Delete this review? This cannot be undone." data-confirm-danger="true" th:if="${currentActorAdmin and review.authorId != currentActorId}" method="post"
+                  th:action="@{/tools/{toolId}/reviews/{reviewId}/delete(toolId=${tool.id},reviewId=${review.id})}">
+                <input type="hidden" name="page" th:value="${reviewPage.number}"><button class="ps-e-link-danger" type="submit">Delete review</button>
+            </form>
+        </article>
+        <nav class="ps-e-pagination" th:if="${reviewPage.totalPages > 1}" aria-label="Review pagination">
+            <a th:if="${!reviewPage.first}" th:href="@{/tools/{slug}(slug=${tool.slug},page=${reviewPage.number - 1})}">Previous</a>
+            <span th:text="${reviewPage.number + 1} + ' / ' + ${reviewPage.totalPages}">1 / 1</span>
+            <a th:if="${!reviewPage.last}" th:href="@{/tools/{slug}(slug=${tool.slug},page=${reviewPage.number + 1})}">Next</a>
+        </nav>
+    </section>
+    <section class="ps-panel ps-admin-actions" th:if="${isAdmin == true}" aria-labelledby="admin-actions-title"><h2 id="admin-actions-title">Administration</h2><p>These actions affect this tool and its availability in the directory.</p><div class="ps-e-actions"><form th:if="${tool.status.name() == 'PUBLISHED'}" method="post" th:action="@{/dashboard/tools/{id}/deprecate(id=${tool.id})}" data-confirm="Deprecate this tool? It will no longer appear in public discovery." data-confirm-title="Deprecate tool?" data-confirm-action="Deprecate" data-confirm-danger="true"><button class="ps-btn ps-btn--danger" type="submit">Deprecate tool</button></form><form method="post" th:action="@{/dashboard/tools/{id}/delete(id=${tool.id})}" data-confirm="Delete this tool, its reviews, tags and version history? This cannot be undone." data-confirm-title="Delete tool?" data-confirm-action="Delete tool" data-confirm-danger="true"><button class="ps-e-link-danger" type="submit">Delete tool</button></form></div></section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,22 @@
+﻿C ตรวจและเก็บ 3 จุดที่ E ฝากมาครบแล้วครับ
+
+1. /my/reviews ใช้ layout/ธีมหลัก ตรวจทั้งไม่มีรีวิวและมีรีวิวใน Light/Dark ที่ 375/1440px ผ่าน
+2. ชื่อเครื่องมือว่างหรือเป็นช่องว่าง แสดง “กรุณาระบุชื่อเครื่องมือ” ภาษาไทย ทั้งสร้างและแก้ไข รักษาค่า slug/คำอธิบาย/หมวดหมู่/repository URL และไม่บันทึกข้อมูลที่ผิด validation
+3. หน้า error ใช้ layout ร่วมและเมนูตรงกับ anonymous/USER/ADMIN ทั้ง 404 และหน้า 403 ที่ไม่มีสิทธิ์ แก้การเติมข้อมูล session ใน model ของ exception handlers แล้ว และใช้ recovery actions ตามสิทธิ์
+
+Owner ของการแก้ 3 จุดนี้: C (ส่วน UI) โดยไม่เปลี่ยน REST validation/สิทธิ์/Tool locks ของ A/B/D/E ครับ
+
+ผล regression ล่าสุด Java 377 + PostgreSQL 335 = 712 tests ผ่าน ไม่มี failure/error/skip; Python validators 25 tests ผ่าน
+HTTP 22 กลุ่มผ่าน; Browse/filters/sort-rating/pagination/tag guards ตรวจผ่านทุก functional flow ใน Chrome/Edge
+ข้อยืนยันของ E ตรวจเพิ่ม 9 กลุ่ม/20 layouts ต่อ browser ผ่านทั้ง Chrome และ Edge
+
+Generic promise มีรายละเอียดแล้ว: InvalidStateError: Transition was aborted because of invalid state. ViewTransition opt-in disabled
+เกี่ยวกับ animation ระหว่าง navigation; flow งานยังผ่าน มีรายละเอียด sanitized แนบไว้ให้ติดตาม integration โดยยังไม่อ้างว่าหายขาดทุก environment
+
+ฐาน develop ที่อ้างอิง: fc9421a086ecf7fabb9bd8ca7d246e843e64cff7
+Git delivery: user authorized commit/push to supakron_673380061-4_02 on 2026-10-10. Use the Git commit SHA supplied with the handoff links; source snapshot SHA256 identifies tested file bytes and is not a Git SHA.
+
+รายงาน: doc/role-c-new-ui-local-2026-10-10.md
+หลักฐานสำหรับ E: deliverables/role-c-new-ui-for-e-2026-10-10/ และ ZIP ชื่อเดียวกัน
+ชุดนี้ตัด fixture passwords, credentials/token, cookies, raw HTML/logs, browser profiles และ harness source ออกแล้ว
+ไม่มีการส่งข้อความนี้ให้ทีมโดยอัตโนมัติ และไม่ได้แตะฐานข้อมูลทีม/Supabase หรือ migration ครับ การตรวจ deploy จริงยังต้องทำตามที่ E แจ้ง

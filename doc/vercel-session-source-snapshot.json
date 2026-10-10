@@ -1,0 +1,65 @@
+{
+  "baseline_sha": "2c6aff803c63b36dd72b6595cdb19589d38924bd",
+  "baseline_tree": "f63b4a05677b5b176693fa2885b60a4afc3f4fae",
+  "branch": "thaninton_673380043-6_02",
+  "committed": false,
+  "snapshot_sha256": "516587e976c0c946fc7d5e498bf71be5c17a0fd51d196b19ec056cd7d5e66c01",
+  "files": [
+    {
+      "path": "code/pom.xml",
+      "sha256": "689cb3af72116a1d4251e4a90fbcf9e4991a805f290e3e3193757ed80e455ab0"
+    },
+    {
+      "path": "code/src/main/java/com/example/toolhub/config/JdbcSessionConfiguration.java",
+      "sha256": "75981fb9fac50f14d42581b1b62683fab3c7a1a97d8ca2cac48f6c2567acf4fd"
+    },
+    {
+      "path": "code/src/main/java/com/example/toolhub/security/UserPrincipal.java",
+      "sha256": "ef0c258f4910b800ea52baaa32d5e705e683b347cca0911a8bf73b43c4aaa0f7"
+    },
+    {
+      "path": "code/src/main/resources/application-vercel.properties",
+      "sha256": "5aba45f30c376dbf585819ce8f7f8260a0494df67e6b5396b23c80b4d98c1311"
+    },
+    {
+      "path": "code/src/test/java/com/example/toolhub/JdbcSessionPostgresIT.java",
+      "sha256": "5b234b830f7f363e17090337ba38cccfa7c7c5ba6d00b6d80dc5f7656de553a3"
+    },
+    {
+      "path": "code/src/test/java/com/example/toolhub/security/UserPrincipalSerializationTest.java",
+      "sha256": "8811ee3a998340628b829d6334bde26a3f6aebbcaa842a0f1f5f919f8db119d0"
+    },
+    {
+      "path": "code/src/test/java/com/example/toolhub/SessionProfileIsolationTest.java",
+      "sha256": "07b81d123f74e825162ca91328b3235f2f42b3b4f2561eb8001a1441c2f7ac4e"
+    },
+    {
+      "path": "code/src/test/java/com/example/toolhub/support/JdbcSessionTestInstances.java",
+      "sha256": "08a20a2ab20e64b957d1e07d27dc1f90e311d3d0ad1679d2529e7dee221c8383"
+    },
+    {
+      "path": "code/src/test/resources/application-jdbc-session-test.properties",
+      "sha256": "30c383733dc5253da79921eb2b339999f98fac9366b1cbba67989ad7cb6b8237"
+    },
+    {
+      "path": "Dockerfile.vercel",
+      "sha256": "f16d5c7b0a1e7274974dad180580d93a131d7d2d2958ca124468277f432aa469"
+    },
+    {
+      "path": "doc/sql/drafts/S1__add_shared_http_sessions.sql",
+      "sha256": "b11ab569e92b8bd7a5e6d40004888bbaf4363ce66d906c674a71b9ee2896c31d"
+    },
+    {
+      "path": ".github/workflows/build.yml",
+      "sha256": "159954f0601160ec2ac17bd5f98d1512bda661a3ca52b2a50c9782a0884fac37"
+    },
+    {
+      "path": "scripts/rehearse-shared-session-schema.ps1",
+      "sha256": "b848319cb69d045482331d748e4b0c66dc754f9b2f9f6c07a90b29e56de57416"
+    },
+    {
+      "path": "scripts/test_vercel_configuration.py",
+      "sha256": "9ae23a00427e03dfe2ea84d86154c0ba2405c7dc793c9c61d8a26eecaed8f4d4"
+    }
+  ]
+}

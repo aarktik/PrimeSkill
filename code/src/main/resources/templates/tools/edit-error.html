@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Something went wrong')}"></head>
+<body><header th:replace="~{fragments/layout :: navbar}"></header><main id="main" tabindex="-1" class="ps-page ps-error-page">
+    <h1>This tool cannot be edited</h1>
+    <p role="alert" th:text="${message}">Review the current tool status before trying again.</p>
+    <div th:replace="~{fragments/layout :: errorActions}"></div>
+</main><footer th:replace="~{fragments/layout :: footer}"></footer></body>
+</html>

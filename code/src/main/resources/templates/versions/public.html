@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: navbar}"></header>
+<main id="main" tabindex="-1" class="ps-e-page">
+    <nav class="ps-crumb" aria-label="Breadcrumb"><a th:href="@{/tools/{slug}(slug=${tool.slug})}">Tool details</a></nav>
+    <header class="ps-e-header"><div><h1 th:text="${pageTitle}">Tool versions</h1><p>Follow the release history of this tool.</p></div></header>
+    <section class="ps-e-card" aria-labelledby="versions-title">
+        <h2 id="versions-title">Release history</h2>
+        <p th:if="${#lists.isEmpty(versions)}">No releases yet.</p>
+<div class="ps-release-list"><article class="ps-release" th:each="version : ${versions}"><div><span class="ps-badge ps-badge--blue" th:text="${version.version}">1.0.0</span></div><div><h3>Release notes</h3><p class="ps-release-notes" th:text="${version.releaseNotes ?: 'No release notes provided.'}">Release notes</p></div></article></div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
