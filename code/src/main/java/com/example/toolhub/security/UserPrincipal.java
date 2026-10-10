@@ -10,9 +10,11 @@ import com.example.toolhub.domain.enums.Role;
 
 public class UserPrincipal implements UserDetails,AuthenticatedUserPrincipal {
 
+    private static final long serialVersionUID = 1L;
+
     private final Long id;
     private final String email;
-    private final String passwordHash;
+    private final transient String passwordHash;
     private final Role role;
     private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
