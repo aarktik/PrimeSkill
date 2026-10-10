@@ -18,11 +18,11 @@ Production ใช้ Vercel และ PostgreSQL บน Supabase; ณ วัน�
 
 | No. | Name | Student ID | Section | Branch | Responsibility |
 | --- | --- | --- | --- | --- | --- |
-| 1  ณัฐกรณ์ อินธิสาร | 673380268-2 | 2 | nattakorn_6733802682_02 | Role A: บัญชีผู้ใช้, Login/Logout, Profile, Session, CSRF และสิทธิ์ USER/ADMIN |
-| 2  นายณัชพล เพ็งพล | 673380267-4 | 2 | natchapol_6733802674_02 | Role B: สร้าง/ดู/แก้ไข/ลบเครื่องมือ, Validation และสิทธิ์เจ้าของเครื่องมือ |
-| 3  นายศุภกร กรมรินทร์ | 673380061-4 | 2 | supakron_673380061-4_02 | Role C: Browse/Search, ตัวกรองหมวดหมู่และแท็ก, Sorting, Pagination และจัดการแท็ก |
-| 4  นายณภัทร อรัญพูล | 673380036-3 | 2 | naphat_67338800363_02 | Role D: สร้าง/แก้ไข/ลบรีวิว, รีวิวของฉัน, คะแนนเฉลี่ยและจำนวนรีวิว |
-| 5  นายธนินธร อันทรบุตร | 673380043-6 | 2 | thaninton_673380043-6_02 | Role E: เวอร์ชันและการเผยแพร่, Admin moderation, Integration, CI, Docker, Supabase และ Deployment |
+| 1 | ณัฐกรณ์ อินธิสาร | 673380268-2 | 2 | nattakorn_6733802682_02 | Role A: บัญชีผู้ใช้, Login/Logout, Profile, Session, CSRF และสิทธิ์ USER/ADMIN |
+| 2 | นายณัชพล เพ็งพล | 673380267-4 | 2 | natchapol_6733802674_02 | Role B: สร้าง/ดู/แก้ไข/ลบเครื่องมือ, Validation และสิทธิ์เจ้าของเครื่องมือ |
+| 3 | นายศุภกร กรมรินทร์ | 673380061-4 | 2 | supakron_673380061-4_02 | Role C: Browse/Search, ตัวกรองหมวดหมู่และแท็ก, Sorting, Pagination และจัดการแท็ก |
+| 4 | นายณภัทร อรัญพูล | 673380036-3 | 2 | naphat_67338800363_02 | Role D: สร้าง/แก้ไข/ลบรีวิว, รีวิวของฉัน, คะแนนเฉลี่ยและจำนวนรีวิว |
+| 5 | นายธนินธร อันทรบุตร | 673380043-6 | 2 | thaninton_673380043-6_02 | Role E: เวอร์ชันและการเผยแพร่, Admin moderation, Integration, CI, Docker, Supabase และ Deployment |
 
 ชื่อ branch และหน้าที่คงตามข้อมูลทีมเดิม ต้องตรวจชื่อ branch จริงและรูปแบบตามใบงานก่อนส่ง โดยเฉพาะรหัสใน branch ของ Role D; ตารางนี้ไม่ได้รับรองจำนวน commit รายบุคคล
 

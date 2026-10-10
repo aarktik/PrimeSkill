@@ -9,18 +9,23 @@
 
 ## คำสั่งล่าสุดและงานที่ทำ
 
-ผู้ใช้เลือก “ทำแค่เท่าที่มี สร้างไฟล์” จึงหยุด refactor คืน Java/test files เป็น baseline 4678e00 และจัดทำ doc/solid-analysis.md, doc/design-patterns.md, doc/diagrams/design-patterns.md ตามโค้ดจริง
+ผู้ใช้ขอให้ทำ README ให้ครบและนำขึ้น main โดยรักษารายชื่อ/บทบาททีมเดิม และเลือกให้ A ตรวจตามข้อกำหนดรีวิวของทีม
 
-เก็บแพตช์ refactor ที่หยุดไว้ภายนอก Git: D:/PrimeSkill-local-team/deliverables/solid-refactor-paused.zip ห้ามนำกลับมาใช้โดยอัตโนมัติ ผล focused test ของแพตช์ที่หยุดไม่ใช่ผลรับรอง baseline/documentation
+- จัดทำ README พร้อมหัวข้อบังคับ วิธีติดตั้ง/รัน/tests, API docs, deployment URL, architecture, ER, team table และ submission gaps
+- เพิ่ม doc/solid-analysis.md, doc/design-patterns.md, doc/diagrams/design-patterns.md และเอกสาร handoff ตาม implementation ที่ SHA 4678e00; ไม่เปลี่ยน runtime
+- Commit/push เอกสารไป `thaninton_673380043-6_02` แล้ว; PR #14 (`docs: complete README and document existing SOLID patterns`) เปิดจาก branch นี้เข้า `develop`
+- A (TeamburapA) ถูกเลือกเป็น reviewer ใน PR #14; ยังไม่มี submitted review
+- PR #14 head ปัจจุบัน 8635fb91350705bf86045bcee5e6c7deb48fc0a3; CI รอบ PR กำลังทำงานเมื่ออัปเดต handoff
+- PR #12 `develop → main` ยังเปิดและยังไม่มี submitted review; ห้ามถือว่า A ได้ approve จากการได้รับ request หรือจาก review PR อื่น
 
 ## งานถัดไป
 
-1. ตรวจเอกสารและ Class Diagram ว่าตรงกับเกณฑ์และข้อจำกัดที่ยอมรับได้
-2. Commit เอกสารให้ทัน 23:59 น. 10 ต.ค. 2026 เวลาไทย ตามคำสั่งผู้ใช้; branch ปัจจุบัน codex/solid-patterns-submission งานชุดนี้ไม่เปลี่ยน runtime
-3. Push/PR เข้า develop เมื่อได้รับ authorization ที่เหมาะสม แล้วให้ A ตรวจ final SHA ของ PR #12 ใหม่หลังเอกสารรวม
-4. SOLID ยังไม่ผ่านเงื่อนไข “ห้ามละเมิดทุกข้อ” แบบรับรองทั้งระบบ: rating/relevance branch (OCP), concrete mapper/state-machine dependencies (DIP), inline version mapping/normalization (SRP) และ LSP/ISP ยังต้องตรวจสัญญาทั้งหมด เอกสารแจ้งไว้ตามจริง
-5. หากกลับมาทำ refactor ต้องทดสอบใหม่ รวม regression PostgreSQL disposable ไม่ใช้ Supabase จริง
-6. Main merge และการเปลี่ยน Vercel production branch เป็นคนละขั้น; ปัจจุบัน deploy ตาม develop อย่าเปลี่ยนโดยสมมติ
+1. รอ A ตรวจและส่ง review จริงใน PR #14; รอ CI รอบ PR #14 ให้ผ่าน
+2. เมื่อ review และ CI ผ่าน ให้ merge PR #14 เข้า `develop`
+3. ตรวจ head ของ PR #12 หลัง develop อัปเดต แล้วขอให้ A review SHA สุดท้ายของ PR #12; merge เข้า `main` เมื่อมี review ตามเกณฑ์
+4. Production ยังติดตาม `develop`; merge เข้า `main` ไม่ได้เปลี่ยน Production Branch เอง ต้องตรวจการตั้งค่า Vercel แยกก่อน deploy รุ่นที่ต้องการ
+5. SOLID ยังไม่ผ่านเงื่อนไข “ห้ามละเมิดทุกข้อ” แบบรับรองทั้งระบบ: rating/relevance branch (OCP), concrete mapper/state-machine dependencies (DIP), inline version mapping/normalization (SRP) และ LSP/ISP ยังต้องตรวจสัญญาทั้งหมด; เอกสารแจ้งไว้ตามจริง
+6. หากกลับมาทำ refactor ต้องทดสอบใหม่ รวม regression PostgreSQL disposable; ห้ามใช้ Supabase จริงเพื่อทดสอบดังกล่าว
 
 ## หลักฐานเดิม
 
