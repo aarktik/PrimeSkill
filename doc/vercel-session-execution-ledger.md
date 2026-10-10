@@ -29,3 +29,24 @@ Ruling: preserve personal branch with uncommitted reviewable changes as explicit
 Final targeted GREEN after EOF normalization: principal/profile4 + actual HTTP/PostgreSQL14; backup restore/S1/rerun checks passed again. Both combined gates still730; all fourteen candidate files pass whitespace inspection. Final source snapshot516587e976c0c946fc7d5e498bf71be5c17a0fd51d196b19ec056cd7d5e66c01. Final S1 SHA256b11ab569e92b8bd7a5e6d40004888bbaf4363ce66d906c674a71b9ee2896c31d. Reports/runbook ready. Task5 not executed. No commit/push.
 
 User authorized commit/push to personal branch on 2026-10-10. Rechecked all fourteen source hashes against verified snapshot: unchanged. Remote branch matches local baseline before commit. Archived source manifest in doc for portable review; no production action authorized by this publishing step.
+
+Task 5 update (10 October 2026): user explicitly asked to continue Vercel rollout.
+Fresh restricted Supabase public-schema backup verified (SHA-256
+E8B892F1AB1191D5F7B15AB645E47A08A22D5A44A2647D42FE3AB0AB0F3981AE), restore
+rehearsal including S1 and rerun refusal passed, then S1 was applied to project
+jayichnxeyhvnmranutd (SQL SHA-256
+B11AB569E92B8BD7A5E6D40004888BBAF4363CE66D906C674A71B9EE2896C31D). Read-only
+postflight passed; see the production migration report for scope and residual
+service_role structural grants. Dedicated runtime role creation was rejected by
+automatic command review, so no app login/password was created or transmitted.
+Vercel import is prepared for aarktik/PrimeSkill, but it selects `main`, not the
+reviewed thaninton_673380043-6_02 candidate at 14dcefd6f5f2081b79e98c2ba96519e54f5c3b21.
+No project was created and no deployment/secrets were submitted. Resolve the
+role and branch before deploy.
+
+## Deployment repair 2026-10-10
+- Current develop124cfc2 lacks candidate14dcefd. Created PR8 to develop.
+- Preview B3Xg14NJh8yaByJpDoqgLzsfzg2g from14dcefd also emitted empty output in304ms without Docker/Maven. Root directory empty, overrides off, Fluid enabled.
+- Ruling: explicitly declare one container service and catch-all rewrite using documented services configuration; test on personal branch before merge. Cost if unsupported: failed preview, no database changes.
+- New route-to-container configuration test failed because vercel.json was absent, then passed with explicit config; all3 configuration tests passed. Platform acceptance remains pending.
+

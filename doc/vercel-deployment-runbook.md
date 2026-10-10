@@ -4,6 +4,12 @@
 
 Java17 Spring Boot/Thymeleaf remains one application. `Dockerfile.vercel` is the
 deployment entrypoint; the ordinary Dockerfile and Compose stay unchanged.
+Root `vercel.json` explicitly declares the container service and routes all paths
+to it, following https://vercel.com/docs/services. On 2026-10-10 the connected
+project silently produced an empty output even with Dockerfile.vercel present
+(preview B3Xg14NJh8yaByJpDoqgLzsfzg2g, source14dcefd). Automatic detection alone
+is therefore insufficient evidence for this project. Require container build logs
+and an actual HTTP health response; a Ready badge alone is not acceptance.
 The `vercel` profile explicitly enables JDBC sessions. Default local and test
 profiles continue using servlet sessions. Do not run preview fixtures against Supabase.
 
