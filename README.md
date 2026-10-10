@@ -2,6 +2,10 @@
 
 ToolHub is a platform for discovering, publishing, versioning, and reviewing software tools.
 
+## Live Demo / Deployment URL
+
+**[Open PrimeSkill](https://primeskill-zeta.vercel.app/)**
+
 ## Team
 
 | Name | Student ID | Section | Branch | Responsibility |
