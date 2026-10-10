@@ -123,6 +123,7 @@ and provider limits must still be checked on preview.
 - `scripts/mvn-java17.ps1 -f code/pom.xml test`
 - `scripts/test-postgres.ps1 -Port <free-loopback-port>`
 - `python scripts/test_vercel_configuration.py -v`
+- `node --test scripts/test-navigation-transition.cjs`
 - Run existing Python report-validator tests and B/C coverage gates from CI.
 - Within the disposable runner environment only, use
   `scripts/rehearse-shared-session-schema.ps1 -Backup <restricted-public.dump>`

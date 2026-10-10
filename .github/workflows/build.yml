@@ -31,6 +31,11 @@ jobs:
         run: docker compose build app
       - name: Check Vercel deployment configuration
         run: python3 scripts/test_vercel_configuration.py -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check navigation animation cancellation handling
+        run: node --test scripts/test-navigation-transition.cjs
       - name: Build Vercel container image
         run: docker build -f Dockerfile.vercel -t primeskill-vercel:${{ github.sha }} .
       - name: Verify container startup and database restart persistence
