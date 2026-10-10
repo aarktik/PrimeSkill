@@ -5,8 +5,11 @@
     const observeNavigationTransition = event => {
         if (!event.viewTransition) return;
         event.viewTransition.ready.catch(error => {
-            // Leaving an opted-in public page can intentionally skip the animation.
-            if (error?.name === 'InvalidStateError' && error.message.includes('ViewTransition opt-in disabled')) return;
+            // Navigation may skip the animation when opt-in changes or the page
+            // has already been revealed. Neither cancellation changes page data.
+            if (error?.name === 'InvalidStateError' &&
+                (error.message.includes('ViewTransition opt-in disabled') ||
+                 error.message.includes('Page already revealed'))) return;
             throw error;
         });
     };
