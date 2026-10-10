@@ -10,7 +10,11 @@ ToolHub is a platform for discovering, publishing, versioning, and reviewing sof
 
 | Name | Student ID | Section | Branch | Responsibility |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| ณัฐกรณ์ อินธิสาร | 673380268-2 | 2 | nattakorn_6733802682_02 | Role A: บัญชีผู้ใช้, Login/Logout, Profile, Session, CSRF และสิทธิ์ USER/ADMIN |
+| นายณัชพล เพ็งพล | 673380267-4 | 2 | natchapol_6733802674_02 | Role B: สร้าง/ดู/แก้ไข/ลบเครื่องมือ, Validation และสิทธิ์เจ้าของเครื่องมือ |
+| นายศุภกร กรมรินทร์ | 673380061-4 | 2 | supakron_673380061-4_02 | Role C: Browse/Search, ตัวกรองหมวดหมู่และแท็ก, Sorting, Pagination และจัดการแท็ก |
+| นายณภัทร อรัญพูล | 673380036-3 | 2 | naphat_67338800363_02 | Role D: สร้าง/แก้ไข/ลบรีวิว, รีวิวของฉัน, คะแนนเฉลี่ยและจำนวนรีวิว |
+| นายธนินธร อันทรบุตร | 673380043-6 | 2 | thaninton_673380043-6_02 | Role E: เวอร์ชันและการเผยแพร่, Admin moderation, Integration, CI, Docker, Supabase และ Deployment |
 
 ## Technology
 
