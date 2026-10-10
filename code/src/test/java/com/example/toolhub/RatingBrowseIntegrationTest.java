@@ -177,12 +177,42 @@ abstract class RatingBrowseContract {
     @Test void browseRendersRealScoresAndEmptyStateAndApiKeepsRatingOrder() throws Exception {
         mvc.perform(get("/tools").param("q", suffix).param("sort", "rating"))
                 .andExpect(status().isOk()).andExpect(view().name("tools/list"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("คะแนน 4.5 / 5 · 2 รีวิว")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("ยังไม่มีรีวิว")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(">4.5</strong>")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("2 reviews")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("No reviews yet")));
         mvc.perform(get("/api/v1/tools").param("q", suffix).param("sort", "rating").param("size", "2"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].id").value(high))
                 .andExpect(jsonPath("$.content[1].id").value(tied)).andExpect(jsonPath("$.totalElements").value(4));
         mvc.perform(get("/tools").param("q", "missing-" + suffix).param("sort", "rating"))
-                .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("ไม่พบเครื่องมือ")));
+                .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("No tools found")));
+    }
+    @Test void homeRendersOnlyPublishedToolsWithBoundedQueries() throws Exception {
+        for (int i = 0; i < 10; i++) tool("Public " + i, category, ToolStatus.PUBLISHED);
+        tool("PrivateDraft", category, ToolStatus.DRAFT);
+        tool("PrivatePending", category, ToolStatus.PENDING);
+        tool("PrivateDeprecated", category, ToolStatus.DEPRECATED);
+        em.clear();
+        var stats = factory.unwrap(SessionFactory.class).getStatistics();
+        boolean previous = stats.isStatisticsEnabled();
+        stats.setStatisticsEnabled(true); stats.clear();
+        try {
+            mvc.perform(get("/"))
+                    .andExpect(status().isOk()).andExpect(view().name("home"))
+                    .andExpect(content().string(org.hamcrest.Matchers.containsString("Popular tools")))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("PrivateDraft"))))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("PrivatePending"))))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("PrivateDeprecated"))));
+            assertTrue(stats.getPrepareStatementCount() <= 6,
+                    "Two pages + their counts + categories + one aggregate; got " + stats.getPrepareStatementCount());
+            assertEquals(0, stats.getEntityFetchCount());
+        } finally { stats.setStatisticsEnabled(previous); }
+    }
+
+    @Test void redesignAssetsAreAvailableWithoutAuthentication() throws Exception {
+        for (String asset : List.of("/css/primeskill.css", "/css/fonts.css", "/js/theme-init.js", "/js/ui.js", "/img/ui-icons.svg", "/fonts/primeskill-0.woff2")) {
+            mvc.perform(get(asset)).andExpect(status().isOk());
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head(asset)).andExpect(status().isOk());
+        }
+        mvc.perform(get("/dashboard/tools")).andExpect(status().isUnauthorized());
     }
 }

@@ -1,0 +1,121 @@
+{
+  "status": "PASS",
+  "browser": "edge",
+  "base": "http://127.0.0.1:18088",
+  "baselineSha": "fc9421a086ecf7fabb9bd8ca7d246e843e64cff7",
+  "sourceKind": "local uncommitted new UI",
+  "cases": [
+    {
+      "label": "Home search submits the typed keyword to new Browse",
+      "status": "PASS"
+    },
+    {
+      "label": "Category plus two ANY tags and rating sort use actual UI controls",
+      "status": "PASS"
+    },
+    {
+      "label": "Next/Previous keep all filters and stable tied-score page boundaries",
+      "status": "PASS"
+    },
+    {
+      "label": "Real 4.5/two-review summary, id tie-break and unrated-last display",
+      "status": "PASS"
+    },
+    {
+      "label": "Single tag narrows results; combining tags does not duplicate cards",
+      "status": "PASS"
+    },
+    {
+      "label": "No-results state and clear filters are usable",
+      "status": "PASS"
+    },
+    {
+      "label": "Mobile drawer applies category/tag/rating filters through the visible UI",
+      "status": "PASS"
+    },
+    {
+      "label": "New Browse reflows in both themes and retains muted search focus",
+      "status": "PASS"
+    },
+    {
+      "label": "Review create/edit/delete through UI refreshes Browse ratings and order",
+      "status": "PASS"
+    },
+    {
+      "label": "Owner DRAFT assign/unassign via UI succeeds; missing CSRF does not mutate",
+      "status": "PASS"
+    },
+    {
+      "label": "Admin can assign/unassign another owner DRAFT using the UI",
+      "status": "PASS"
+    },
+    {
+      "label": "Non-owner DRAFT access and forged assign/unassign are denied",
+      "status": "PASS"
+    },
+    {
+      "label": "Anonymous tag management requires login and denies forged mutations",
+      "status": "PASS"
+    },
+    {
+      "label": "PENDING tags read-only; owner/admin 409 and non-owner 403 preserve state",
+      "status": "PASS"
+    },
+    {
+      "label": "PUBLISHED tags read-only; owner/admin 409 and non-owner 403 preserve state",
+      "status": "PASS"
+    },
+    {
+      "label": "DEPRECATED tags read-only; owner/admin 409 and non-owner 403 preserve state",
+      "status": "PASS"
+    }
+  ],
+  "layouts": [
+    {
+      "label": "light Browse 320",
+      "width": 320,
+      "scrollWidth": 320,
+      "status": "PASS"
+    },
+    {
+      "label": "light Browse 375",
+      "width": 375,
+      "scrollWidth": 375,
+      "status": "PASS"
+    },
+    {
+      "label": "light Browse 1440",
+      "width": 1440,
+      "scrollWidth": 1425,
+      "status": "PASS"
+    },
+    {
+      "label": "dark Browse 320",
+      "width": 320,
+      "scrollWidth": 320,
+      "status": "PASS"
+    },
+    {
+      "label": "dark Browse 375",
+      "width": 375,
+      "scrollWidth": 375,
+      "status": "PASS"
+    },
+    {
+      "label": "dark Browse 1440",
+      "width": 1440,
+      "scrollWidth": 1425,
+      "status": "PASS"
+    }
+  ],
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Edg/155.0.4283.45",
+    "revision": "@50f24ef2aa5369a074b8888b7db82d9c0652d642",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+    "jsVersion": "15.5.9.4"
+  },
+  "javascriptExceptions": [],
+  "exceptionEvents": [],
+  "exceptionRevocations": []
+}

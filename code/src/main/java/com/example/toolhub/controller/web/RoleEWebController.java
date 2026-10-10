@@ -47,7 +47,7 @@ public class RoleEWebController {
         ToolResponse tool = toolService.getByIdOrSlug(idOrSlug, actor.id(), actor.admin());
         model.addAttribute("tool", tool);
         model.addAttribute("versions", versionService.list(tool.getId(), actor));
-        model.addAttribute("pageTitle", "เวอร์ชันของ " + tool.getName());
+        model.addAttribute("pageTitle", "Versions of " + tool.getName());
         model.addAttribute("activeNav", "explore");
         return "versions/public";
     }
@@ -58,7 +58,7 @@ public class RoleEWebController {
         ToolResponse tool = ownedTool(toolId, actor);
         model.addAttribute("tool", tool);
         model.addAttribute("versions", versionService.list(toolId, actor));
-        model.addAttribute("pageTitle", "เวอร์ชันของ " + tool.getName());
+        model.addAttribute("pageTitle", "Versions of " + tool.getName());
         model.addAttribute("activeNav", "my-tools");
         return "versions/list";
     }
@@ -86,11 +86,11 @@ public class RoleEWebController {
         try {
             versionService.create(toolId, request, actor);
         } catch (CatalogConflictException exception) {
-            errors.rejectValue("version", "duplicate", "เลขเวอร์ชันนี้มีแล้ว กรุณาใช้เลขอื่น");
+            errors.rejectValue("version", "duplicate", "This version already exists. Choose another version.");
             populateVersionForm(model, tool, request, null);
             return "versions/form";
         }
-        redirect.addFlashAttribute("successMessage", "เพิ่มเวอร์ชันแล้ว");
+        redirect.addFlashAttribute("successMessage", "Version created.");
         return versionsRedirect(toolId);
     }
 
@@ -118,11 +118,11 @@ public class RoleEWebController {
         try {
             versionService.update(toolId, versionId, request, actor);
         } catch (CatalogConflictException exception) {
-            errors.rejectValue("version", "duplicate", "เลขเวอร์ชันนี้มีแล้ว กรุณาใช้เลขอื่น");
+            errors.rejectValue("version", "duplicate", "This version already exists. Choose another version.");
             populateVersionForm(model, tool, request, versionId);
             return "versions/form";
         }
-        redirect.addFlashAttribute("successMessage", "บันทึกเวอร์ชันแล้ว");
+        redirect.addFlashAttribute("successMessage", "Version saved.");
         return versionsRedirect(toolId);
     }
 
@@ -132,23 +132,26 @@ public class RoleEWebController {
         CurrentActor actor = actorProvider.requireActor();
         ownedTool(toolId, actor);
         versionService.delete(toolId, versionId, actor);
-        redirect.addFlashAttribute("successMessage", "ลบเวอร์ชันแล้ว");
+        redirect.addFlashAttribute("successMessage", "Version deleted.");
         return versionsRedirect(toolId);
     }
 
     @PostMapping("/dashboard/tools/{toolId}/submit")
     public String submit(@PathVariable Long toolId, RedirectAttributes redirect) {
-        return ownerTransition(toolId, PublishingAction.SUBMIT, "ส่งเครื่องมือให้ตรวจแล้ว", redirect);
+        return ownerTransition(toolId, PublishingAction.SUBMIT, "Tool submitted for review.", redirect);
     }
 
     @PostMapping("/dashboard/tools/{toolId}/deprecate")
     public String deprecate(@PathVariable Long toolId, RedirectAttributes redirect) {
-        return ownerTransition(toolId, PublishingAction.DEPRECATE, "เลิกเผยแพร่เครื่องมือแล้ว", redirect);
+        var actor = actorProvider.requireActor();
+        publishingService.transition(toolId, PublishingAction.DEPRECATE, actor);
+        redirect.addFlashAttribute("successMessage", "Tool deprecated.");
+        return actor.admin() ? "redirect:/tools/" + toolId : versionsRedirect(toolId);
     }
 
     @PostMapping("/dashboard/tools/{toolId}/restore")
     public String restore(@PathVariable Long toolId, RedirectAttributes redirect) {
-        return ownerTransition(toolId, PublishingAction.RESTORE, "กู้คืนเครื่องมือเป็นแบบร่างแล้ว", redirect);
+        return ownerTransition(toolId, PublishingAction.RESTORE, "Tool restored to draft.", redirect);
     }
 
     @GetMapping("/admin/tools")
@@ -158,19 +161,19 @@ public class RoleEWebController {
                 Sort.by(Sort.Direction.ASC, "updatedAt").and(Sort.by("id"))), actor);
         model.addAttribute("tools", pending.getContent());
         model.addAttribute("toolPage", pending);
-        model.addAttribute("pageTitle", "เครื่องมือรออนุมัติ");
+        model.addAttribute("pageTitle", "Review submissions");
         model.addAttribute("activeNav", "moderation");
         return "admin/moderation";
     }
 
     @PostMapping("/admin/tools/{toolId}/approve")
     public String approve(@PathVariable Long toolId, @RequestParam String expectedReviewRevision, RedirectAttributes redirect) {
-        return adminTransition(toolId, PublishingAction.APPROVE, parseRevision(expectedReviewRevision), "อนุมัติเครื่องมือแล้ว", redirect);
+        return adminTransition(toolId, PublishingAction.APPROVE, parseRevision(expectedReviewRevision), "Tool approved.", redirect);
     }
 
     @PostMapping("/admin/tools/{toolId}/reject")
     public String reject(@PathVariable Long toolId, @RequestParam String expectedReviewRevision, RedirectAttributes redirect) {
-        return adminTransition(toolId, PublishingAction.REJECT, parseRevision(expectedReviewRevision), "ส่งเครื่องมือกลับไปเป็นแบบร่างแล้ว", redirect);
+        return adminTransition(toolId, PublishingAction.REJECT, parseRevision(expectedReviewRevision), "Submission returned to draft.", redirect);
     }
 
     private String ownerTransition(Long toolId, PublishingAction action, String message,
@@ -219,7 +222,7 @@ public class RoleEWebController {
         model.addAttribute("formAction", versionId == null
                 ? "/dashboard/tools/" + tool.getId() + "/versions"
                 : "/dashboard/tools/" + tool.getId() + "/versions/" + versionId);
-        model.addAttribute("pageTitle", versionId == null ? "เพิ่มเวอร์ชัน" : "แก้ไขเวอร์ชัน");
+        model.addAttribute("pageTitle", versionId == null ? "New version" : "Edit version");
         model.addAttribute("activeNav", "my-tools");
     }
 

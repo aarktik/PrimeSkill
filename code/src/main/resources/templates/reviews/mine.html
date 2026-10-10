@@ -1,35 +1,27 @@
 <!DOCTYPE html>
-<html lang="th" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${pageTitle} + ' · Primeskill'">รีวิวของฉัน · Primeskill</title>
-    <style>
-        body{font-family:system-ui,sans-serif;line-height:1.6;color:#102a43;max-width:900px;margin:0 auto;padding:24px}
-        article{padding:16px 0;border-bottom:1px solid #d8e1ea}button{font:inherit;padding:8px 14px;cursor:pointer}
-        .muted{color:#526477}
-    </style>
-</head>
-<body>
-<main>
-    <p><a th:href="@{/tools}">กลับไปสำรวจเครื่องมือ</a></p>
-    <h1 th:text="${pageTitle}">รีวิวของฉัน</h1>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body><header th:replace="~{fragments/layout :: navbar}"></header>
+<div class="ps-workspace"><aside th:replace="~{fragments/layout :: sidebar}"></aside><main id="main" tabindex="-1" class="ps-workspace-main">
+    <p><a th:href="@{/tools}">Back to discovery</a></p>
+    <header class="ps-e-header"><div><h1 th:text="${pageTitle}">My reviews</h1><p>Your experiences, shared with the community.</p></div></header>
     <p th:if="${successMessage}" th:text="${successMessage}" role="status"></p>
     <p th:if="${errorMessage}" th:text="${errorMessage}" role="alert"></p>
-    <p th:if="${#lists.isEmpty(reviews)}" class="muted">คุณยังไม่มีรีวิว</p>
-    <article th:each="review : ${reviews}">
-        <p>เครื่องมือ #<span th:text="${review.toolId}">0</span> · คะแนน <strong th:text="${review.rating}">5</strong> / 5</p>
-        <p th:if="${review.comment != null and !review.comment.isBlank()}" th:text="${review.comment}">ความเห็น</p>
-        <p class="muted" th:if="${review.comment == null or review.comment.isBlank()}">ไม่มีข้อความ</p>
-        <p class="muted">หน้านี้แสดงเฉพาะรีวิวของคุณและไม่เปิดรายละเอียดเครื่องมือที่ถูกซ่อน</p>
-        <form method="post" th:action="@{/my/reviews/{toolId}/{reviewId}/delete(toolId=${review.toolId},reviewId=${review.id})}">
-            <button type="submit">ลบรีวิว</button>
+    <p th:if="${#lists.isEmpty(reviews)}" class="muted">No reviews yet.</p>
+    <article class="ps-panel ps-review" th:each="review : ${reviews}">
+        <p>Tool #<span th:text="${review.toolId}">0</span> · Rating <strong th:text="${review.rating}">5</strong> / 5</p>
+        <p class="ps-review-comment" th:if="${review.comment != null and !review.comment.isBlank()}" th:text="${review.comment}">Comment</p>
+        <p class="muted" th:if="${review.comment == null or review.comment.isBlank()}">No comment provided.</p>
+        <p><a class="ps-text-link" th:href="@{/tools/{id}(id=${review.toolId})}">View tool</a></p><p class="muted">Only your review content is shown here. Details of hidden tools remain private.</p>
+        <form data-confirm="Delete this review? This cannot be undone." data-confirm-danger="true" method="post" th:action="@{/my/reviews/{toolId}/{reviewId}/delete(toolId=${review.toolId},reviewId=${review.id})}">
+            <button class="ps-btn ps-btn--danger" type="submit">Delete review</button>
         </form>
     </article>
-    <nav th:if="${reviewPage.totalPages > 1}" aria-label="เปลี่ยนหน้ารีวิว">
-        <a th:if="${!reviewPage.first}" th:href="@{/my/reviews(page=${reviewPage.number - 1})}">ก่อนหน้า</a>
+    <nav class="ps-e-pagination" th:if="${reviewPage.totalPages > 1}" aria-label="Review pagination">
+        <a th:if="${!reviewPage.first}" th:href="@{/my/reviews(page=${reviewPage.number - 1})}">Previous</a>
         <span th:text="${reviewPage.number + 1} + ' / ' + ${reviewPage.totalPages}">1 / 1</span>
-        <a th:if="${!reviewPage.last}" th:href="@{/my/reviews(page=${reviewPage.number + 1})}">ถัดไป</a>
+        <a th:if="${!reviewPage.last}" th:href="@{/my/reviews(page=${reviewPage.number + 1})}">Next</a>
     </nav>
-</main>
-</body>
+</main></div>
+<footer th:replace="~{fragments/layout :: footer}"></footer></body>
 </html>

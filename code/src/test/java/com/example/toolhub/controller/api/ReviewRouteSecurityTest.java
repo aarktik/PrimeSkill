@@ -50,6 +50,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest({ReviewRestController.class, ReviewWebController.class})
 @Import({
+        com.example.toolhub.controller.web.UiText.class,
         SecurityConfig.class,
         PasswordConfig.class,
         com.example.toolhub.security.RestSecurityExceptionHandler.class
@@ -61,6 +62,7 @@ class ReviewRouteSecurityTest {
     @MockitoBean private ReviewService reviewService;
     @MockitoBean private ReviewSummaryService reviewSummaryService;
     @MockitoBean private ToolService toolService;
+    @MockitoBean private com.example.toolhub.service.TagService tagService;
     @MockitoBean private CurrentActorProvider currentActorProvider;
     @MockitoBean private JpaUserDetailsService userDetailsService;
     @MockitoBean(name = "jpaMappingContext") private JpaMetamodelMappingContext jpaMappingContext;
@@ -166,7 +168,7 @@ class ReviewRouteSecurityTest {
                         .param("comment", submittedComment))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString(submittedComment)))
-                .andExpect(content().string(containsString("size must be between 0 and 2000")))
+                .andExpect(content().string(containsString("Use at most 2,000 characters.")))
                 .andExpect(content().string(containsString("selected=\"selected\">4</option>")));
 
         verify(reviewService, never())
