@@ -154,7 +154,7 @@ class ReviewRouteSecurityTest {
         String submittedComment = "keep this invalid value " + "x".repeat(2001);
 
         when(currentActorProvider.requireActor()).thenReturn(actor);
-        when(toolService.getByIdOrSlug("3", 7L, false)).thenReturn(tool);
+        when(toolService.getById(3L, 7L, false)).thenReturn(tool);
         when(reviewService.listForTool(eq(3L), eq(7L), eq(false), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(existingReview), PageRequest.of(0, 20), 1));
         when(reviewSummaryService.summarizeByToolIds(List.of(3L)))

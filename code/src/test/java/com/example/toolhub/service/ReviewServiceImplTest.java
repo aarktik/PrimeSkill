@@ -57,7 +57,7 @@ class ReviewServiceImplTest {
         lenient().when(toolRepository.findForUpdateById(3L))
                 .thenReturn(Optional.of(org.mockito.Mockito.mock(com.example.toolhub.domain.entity.Tool.class)));
         publishedTool = ToolResponse.builder().id(3L).ownerId(9L).status(ToolStatus.PUBLISHED).build();
-        lenient().when(toolService.getByIdOrSlug("3", 7L, false)).thenReturn(publishedTool);
+        lenient().when(toolService.getById(3L, 7L, false)).thenReturn(publishedTool);
     }
 
     @Test
@@ -110,12 +110,12 @@ class ReviewServiceImplTest {
 
     @Test
     void create_rejectsOwnerAndNonPublishedTool() {
-        when(toolService.getByIdOrSlug("3", 9L, false)).thenReturn(publishedTool);
+        when(toolService.getById(3L, 9L, false)).thenReturn(publishedTool);
         assertThrows(AccessDeniedException.class,
                 () -> service.create(3L, new CreateReviewRequest((short) 5, null), 9L, false));
 
         ToolResponse draft = ToolResponse.builder().id(3L).ownerId(9L).status(ToolStatus.DRAFT).build();
-        when(toolService.getByIdOrSlug("3", 7L, false)).thenReturn(draft);
+        when(toolService.getById(3L, 7L, false)).thenReturn(draft);
         assertThrows(CatalogConflictException.class,
                 () -> service.create(3L, new CreateReviewRequest((short) 5, null), 7L, false));
         verify(reviewRepository, never()).save(any());
@@ -123,7 +123,7 @@ class ReviewServiceImplTest {
 
     @Test
     void update_onlyAuthorCanEdit_evenAdminCannotEditAnotherUsersReview() {
-        when(toolService.getByIdOrSlug("3", 7L, true)).thenReturn(publishedTool);
+        when(toolService.getById(3L, 7L, true)).thenReturn(publishedTool);
         Review review = org.mockito.Mockito.mock(Review.class);
         User author = org.mockito.Mockito.mock(User.class);
         when(review.getUser()).thenReturn(author);
@@ -138,7 +138,7 @@ class ReviewServiceImplTest {
     @Test
     void update_rejectsNonPublishedToolBeforeLoadingReview() {
         ToolResponse draft = ToolResponse.builder().id(3L).ownerId(9L).status(ToolStatus.DRAFT).build();
-        when(toolService.getByIdOrSlug("3", 7L, false)).thenReturn(draft);
+        when(toolService.getById(3L, 7L, false)).thenReturn(draft);
 
         assertThrows(CatalogConflictException.class,
                 () -> service.update(3L, 12L, new UpdateReviewRequest((short) 4, "updated"), 7L, false));
@@ -157,6 +157,6 @@ class ReviewServiceImplTest {
         service.delete(99L, 12L, 7L, false);
 
         verify(reviewRepository).delete(review);
-        verify(toolService, never()).getByIdOrSlug(any(), any(), anyBoolean());
+        verify(toolService, never()).getById(any(), any(), anyBoolean());
     }
 }

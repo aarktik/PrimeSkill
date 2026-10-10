@@ -202,7 +202,7 @@ public class RoleEWebController {
     }
 
     private ToolResponse ownedTool(Long toolId, CurrentActor actor) {
-        ToolResponse tool = toolService.getByIdOrSlug(String.valueOf(toolId), actor.id(), actor.admin());
+        ToolResponse tool = toolService.getById(toolId, actor.id(), actor.admin());
         if (!actor.id().equals(tool.getOwnerId())) {
             throw new AccessDeniedException("You do not own this tool");
         }

@@ -31,7 +31,8 @@ class JdbcSessionPostgresIT {
 
     HttpResponse<String> send(String host, String path, String cookie, String token, String body) throws Exception {
         var request = HttpRequest.newBuilder(URI.create(host + path)).timeout(java.time.Duration.ofSeconds(20));
-        if (!path.startsWith("/api/")) request.header("Accept", "text/html");
+        if (path.startsWith("/v3/api-docs")) request.header("Accept", "application/json");
+        else if (!path.startsWith("/api/")) request.header("Accept", "text/html");
         if (cookie != null) request.header("Cookie", cookie);
         if (token != null) request.header("X-CSRF-TOKEN", token);
         if (body == null) request.GET(); else request.header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body));
@@ -133,7 +134,7 @@ class JdbcSessionPostgresIT {
                 for(String privilege:new String[]{"SELECT","INSERT","UPDATE","DELETE","TRUNCATE","REFERENCES","TRIGGER"})
                     assertFalse(sql.queryForObject("select has_table_privilege(?,?,?)",Boolean.class,role,"public."+table,privilege));
     }
-    @Test void deploymentProfileSetsSecureCookieAndDisablesDocumentation() throws Exception {
+    @Test void deploymentProfileSetsSecureCookieAndEnablesDocumentation() throws Exception {
         try(var deployment=servers.start(true)) {
             String host=servers.address(deployment);
             // Exercise first-use initialization, not just a successfully bound port.
@@ -147,8 +148,13 @@ class JdbcSessionPostgresIT {
             String header=csrf.headers().firstValue("Set-Cookie").orElseThrow();
             assertTrue(header.contains("Secure")); assertTrue(header.contains("HttpOnly"));
             assertTrue(header.contains("SameSite=Lax")); assertFalse(header.contains("Domain="));
-            assertFalse(deployment.getEnvironment().getProperty("springdoc.api-docs.enabled",Boolean.class,true));
-            assertFalse(deployment.getEnvironment().getProperty("springdoc.swagger-ui.enabled",Boolean.class,true));
+            assertTrue(deployment.getEnvironment().getProperty("springdoc.api-docs.enabled",Boolean.class,false));
+            assertTrue(deployment.getEnvironment().getProperty("springdoc.swagger-ui.enabled",Boolean.class,false));
+            assertEquals(200,send(host,"/v3/api-docs",null,null,null).statusCode());
+            assertEquals(200,send(host,"/swagger-ui/index.html",null,null,null).statusCode());
+            var swaggerConfig=send(host,"/v3/api-docs/swagger-config",null,null,null);
+            assertEquals(200,swaggerConfig.statusCode());
+            assertTrue(JsonPath.<java.util.List<?>>read(swaggerConfig.body(),"$.supportedSubmitMethods").isEmpty());
             assertEquals("never",deployment.getEnvironment().getProperty("spring.sql.init.mode"));
         }
     }

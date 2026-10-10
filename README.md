@@ -16,6 +16,13 @@ ToolHub is a platform for discovering, publishing, versioning, and reviewing sof
 | นายณภัทร อรัญพูล | 673380036-3 | 2 | naphat_67338800363_02 | Role D: สร้าง/แก้ไข/ลบรีวิว, รีวิวของฉัน, คะแนนเฉลี่ยและจำนวนรีวิว |
 | นายธนินธร อันทรบุตร | 673380043-6 | 2 | thaninton_673380043-6_02 | Role E: เวอร์ชันและการเผยแพร่, Admin moderation, Integration, CI, Docker, Supabase และ Deployment |
 
+## API Documentation
+
+- Swagger UI: [API reference](https://primeskill-zeta.vercel.app/swagger-ui/index.html)
+- OpenAPI JSON: [Generated specification](https://primeskill-zeta.vercel.app/v3/api-docs)
+
+Production Swagger UI is read-only. API writes still require a valid session, CSRF token and the appropriate permissions. See [session and CSRF usage](doc/role-e-local-runbook.md). Documentation is enabled by the `vercel` profile.
+
 ## Technology
 
 - Java 17, Spring Boot, Spring Data JPA, Spring Security
@@ -35,7 +42,7 @@ img/    Project images
 
 1. Set `SUPABASE_DB_URL`, `SUPABASE_DB_USERNAME`, and `SUPABASE_DB_PASSWORD` in your environment.
 2. Run `mvn spring-boot:run` from `code/` (use `mvn` if the Maven Wrapper is unavailable on your machine).
-3. Open Swagger UI at `/swagger-ui.html` once API endpoints are available.
+3. Open Swagger UI at `/swagger-ui/index.html`.
 
 For an isolated local PostgreSQL stack, copy `.env.example` to `.env`, change its local password, then run `docker compose up --build` from the repository root. See [Role E local runbook](doc/role-e-local-runbook.md) for the current limitations and production checklist.
 

@@ -138,7 +138,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private ToolResponse visibleTool(Long toolId, Long actorUserId, boolean actorIsAdmin) {
-        return toolService.getByIdOrSlug(String.valueOf(toolId), actorUserId, actorIsAdmin);
+        return toolService.getById(toolId, actorUserId, actorIsAdmin);
     }
 
     private Review findReview(Long toolId, Long reviewId) {

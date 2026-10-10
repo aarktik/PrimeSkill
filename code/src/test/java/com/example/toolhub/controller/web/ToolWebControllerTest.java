@@ -118,7 +118,7 @@ class ToolWebControllerTest {
         ToolResponse tool = ToolResponse.builder().id(1L).ownerId(7L).status(status).build();
         for (CurrentActor actor : List.of(new CurrentActor(7L, false), new CurrentActor(8L, true))) {
             when(currentActorProvider.requireActor()).thenReturn(actor);
-            when(toolService.getByIdOrSlug("1", actor.id(), actor.admin())).thenReturn(tool);
+            when(toolService.getById(1L, actor.id(), actor.admin())).thenReturn(tool);
             assertThrows(InvalidStateTransitionException.class, () -> controller.editForm(1L, new ExtendedModelMap()));
         }
         verify(categoryService, never()).findAll();
@@ -127,7 +127,7 @@ class ToolWebControllerTest {
     @Test
     void editForm_doesNotExposePublishedEditorToOtherUser() {
         when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(9L, false));
-        when(toolService.getByIdOrSlug("1", 9L, false))
+        when(toolService.getById(1L, 9L, false))
                 .thenReturn(ToolResponse.builder().id(1L).ownerId(7L).status(ToolStatus.PUBLISHED).build());
         assertThrows(AccessDeniedException.class, () -> controller.editForm(1L, new ExtendedModelMap()));
         verify(categoryService, never()).findAll();
@@ -136,7 +136,7 @@ class ToolWebControllerTest {
     @Test
     void editForm_allowsOwnerToEditDraftWithoutCountingView() {
         when(currentActorProvider.requireActor()).thenReturn(new CurrentActor(7L, false));
-        when(toolService.getByIdOrSlug("1", 7L, false))
+        when(toolService.getById(1L, 7L, false))
                 .thenReturn(ToolResponse.builder().id(1L).ownerId(7L).status(ToolStatus.DRAFT).build());
         when(categoryService.findAll()).thenReturn(List.of());
         ExtendedModelMap model = new ExtendedModelMap();

@@ -179,7 +179,7 @@ public class ToolWebController {
     }
 
     private ToolResponse editableTool(Long id, CurrentActor actor) {
-        ToolResponse tool = toolService.getByIdOrSlug(String.valueOf(id), actor.id(), actor.admin());
+        ToolResponse tool = toolService.getById(id, actor.id(), actor.admin());
         if (!actor.admin() && !actor.id().equals(tool.getOwnerId())) {
             throw new AccessDeniedException("You do not own this tool");
         }
