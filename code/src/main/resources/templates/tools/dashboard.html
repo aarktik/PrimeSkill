@@ -1,44 +1,39 @@
 <!DOCTYPE html>
-<html lang="th" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${pageTitle} + ' · Primeskill'">เครื่องมือของฉัน · Primeskill</title>
-    <link rel="stylesheet" th:href="@{/css/role-e.css}">
-    <script defer th:src="@{/js/role-e.js}"></script>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: navbar}"></header>
-<main id="main" tabindex="-1" class="ps-page ps-dashboard-tools">
-    <header><h1 th:text="${pageTitle}">เครื่องมือของฉัน</h1><a class="ps-btn ps-btn--primary" th:href="@{/dashboard/tools/new}">เพิ่มเครื่องมือ</a></header>
+<div class="ps-workspace"><aside th:replace="~{fragments/layout :: sidebar}"></aside><main id="main" tabindex="-1" class="ps-workspace-main ps-page ps-dashboard-tools">
+    <header class="ps-e-header"><div><span class="ps-eyebrow">Creator workspace</span><h1 th:text="${pageTitle}">My tools</h1><p>From first draft to your next release.</p></div><a class="ps-btn ps-btn--primary" th:href="@{/dashboard/tools/new}">New tool</a></header>
     <div th:replace="~{fragments/layout :: alerts}"></div>
-    <p th:if="${#lists.isEmpty(tools)}">เริ่มเผยแพร่เครื่องมือแรกของคุณ</p>
-    <table th:unless="${#lists.isEmpty(tools)}">
-        <thead><tr><th scope="col">ชื่อ</th><th scope="col">สถานะ</th><th scope="col">การจัดการ</th></tr></thead>
+    <div class="ps-empty" th:if="${#lists.isEmpty(tools)}"><svg th:replace="~{fragments/layout :: icon('box')}"/><h2>Your next creation starts here.</h2><p>Create a tool, add its first release, and share it with the community.</p><a class="ps-btn ps-btn--primary" href="/dashboard/tools/new">Create your first tool</a></div>
+    <table class="ps-table" th:unless="${#lists.isEmpty(tools)}">
+        <thead><tr><th scope="col">Name</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
         <tbody><tr th:each="tool : ${tools}">
-            <td><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a></td>
-            <td><span th:replace="~{fragments/layout :: statusBadge(${tool.status})}">แบบร่าง</span></td>
-            <td><a th:if="${tool.status.name() == 'DRAFT'}" th:href="@{/dashboard/tools/{id}/edit(id=${tool.id})}">แก้ไข</a>
-                <a th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">เวอร์ชันและสถานะ</a>
+            <td class="ps-dashboard-name"><a th:href="@{/tools/{slug}(slug=${tool.slug})}" th:text="${tool.name}">Tool</a><p class="ps-muted" th:text="${tool.shortDescription}">Description</p></td>
+            <td><span th:replace="~{fragments/layout :: statusBadge(${tool.status})}">Draft</span></td>
+            <td><div class="ps-row-actions"><a th:if="${tool.status.name() == 'DRAFT'}" th:href="@{/dashboard/tools/{id}/edit(id=${tool.id})}">Edit</a>
+                <a th:href="@{/dashboard/tools/{id}/versions(id=${tool.id})}">Releases & publishing</a>
                 <form th:action="@{/dashboard/tools/{id}/delete(id=${tool.id})}" method="post" style="display:inline"
-                      onsubmit="return confirm('ลบเครื่องมือนี้และประวัติเวอร์ชันทั้งหมดหรือไม่?')">
+                      data-confirm="Delete this tool and all its version history? This cannot be undone." data-confirm-danger="true">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <button type="submit">ลบ</button>
-                </form>
+                    <button class="ps-e-link-danger" type="submit">Delete</button>
+                </form></div>
             </td>
         </tr></tbody>
     </table>
-    <nav th:if="${toolPage.totalPages > 1}" aria-label="แบ่งหน้ารายการเครื่องมือ">
-        <span th:if="${toolPage.first}">ก่อนหน้า</span>
-        <a th:unless="${toolPage.first}" th:href="@{/dashboard/tools(page=${toolPage.number - 1})}">ก่อนหน้า</a>
+    <nav class="ps-e-pagination" th:if="${toolPage.totalPages > 1}" aria-label="Tool pagination">
+        <span th:if="${toolPage.first}">Previous</span>
+        <a th:unless="${toolPage.first}" th:href="@{/dashboard/tools(page=${toolPage.number - 1})}">Previous</a>
         <th:block th:each="pageNumber : ${#numbers.sequence(0, toolPage.totalPages - 1)}">
             <span th:if="${pageNumber == toolPage.number}" aria-current="page" th:text="${pageNumber + 1}">1</span>
             <a th:unless="${pageNumber == toolPage.number}"
                th:href="@{/dashboard/tools(page=${pageNumber})}" th:text="${pageNumber + 1}">2</a>
         </th:block>
-        <span th:if="${toolPage.last}">ถัดไป</span>
-        <a th:unless="${toolPage.last}" th:href="@{/dashboard/tools(page=${toolPage.number + 1})}">ถัดไป</a>
+        <span th:if="${toolPage.last}">Next</span>
+        <a th:unless="${toolPage.last}" th:href="@{/dashboard/tools(page=${toolPage.number + 1})}">Next</a>
     </nav>
-</main>
+</main></div>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

@@ -61,7 +61,7 @@ class ToolBrowseWebControllerTest {
         assertEquals(1, ((List<?>) model.get("tools")).size());
         assertEquals(1L, model.get("totalElements"));
         assertEquals("explore", model.get("activeNav"));
-        assertEquals("สำรวจเครื่องมือ", model.get("pageTitle"));
+        assertEquals("Explore tools", model.get("pageTitle"));
         assertEquals(summaries, model.get("reviewSummaries"));
         verify(reviewSummaryService).summarizeByToolIds(List.of(1L));
         verify(toolSearchService).search(any(), any(), any(), anyString(), anyInt(), anyInt());

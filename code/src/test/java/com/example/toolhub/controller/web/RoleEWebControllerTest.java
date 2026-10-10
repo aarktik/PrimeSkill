@@ -48,7 +48,7 @@ class RoleEWebControllerTest {
         mockMvc.perform(get("/dashboard/tools/1/versions"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("versions/list"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("เพิ่มเวอร์ชัน")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("New version")));
     }
 
     @Test
@@ -72,7 +72,7 @@ class RoleEWebControllerTest {
         mockMvc.perform(get("/admin/tools"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/moderation"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("ไม่มีเครื่องมือรออนุมัติ")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("The review queue is clear.")));
     }
 
     @Test

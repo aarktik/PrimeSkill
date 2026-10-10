@@ -67,7 +67,7 @@ public class ToolBrowseWebController {
         model.addAttribute("sort", effectiveSort);
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("allTags", tagService.findAll());
-        model.addAttribute("pageTitle", "สำรวจเครื่องมือ");
+        model.addAttribute("pageTitle", "Explore tools");
         model.addAttribute("activeNav", "explore");
         return "tools/list";
     }

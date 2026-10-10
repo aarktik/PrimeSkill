@@ -40,15 +40,17 @@ public class ToolWebController {
     private final CurrentActorProvider currentActorProvider;
     private final ReviewService reviewService;
     private final ReviewSummaryService reviewSummaryService;
+    private final com.example.toolhub.service.TagService tagService;
 
     public ToolWebController(ToolService toolService, CategoryService categoryService,
                              CurrentActorProvider currentActorProvider, ReviewService reviewService,
-                             ReviewSummaryService reviewSummaryService) {
+                             ReviewSummaryService reviewSummaryService, com.example.toolhub.service.TagService tagService) {
         this.toolService = toolService;
         this.categoryService = categoryService;
         this.currentActorProvider = currentActorProvider;
         this.reviewService = reviewService;
         this.reviewSummaryService = reviewSummaryService;
+        this.tagService = tagService;
     }
 
     @GetMapping("/tools/{idOrSlug}")
@@ -59,6 +61,7 @@ public class ToolWebController {
         model.addAttribute("tool", tool);
         model.addAttribute("pageTitle", tool.getName());
         model.addAttribute("activeNav", "explore");
+        model.addAttribute("toolTags", tagService.findTagsOfTool(tool.getId(), actor.id(), actor.admin()));
         populateReviews(model, tool, actor.id(), actor.admin(), page);
         return "tools/detail";
     }
@@ -85,7 +88,7 @@ public class ToolWebController {
                 PageRequest.of(safePage, DASHBOARD_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "updatedAt")));
         model.addAttribute("tools", tools.getContent());
         model.addAttribute("toolPage", tools);
-        model.addAttribute("pageTitle", "เครื่องมือของฉัน");
+        model.addAttribute("pageTitle", "My tools");
         model.addAttribute("activeNav", "my-tools");
         return "tools/dashboard";
     }
@@ -95,7 +98,8 @@ public class ToolWebController {
         currentActorProvider.requireActor();
         model.addAttribute("toolRequest", new CreateToolRequest(null, null, null, null, null, null));
         model.addAttribute("categories", categoryService.findAll());
-        model.addAttribute("pageTitle", "เพิ่มเครื่องมือ");
+        model.addAttribute("pageTitle", "New tool");
+        model.addAttribute("activeNav", "my-tools");
         model.addAttribute("formAction", "/dashboard/tools");
         return "tools/form";
     }
@@ -108,8 +112,13 @@ public class ToolWebController {
             populateCreateForm(model);
             return "tools/form";
         }
-        ToolResponse response = toolService.create(request, currentActorProvider.requireActor().id());
-        redirectAttributes.addFlashAttribute("successMessage", "สร้างแบบร่างเครื่องมือแล้ว");
+        ToolResponse response;
+        try { response = toolService.create(request, currentActorProvider.requireActor().id()); }
+        catch (com.example.toolhub.exception.CatalogConflictException exception) {
+            bindingResult.rejectValue("slug", "duplicate", "This slug is already in use.");
+            populateCreateForm(model); return "tools/form";
+        }
+        redirectAttributes.addFlashAttribute("successMessage", "Tool draft created.");
         return "redirect:/tools/" + response.getSlug();
     }
 
@@ -121,7 +130,8 @@ public class ToolWebController {
         model.addAttribute("toolRequest", new UpdateToolRequest(tool.getName(), tool.getSlug(),
                 tool.getShortDescription(), tool.getDescription(), tool.getCategoryId(), tool.getRepositoryUrl()));
         model.addAttribute("categories", categoryService.findAll());
-        model.addAttribute("pageTitle", "แก้ไขเครื่องมือ");
+        model.addAttribute("pageTitle", "Edit tool");
+        model.addAttribute("activeNav", "my-tools");
         model.addAttribute("formAction", "/dashboard/tools/" + id);
         return "tools/form";
     }
@@ -135,12 +145,21 @@ public class ToolWebController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("tool", editableTool(id, actor));
             model.addAttribute("categories", categoryService.findAll());
-            model.addAttribute("pageTitle", "แก้ไขเครื่องมือ");
+            model.addAttribute("pageTitle", "Edit tool");
+            model.addAttribute("activeNav", "my-tools");
             model.addAttribute("formAction", "/dashboard/tools/" + id);
             return "tools/form";
         }
-        ToolResponse response = toolService.update(id, request, actor.id(), actor.admin());
-        redirectAttributes.addFlashAttribute("successMessage", "บันทึกการเปลี่ยนแปลงแล้ว");
+        ToolResponse response;
+        try { response = toolService.update(id, request, actor.id(), actor.admin()); }
+        catch (com.example.toolhub.exception.CatalogConflictException exception) {
+            bindingResult.rejectValue("slug", "duplicate", "This slug is already in use.");
+            model.addAttribute("tool", editableTool(id, actor));
+            model.addAttribute("categories", categoryService.findAll());
+            model.addAttribute("pageTitle", "Edit tool"); model.addAttribute("activeNav", "my-tools");
+            model.addAttribute("formAction", "/dashboard/tools/" + id); return "tools/form";
+        }
+        redirectAttributes.addFlashAttribute("successMessage", "Changes saved.");
         return "redirect:/tools/" + response.getSlug();
     }
 
@@ -148,13 +167,14 @@ public class ToolWebController {
     public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         CurrentActor actor = currentActorProvider.requireActor();
         toolService.delete(id, actor.id(), actor.admin());
-        redirectAttributes.addFlashAttribute("successMessage", "ลบเครื่องมือแล้ว");
+        redirectAttributes.addFlashAttribute("successMessage", "Tool deleted.");
         return "redirect:/dashboard/tools";
     }
 
     private void populateCreateForm(Model model) {
+        model.addAttribute("activeNav", "my-tools");
         model.addAttribute("categories", categoryService.findAll());
-        model.addAttribute("pageTitle", "เพิ่มเครื่องมือ");
+        model.addAttribute("pageTitle", "New tool");
         model.addAttribute("formAction", "/dashboard/tools");
     }
 
@@ -169,24 +189,29 @@ public class ToolWebController {
         return tool;
     }
 
+    private String editError(Model model, jakarta.servlet.http.HttpServletRequest request) {
+        new WebLayoutAdvice(currentActorProvider).layout(model, request);
+        return "tools/edit-error";
+    }
+
     @ExceptionHandler(InvalidStateTransitionException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public String invalidEditState(Model model) {
-        model.addAttribute("message", "แก้ไขข้อมูลได้เฉพาะเครื่องมือที่เป็นแบบร่าง กรุณากลับไปตรวจสถานะล่าสุด");
-        return "tools/edit-error";
+    public String invalidEditState(Model model, jakarta.servlet.http.HttpServletRequest request) {
+        model.addAttribute("message", "Only draft tools can be edited. Return to your workspace to check the latest status.");
+        return editError(model, request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public String deniedEdit(Model model) {
-        model.addAttribute("message", "คุณไม่มีสิทธิ์แก้ไขเครื่องมือนี้");
-        return "tools/edit-error";
+    public String deniedEdit(Model model, jakarta.servlet.http.HttpServletRequest request) {
+        model.addAttribute("message", "You do not have permission to edit this tool.");
+        return editError(model, request);
     }
 
     @ExceptionHandler(org.springframework.dao.PessimisticLockingFailureException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-    public String concurrentEdit(Model model) {
-        model.addAttribute("message", "เครื่องมือกำลังถูกใช้งาน กรุณาตรวจข้อมูลล่าสุดแล้วลองอีกครั้ง");
-        return "tools/edit-error";
+    public String concurrentEdit(Model model, jakarta.servlet.http.HttpServletRequest request) {
+        model.addAttribute("message", "This tool is being updated. Check its latest state before trying again.");
+        return editError(model, request);
     }
 }

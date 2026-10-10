@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ToolTagRepository extends JpaRepository<ToolTag, ToolTagId> {
     boolean existsByIdToolIdAndIdTagId(Long toolId, Long tagId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "tag")
     List<ToolTag> findByIdToolId(Long toolId);
 
     long countByIdTagId(Long tagId);

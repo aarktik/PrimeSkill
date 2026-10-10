@@ -1,18 +1,13 @@
 <!DOCTYPE html>
-<html lang="th" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ดำเนินการไม่สำเร็จ · Primeskill</title>
-    <link rel="stylesheet" th:href="@{/css/role-e.css}">
-    <script defer th:src="@{/js/role-e.js}"></script>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Something went wrong')}"></head>
 <body>
 <header th:replace="~{fragments/layout :: navbar}"></header>
-<main id="main" tabindex="-1" class="ps-e-page ps-e-page--form">
+<main id="main" tabindex="-1" class="ps-page ps-error-page">
     <section class="ps-e-card" role="alert">
-        <h1>ดำเนินการไม่สำเร็จ</h1>
-        <p th:text="${message}">โปรดลองอีกครั้ง</p>
-        <a class="ps-e-button ps-e-button--secondary" th:href="@{/dashboard/tools}">กลับไปเครื่องมือของฉัน</a>
+        <h1>Something went wrong</h1>
+        <p th:text="${message}">Please try again.</p>
+        <div th:replace="~{fragments/layout :: errorActions}"></div>
     </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>

@@ -32,14 +32,16 @@ public class ReviewWebController {
     private final ToolService toolService;
     private final CurrentActorProvider currentActorProvider;
     private final ReviewSummaryService reviewSummaryService;
+    private final com.example.toolhub.service.TagService tagService;
 
     public ReviewWebController(ReviewService reviewService, ToolService toolService,
                                CurrentActorProvider currentActorProvider,
-                               ReviewSummaryService reviewSummaryService) {
+                               ReviewSummaryService reviewSummaryService, com.example.toolhub.service.TagService tagService) {
         this.reviewService = reviewService;
         this.toolService = toolService;
         this.currentActorProvider = currentActorProvider;
         this.reviewSummaryService = reviewSummaryService;
+        this.tagService = tagService;
     }
 
     @GetMapping("/my/reviews")
@@ -48,7 +50,8 @@ public class ReviewWebController {
         var reviews = reviewService.listAuthoredBy(actor.id(), PageRequest.of(Math.max(page, 0), PAGE_SIZE));
         model.addAttribute("reviews", reviews.getContent());
         model.addAttribute("reviewPage", reviews);
-        model.addAttribute("pageTitle", "รีวิวของฉัน");
+        model.addAttribute("pageTitle", "My reviews");
+        model.addAttribute("activeNav", "my-reviews");
         return "reviews/mine";
     }
 
@@ -71,41 +74,48 @@ public class ReviewWebController {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
             return "redirect:/tools/" + tool.getSlug();
         }
-        redirectAttributes.addFlashAttribute("successMessage", "ส่งรีวิวแล้ว");
+        redirectAttributes.addFlashAttribute("successMessage", "Review published.");
         return "redirect:/tools/" + tool.getSlug();
     }
 
     @PostMapping("/tools/{toolId}/reviews/{reviewId}")
     public String update(@PathVariable Long toolId, @PathVariable Long reviewId,
+                         @RequestParam(defaultValue = "0") int page,
                          @Valid @ModelAttribute("updateReviewRequest") UpdateReviewRequest request,
                          BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
         CurrentActor actor = currentActorProvider.requireActor();
         ToolResponse tool = visibleTool(toolId, actor);
         if (bindingResult.hasErrors()) {
-            modelForReviewValidation(tool, actor, model, request, reviewId, bindingResult);
+            modelForReviewValidation(tool, actor, model, request, reviewId, bindingResult, page);
             return "tools/detail";
         }
         try {
             reviewService.update(toolId, reviewId, request, actor.id(), actor.admin());
         } catch (CatalogConflictException | DuplicateResourceException | AccessDeniedException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
-            return "redirect:/tools/" + tool.getSlug();
+            return "redirect:/tools/" + tool.getSlug() + "?page=" + Math.max(page, 0) + "#your-review";
         }
-        redirectAttributes.addFlashAttribute("successMessage", "แก้ไขรีวิวแล้ว");
-        return "redirect:/tools/" + tool.getSlug();
+        redirectAttributes.addFlashAttribute("successMessage", "Review updated.");
+        return "redirect:/tools/" + tool.getSlug() + "?page=" + Math.max(page, 0) + "#your-review";
     }
 
     @PostMapping("/tools/{toolId}/reviews/{reviewId}/delete")
     public String delete(@PathVariable Long toolId, @PathVariable Long reviewId,
+                         @RequestParam(defaultValue = "0") int page,
                          RedirectAttributes redirectAttributes) {
         CurrentActor actor = currentActorProvider.requireActor();
         try {
             reviewService.delete(toolId, reviewId, actor.id(), actor.admin());
-            redirectAttributes.addFlashAttribute("successMessage", "ลบรีวิวแล้ว");
+            redirectAttributes.addFlashAttribute("successMessage", "Review deleted.");
         } catch (AccessDeniedException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
-        return "redirect:/my/reviews";
+        try {
+            var tool = visibleTool(toolId, actor);
+            var remaining = reviewService.listForTool(toolId, actor.id(), actor.admin(), PageRequest.of(0, PAGE_SIZE));
+            int lastPage = Math.max(0, remaining.getTotalPages() - 1);
+            return "redirect:/tools/" + tool.getSlug() + "?page=" + Math.min(Math.max(page, 0), lastPage) + "#reviews-heading";
+        } catch (com.example.toolhub.exception.ResourceNotFoundException exception) { return "redirect:/my/reviews"; }
     }
 
     @PostMapping("/my/reviews/{toolId}/{reviewId}/delete")
@@ -114,7 +124,7 @@ public class ReviewWebController {
         CurrentActor actor = currentActorProvider.requireActor();
         try {
             reviewService.delete(toolId, reviewId, actor.id(), actor.admin());
-            redirectAttributes.addFlashAttribute("successMessage", "ลบรีวิวแล้ว");
+            redirectAttributes.addFlashAttribute("successMessage", "Review deleted.");
         } catch (AccessDeniedException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -126,27 +136,28 @@ public class ReviewWebController {
         model.addAttribute("tool", tool);
         model.addAttribute("pageTitle", tool.getName());
         model.addAttribute("activeNav", "explore");
-        populateReviewDetail(tool, actor, model);
+        populateReviewDetail(tool, actor, model, 0);
         model.addAttribute("createReviewRequest", request);
+        model.addAttribute(BindingResult.MODEL_KEY_PREFIX + "createReviewRequest", bindingResult);
         model.addAttribute("reviewErrors", bindingResult.getFieldErrors());
         return "tools/detail";
     }
 
     private void modelForReviewValidation(ToolResponse tool, CurrentActor actor, Model model,
                                          UpdateReviewRequest request, Long reviewId,
-                                         BindingResult bindingResult) {
+                                         BindingResult bindingResult, int page) {
         model.addAttribute("tool", tool);
         model.addAttribute("pageTitle", tool.getName());
         model.addAttribute("activeNav", "explore");
-        populateReviewDetail(tool, actor, model);
+        populateReviewDetail(tool, actor, model, page);
         model.addAttribute("updateReviewRequest", request);
         model.addAttribute("updateReviewId", reviewId);
         model.addAttribute("updateReviewErrors", bindingResult.getFieldErrors());
     }
 
-    private void populateReviewDetail(ToolResponse tool, CurrentActor actor, Model model) {
+    private void populateReviewDetail(ToolResponse tool, CurrentActor actor, Model model, int page) {
         var reviews = reviewService.listForTool(tool.getId(), actor.id(), actor.admin(),
-                PageRequest.of(0, PAGE_SIZE));
+                PageRequest.of(Math.max(page, 0), PAGE_SIZE));
         model.addAttribute("reviews", reviews.getContent());
         model.addAttribute("reviewPage", reviews);
         model.addAttribute("reviewSummary", reviewSummaryService.summarizeByToolIds(java.util.List.of(tool.getId()))
@@ -154,7 +165,10 @@ public class ReviewWebController {
         model.addAttribute("myReview", reviewService.findMineForTool(tool.getId(), actor.id()));
         model.addAttribute("currentActorId", actor.id());
         model.addAttribute("currentActorAdmin", actor.admin());
-        model.addAttribute("createReviewRequest", new CreateReviewRequest(null, null));
+        model.addAttribute("toolTags", tagService.findTagsOfTool(tool.getId(), actor.id(), actor.admin()));
+        if (!model.containsAttribute("createReviewRequest")) {
+            model.addAttribute("createReviewRequest", new CreateReviewRequest(null, null));
+        }
     }
 
     private ToolResponse visibleTool(Long toolId, CurrentActor actor) {

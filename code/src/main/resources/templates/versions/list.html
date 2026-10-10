@@ -1,75 +1,50 @@
 <!DOCTYPE html>
-<html lang="th" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${pageTitle} + ' · Primeskill'">เวอร์ชัน · Primeskill</title>
-    <link rel="stylesheet" th:href="@{/css/role-e.css}">
-    <script defer th:src="@{/js/role-e.js}"></script>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/layout :: navbar}"></header>
-<main id="main" tabindex="-1" class="ps-e-page">
-    <nav aria-label="เส้นทางนำทาง"><a th:href="@{/dashboard/tools}">เครื่องมือของฉัน</a> / <span th:text="${tool.name}">Tool</span></nav>
+<div class="ps-workspace"><aside th:replace="~{fragments/layout :: sidebar}"></aside><main id="main" tabindex="-1" class="ps-workspace-main ps-e-page">
+    <nav class="ps-crumb" aria-label="Breadcrumb"><a th:href="@{/dashboard/tools}">My tools</a> / <span th:text="${tool.name}">Tool</span></nav>
     <header class="ps-e-header">
         <div>
-            <h1 th:text="${pageTitle}">เวอร์ชันของเครื่องมือ</h1>
-            <p>จัดการเวอร์ชันและสถานะการเผยแพร่</p>
+            <h1 th:text="${pageTitle}">Tool versions</h1>
+            <p>Manage releases and the publishing lifecycle of your tool.</p>
         </div>
         <a th:if="${tool.status.name() == 'DRAFT'}" class="ps-e-button ps-e-button--primary"
-           th:href="@{/dashboard/tools/{id}/versions/new(id=${tool.id})}">เพิ่มเวอร์ชัน</a>
+           th:href="@{/dashboard/tools/{id}/versions/new(id=${tool.id})}">New version</a>
     </header>
     <div th:replace="~{fragments/layout :: alerts}"></div>
 
     <section class="ps-e-card" aria-labelledby="publishing-title">
-        <h2 id="publishing-title">การเผยแพร่</h2>
-        <p>สถานะ:
-            <span th:if="${tool.status.name() == 'DRAFT'}" class="ps-e-badge ps-e-badge--neutral">แบบร่าง</span>
-            <span th:if="${tool.status.name() == 'PENDING'}" class="ps-e-badge ps-e-badge--warning">รออนุมัติ</span>
-            <span th:if="${tool.status.name() == 'PUBLISHED'}" class="ps-e-badge ps-e-badge--success">เผยแพร่แล้ว</span>
-            <span th:if="${tool.status.name() == 'DEPRECATED'}" class="ps-e-badge ps-e-badge--neutral">เลิกเผยแพร่</span>
+        <h2 id="publishing-title">Publishing</h2>
+        <p>Status:
+            <span th:if="${tool.status.name() == 'DRAFT'}" class="ps-e-badge ps-e-badge--neutral">Draft</span>
+            <span th:if="${tool.status.name() == 'PENDING'}" class="ps-e-badge ps-e-badge--warning">Pending review</span>
+            <span th:if="${tool.status.name() == 'PUBLISHED'}" class="ps-e-badge ps-e-badge--success">Published</span>
+            <span th:if="${tool.status.name() == 'DEPRECATED'}" class="ps-e-badge ps-e-badge--neutral">Deprecated</span>
         </p>
-        <form th:if="${tool.status.name() == 'DRAFT'}" th:action="@{/dashboard/tools/{id}/submit(id=${tool.id})}" method="post">
+        <form th:if="${tool.status.name() == 'DRAFT'}" th:action="@{/dashboard/tools/{id}/submit(id=${tool.id})}" method="post" data-confirm="Submit this tool for review? Metadata and releases will be locked until a decision is made.">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <button class="ps-e-button ps-e-button--primary" type="submit">ส่งให้ตรวจ</button>
+            <button class="ps-e-button ps-e-button--primary" type="submit">Submit for review</button>
         </form>
-        <p th:if="${tool.status.name() == 'PENDING'}">รอผู้ดูแลระบบพิจารณา</p>
+        <p th:if="${tool.status.name() == 'PENDING'}">Your submission is waiting for an admin review.</p>
         <form th:if="${tool.status.name() == 'PUBLISHED'}" th:action="@{/dashboard/tools/{id}/deprecate(id=${tool.id})}" method="post"
-              onsubmit="return confirm('เลิกเผยแพร่เครื่องมือนี้หรือไม่?')">
+              data-confirm="Deprecate this tool? It will no longer appear in public discovery." data-confirm-danger="true">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <button class="ps-e-button ps-e-button--danger" type="submit">เลิกเผยแพร่</button>
+            <button class="ps-e-button ps-e-button--danger" type="submit">Deprecate tool</button>
         </form>
         <form th:if="${tool.status.name() == 'DEPRECATED'}" th:action="@{/dashboard/tools/{id}/restore(id=${tool.id})}" method="post">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <button class="ps-e-button ps-e-button--primary" type="submit">กู้คืนเป็นแบบร่าง</button>
+            <button class="ps-e-button ps-e-button--primary" type="submit">Restore to draft</button>
         </form>
     </section>
 
     <section class="ps-e-card" aria-labelledby="versions-title">
-        <h2 id="versions-title">รายการเวอร์ชัน</h2>
-        <p th:if="${#lists.isEmpty(versions)}">ยังไม่มีเวอร์ชันสำหรับเครื่องมือนี้</p>
-        <div role="region" aria-label="รายการ" tabindex="0" class="ps-e-table-wrap" th:unless="${#lists.isEmpty(versions)}">
-            <table>
-                <thead><tr><th scope="col">เวอร์ชัน</th><th scope="col">บันทึกการเปลี่ยนแปลง</th><th scope="col">การจัดการ</th></tr></thead>
-                <tbody><tr th:each="version : ${versions}">
-                    <td th:text="${version.version}">1.0.0</td>
-                    <td class="ps-release-notes" th:text="${version.releaseNotes ?: '—'}">รายละเอียด</td>
-                    <td>
-                        <div class="ps-e-actions" th:if="${tool.status.name() == 'DRAFT'}">
-                            <a th:href="@{/dashboard/tools/{toolId}/versions/{versionId}/edit(toolId=${tool.id},versionId=${version.id})}">แก้ไข</a>
-                            <form th:action="@{/dashboard/tools/{toolId}/versions/{versionId}/delete(toolId=${tool.id},versionId=${version.id})}"
-                                  method="post" onsubmit="return confirm('ลบเวอร์ชันนี้หรือไม่?')">
-                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                <button class="ps-e-link-danger" type="submit">ลบ</button>
-                            </form>
-                        </div>
-                        <span th:unless="${tool.status.name() == 'DRAFT'}">—</span>
-                    </td>
-                </tr></tbody>
-            </table>
-        </div>
+        <h2 id="versions-title">Release history</h2>
+        <p th:if="${#lists.isEmpty(versions)}">No releases yet.</p>
+<div class="ps-release-list"><article class="ps-release" th:each="version : ${versions}"><div><span class="ps-badge ps-badge--blue" th:text="${version.version}">1.0.0</span></div><div><h3>Release notes</h3><p class="ps-release-notes" th:text="${version.releaseNotes ?: 'No release notes provided.'}">Release notes</p><div class="ps-e-actions" th:if="${tool.status.name() == 'DRAFT'}"><a class="ps-btn ps-btn--secondary" th:href="@{/dashboard/tools/{toolId}/versions/{versionId}/edit(toolId=${tool.id},versionId=${version.id})}">Edit release</a><form th:action="@{/dashboard/tools/{toolId}/versions/{versionId}/delete(toolId=${tool.id},versionId=${version.id})}" method="post" data-confirm="Delete this version? This cannot be undone." data-confirm-danger="true"><button class="ps-e-link-danger" type="submit">Delete</button></form></div></div></article></div>
     </section>
-</main>
+</main></div>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

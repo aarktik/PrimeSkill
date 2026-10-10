@@ -37,6 +37,8 @@ public class SecurityConfig {
                         .accessDeniedHandler(restSecurityExceptionHandler)
 )
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET, "/css/**", "/js/**", "/fonts/**", "/img/**").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/css/**", "/js/**", "/fonts/**", "/img/**").permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
@@ -64,6 +66,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/categories/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/tags/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/categories", "/admin/categories/**", "/admin/tags", "/admin/tags/**").hasRole("ADMIN")
                         .requestMatchers(
                                 "/api/v1/admin/tools",
                                 "/api/v1/admin/tools/**",
