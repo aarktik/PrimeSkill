@@ -8,11 +8,11 @@ PrimeSkill (ชื่อแอปพลิเคชันภายใน ToolHub
 
 ## Deployment URL
 
-- **เว็บใช้งานจริง:** [PrimeSkill Live Demo](https://primeskill-zeta.vercel.app/)
-- [Browse tools](https://primeskill-zeta.vercel.app/tools) · [Register](https://primeskill-zeta.vercel.app/register) · [Sign in](https://primeskill-zeta.vercel.app/login)
-- [Swagger UI](https://primeskill-zeta.vercel.app/swagger-ui/index.html) · [OpenAPI JSON](https://primeskill-zeta.vercel.app/v3/api-docs)
+- **เว็บใช้งานจริง:** [PrimeSkill Live Demo](https://primeskill-production.up.railway.app/)
+- [Browse tools](https://primeskill-production.up.railway.app/tools) · [Register](https://primeskill-production.up.railway.app/register) · [Sign in](https://primeskill-production.up.railway.app/login)
+- [Swagger UI](https://primeskill-production.up.railway.app/swagger-ui/index.html) · [OpenAPI JSON](https://primeskill-production.up.railway.app/v3/api-docs)
 
-Production ใช้ Vercel และ PostgreSQL บน Supabase; ณ วันที่ตรวจ 10 ตุลาคม 2026 Production ติดตาม branch `develop` ที่ SHA `4678e0047184de7100579041c9cdfacfe228c688` การรวม `main` ไม่เปลี่ยน branch deploy เอง ดู [สถานะและหลักฐาน](doc/SESSION_HANDOFF.md) และตรวจ dashboard อีกครั้งก่อนนำเสนอ
+Production เปิดให้ใช้งานผ่าน Railway และใช้ PostgreSQL บน Supabase ตรวจ branch และ source SHA ของ deployment ล่าสุดใน Railway ก่อนนำเสนอ
 
 ## สมาชิกกลุ่ม / Team
 
@@ -34,7 +34,7 @@ Production ใช้ Vercel และ PostgreSQL บน Supabase; ณ วัน�
 - **Security:** Spring Security, session authentication, CSRF; Spring Session JDBC ใน profile `vercel`
 - **API docs:** springdoc OpenAPI 3.1.1 / Swagger UI
 - **Testing:** JUnit, Mockito, Spring Boot Test/MockMvc, H2 แยกสำหรับ tests และ PostgreSQL integration ผ่าน Failsafe
-- **Delivery:** Git/GitHub, GitHub Actions, Docker/Compose, Vercel
+- **Delivery:** Git/GitHub, GitHub Actions, Docker/Compose, Railway
 
 เวอร์ชัน dependencies อ้างอิง [pom.xml](code/pom.xml)
 
@@ -78,7 +78,7 @@ Controllers รับ HTTP/validation และเรียก Service; Services
 - [Data Dictionary](doc/data-dictionary.md) · [Seed data](code/src/main/resources/data.sql)
 - [Migration runbook](doc/migration-rollout-runbook.md) · [Release SQL manifest](doc/sql/migration-release-manifest.json)
 
-Hibernate ใช้ `ddl-auto=validate` ไม่สร้าง DDL อัตโนมัติ Default local profile รัน SQL initialization; production `vercel` ปิด SQL initialization และใช้ schema ที่จัดเตรียมแล้ว JDBC session tables เป็น infrastructure เพิ่มจาก 8 ตารางธุรกิจ ห้าม replay migration/seed บนฐานจริงโดยไม่มีการตรวจสถานะและแผน rollout
+Hibernate ใช้ `ddl-auto=validate` ไม่สร้าง DDL อัตโนมัติ Default local profile รัน SQL initialization; production ต้องปิด SQL initialization และใช้ schema ที่จัดเตรียมแล้ว โปรไฟล์ `vercel` ใน repository ตั้งค่าไว้เช่นนั้นและเพิ่ม JDBC session tables จาก 8 ตารางธุรกิจ ห้าม replay migration/seed บนฐานจริงโดยไม่มีการตรวจสถานะและแผน rollout
 
 ## Installation & Setup
 
@@ -149,7 +149,7 @@ java -jar code/target/toolhub-0.0.1-SNAPSHOT.jar
 
 ## API Documentation
 
-[Swagger UI](https://primeskill-zeta.vercel.app/swagger-ui/index.html) แสดง endpoints, request/response schemas และ status codes; [OpenAPI JSON](https://primeskill-zeta.vercel.app/v3/api-docs) เป็น contract ที่ generated จากโปรแกรม
+[Swagger UI](https://primeskill-production.up.railway.app/swagger-ui/index.html) แสดง endpoints, request/response schemas และ status codes; [OpenAPI JSON](https://primeskill-production.up.railway.app/v3/api-docs) เป็น contract ที่ generated จากโปรแกรม
 
 - Base path: `/api/v1`
 - Resources: tools, versions, reviews, categories, tags, users/profile และ authentication
@@ -225,7 +225,7 @@ PrimeSkill/
 
 งานส่วนตัวใช้ branch ตามรูปแบบใบงาน `ชื่อ_รหัสนักศึกษา_section` รวมผ่าน PR เข้า `develop` และส่งมอบผ่าน PR `develop → main` ให้สมาชิกทีมอย่างน้อยหนึ่งคนรีวิว SHA สุดท้าย ทุกคนใช้บัญชีและ commit identity ของตนเอง; ตรวจ meaningful commits อย่างน้อย 15 ครั้งต่อคนตามใบงาน
 
-CI ผ่านและ reviewer อนุมัติเป็นหลักฐานคนละส่วน ต้องตรวจทั้งคู่ก่อน merge รุ่นส่งมอบ การรวม main ไม่เปลี่ยน Vercel Production Branch จาก develop โดยอัตโนมัติ ตรวจ branch/source SHA/domain ใน dashboard และ smoke check public URLs หลังเปลี่ยนการ deploy
+CI ผ่านและ reviewer อนุมัติเป็นหลักฐานคนละส่วน ต้องตรวจทั้งคู่ก่อน merge รุ่นส่งมอบ การรวม branch ไม่เปลี่ยน source branch ของ Railway โดยอัตโนมัติ ตรวจ branch/source SHA/domain ใน Railway dashboard และ smoke check public URLs หลัง deploy
 
 ## Submission Status / Known Gaps
 
